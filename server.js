@@ -30,7 +30,7 @@ pool.query(`
 // បង្ហាញ Frontend ពី Folder public
 app.use(express.static(path.join(__dirname, 'public')));
 
-// API សម្រាប់ទាញយកវីដេអូ និងកត់ត្រាចូល Neon Database យ៉ាងមានស្ថេរភាព
+// API សម្រាប់កត់ត្រាប្រវត្តិក្នុង Database យ៉ាងរហ័ស និងផ្ដល់ Link សម្រាប់ទាញយក
 app.get('/download', async (req, res) => {
     try {
         const videoURL = req.query.url;
@@ -39,42 +39,23 @@ app.get('/download', async (req, res) => {
             return res.status(400).json({ success: false, error: 'តំណភ្ជាប់ YouTube មិនត្រឹមត្រូវទេ!' });
         }
 
-        // យកចំណងជើង និង Link ទាញយកពិតប្រាកដតាមរយៈ Cobalt API (Free & Stable YouTube API)
-        const fetch = (await import('node-fetch')).default;
-        const apiResponse = await fetch('https://co.wuk.sh/api/json', {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                url: videoURL,
-                vQuality: '720',
-                filenamePattern: 'classic'
-            })
-        });
+        // កំណត់ចំណងជើងបណ្តោះអាសន្ន ឬទាញយកតាម Date
+        const videoTitle = "YouTube Video (" + new Date().toLocaleDateString('km-KH') + ")";
 
-        const result = await apiResponse.json();
+        // រក្សាទុកប្រវត្តិចូលក្នុង Neon PostgreSQL Database ភ្លាមៗ
+        await pool.query(
+            'INSERT INTO download_history (video_url, video_title) VALUES ($1, $2)',
+            [videoURL, videoTitle]
+        );
 
-        if (result.status === 'redirect' || result.status === 'stream' || result.url) {
-            const downloadLink = result.url || result.picker[0].url;
-            const videoTitle = result.filename ? result.filename.replace(/\.[^/.]+$/, "") : "YouTube Video";
+        // ส่ง Link ទៅកាន់ SaveFrom ឬ Y2Mate ដែលជា Downloader វេបសាយមានស្ថេរភាពខ្ពស់
+        const directDownloadUrl = `https://en.savefrom.net/1-youtube-downloader-7/?url=${encodeURIComponent(videoURL)}`;
 
-            // រក្សាទុកប្រវត្តិចូលក្នុង Neon PostgreSQL Database
-            await pool.query(
-                'INSERT INTO download_history (video_url, video_title) VALUES ($1, $2)',
-                [videoURL, videoTitle]
-            );
-
-            // ส่ง JSON กลับไปยัง Frontend ឱ្យเปิดดาวน์โหลดไฟล์ตรงๆ
-            return res.json({ success: true, downloadUrl: downloadLink });
-        } else {
-            return res.status(500).json({ success: false, error: 'ไม่สามารถดึงข้อมูลวิดีโอจาก YouTube ได้!' });
-        }
+        res.json({ success: true, redirectUrl: directDownloadUrl });
 
     } catch (err) {
         console.error("Download Error:", err);
-        res.status(500).json({ success: false, error: 'មានបញ្ហាក្នុងការទាញយកវីដេអូ!' });
+        res.status(500).json({ success: false, error: 'មានបញ្ហាក្នុងការកត់ត្រាទិន្នន័យ!' });
     }
 });
 
