@@ -3,39 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube Video Downloader</title>
+    <title>ប្រព័ន្ធទាញយកវីដេអូ YouTube (YouTube Video Downloader)</title>
+    <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@300;400;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Fonts: Kantumruy Pro & Battambang -->
+    <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&family=Kantumruy+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Kantumruy Pro', sans-serif; background-color: #f0f2f5; }
-        .card { border-radius: 16px; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
+        :root {
+            --bg-body: #0f172a;
+            --card-bg: #1e293b;
+            --border-color: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-color: #6366f1;
+            --accent-hover: #4f46e5;
+        }
+        body { 
+            background-color: var(--bg-body); 
+            font-family: 'Kantumruy Pro', 'Battambang', sans-serif; 
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .card-custom {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 540px;
+            padding: 2.5rem;
+        }
+        .form-control, .form-select {
+            background-color: #0f172a;
+            border: 1px solid var(--border-color);
+            color: #f8fafc;
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            font-size: 14px;
+        }
+        .form-control:focus, .form-select:focus {
+            background-color: #0f172a;
+            color: #f8fafc;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+        .form-control::placeholder {
+            color: #64748b;
+        }
+        .btn-download {
+            background-color: var(--accent-color);
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            color: white;
+            transition: all 0.2s;
+        }
+        .btn-download:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+        .app-badge {
+            background-color: rgba(99, 102, 241, 0.1);
+            color: #818cf8;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            font-size: 12px;
+            padding: 4px 12px;
+            border-radius: 50rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
     </style>
 </head>
-<body class="d-flex align-items-center justify-content-center vh-100">
+<body>
 
-    <div class="container" style="max-width: 600px;">
-        <div class="card p-4 bg-white">
-            <h3 class="text-center fw-bold text-danger mb-3">📥 ទាញយកវីដេអូ YouTube</h3>
-            <p class="text-center text-muted small mb-4">ដាក់បញ្ចូលลิงก์ YouTube ដើម្បីទាញយកវីដេអូរបស់អ្នក</p>
-            
+    <div class="card-custom">
+        <div class="text-center mb-4">
             <div class="mb-3">
-                <input type="text" class="form-control form-control-lg" id="videoUrl" placeholder="បិទភ្ជាប់ลิงก์ YouTube ទីនេះ (https://youtu.be/...)">
+                <span class="app-badge">
+                    <i class="bi bi-youtube text-danger"></i> YouTube Media Engine
+                </span>
             </div>
-            
-            <div class="mb-4">
-                <label class="form-label small fw-bold text-secondary">ជ្រើសរើសកម្រិតវីដេអូ (Quality):</label>
-                <select class="form-select" id="videoQuality">
-                    <option value="highest">ច្បាស់បំផុត (Highest Quality)</option>
-                    <option value="lowest">ធម្មតា / រហ័ស (Lowest Quality)</option>
+            <h3 class="fw-bold text-white mb-2 fs-4">ទាញយកវីដេអូ YouTube</h3>
+            <p class="text-secondary small m-0">បិទភ្ជាប់លីង (URL) ដើម្បីទាញយកវីដេអូរបស់អ្នកដោយសុវត្ថិភាព</p>
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label small text-secondary fw-bold mb-2">តំណភ្ជាប់វីដេអូ (Video URL)</label>
+            <div class="input-group">
+                <span class="input-group-text bg-dark border-secondary text-secondary rounded-start-3"><i class="bi bi-link-45deg"></i></span>
+                <input type="text" class="form-control border-start-0" id="videoUrl" placeholder="https://www.youtube.com/watch?v=...">
+            </div>
+        </div>
+        
+        <div class="mb-4">
+            <label class="form-label small text-secondary fw-bold mb-2">កម្រិតគុណភាពវីដេអូ (Quality)</label>
+            <div class="input-group">
+                <span class="input-group-text bg-dark border-secondary text-secondary rounded-start-3"><i class="bi bi-sliders"></i></span>
+                <select class="form-select border-start-0" id="videoQuality">
+                    <option value="highest">ច្បាស់បំផុត (Highest Quality - HD)</option>
+                    <option value="lowest">ធម្មតា / រហ័ស (Standard Quality)</option>
                 </select>
             </div>
-
-            <button onclick="startDownload()" class="btn btn-danger btn-lg w-100 fw-bold shadow-sm" id="downloadBtn">
-                📥 ចុចទាញយកវីដេអូ (Download)
-            </button>
-
-            <div id="statusMessage" class="text-center mt-3 small fw-bold"></div>
         </div>
+
+        <button onclick="startDownload()" class="btn btn-download w-100 shadow-sm" id="downloadBtn">
+            <i class="bi bi-cloud-arrow-down-fill me-2"></i> ចុចទាញយកវីដេអូ (Download)
+        </button>
+
+        <div id="statusMessage" class="text-center mt-3 small fw-semibold"></div>
     </div>
 
     <script>
@@ -45,18 +127,18 @@
             let statusMsg = document.getElementById('statusMessage');
 
             if (!url) {
-                alert("⚠ សូមដាក់បញ្ចូលลิงก์ YouTube ជាមុនសិន!");
+                alert("⚠ សូមដាក់បញ្ចូលតំណភ្ជាប់ YouTube ជាមុនសិន!");
                 return;
             }
 
-            statusMsg.innerHTML = '<span class="text-primary">⏳ កំពុងរៀបចំទាញយកវីដេអូ... សូមរង់ចាំបន្តិច!</span>';
+            statusMsg.innerHTML = '<span class="text-info"><span class="spinner-border spinner-border-sm me-1"></span> កំពុងរៀបចំទាញយកវីដេអូ... សូមរង់ចាំបន្តិច!</span>';
 
             // បើក Link Download ដោយផ្ទាល់ដើម្បីឱ្យ Browser ទាញយកចូលម៉ាស៊ីន
             window.location.href = `/download?url=${encodeURIComponent(url)}&quality=${quality}`;
 
             setTimeout(() => {
-                statusMsg.innerHTML = '<span class="text-success">✅ ការទាញយកបានចាប់ផ្តើមរួចរាល់!</span>';
-            }, 3000);
+                statusMsg.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i> ការទាញយកបានចាប់ផ្តើមរួចរាល់!</span>';
+            }, 3500);
         }
     </script>
 </body>
