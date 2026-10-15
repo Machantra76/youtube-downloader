@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
-const ytdl = require('ytdl-core');
+// ប្តូរមកប្រើ @distube/ytdl-core វិញដើម្បីកុំឱ្យติด Error ជាមួយ YouTube API
+const ytdl = require('@distube/ytdl-core');
 const path = require('path');
 const { Pool } = require('pg');
 
@@ -54,7 +55,7 @@ app.get('/download', async (req, res) => {
 
         res.header('Content-Disposition', `attachment; filename="${cleanTitle}.mp4"`);
         
-        // ផ្ដល់ទិន្នន័យវីដេអូទៅ Browser ជា Stream
+        // ផ្ដល់ទិន្នន័យវីដេអូទៅ Browser ជា Stream ដោយប្រើ @distube/ytdl-core
         ytdl(videoURL, { quality: quality, filter: 'videoandaudio' }).pipe(res);
 
     } catch (err) {
@@ -70,7 +71,7 @@ app.get('/api/history', async (req, res) => {
         res.json({ success: true, data: result.rows });
     } catch (err) {
         console.error("Error fetching history:", err);
-        res.status(500).json({ success: false, error: 'មិនអាចទាញទិន្នន័យប្រវត្តិបានទេ' });
+        res.status(500).json({ success: false, error: 'មិនអាចទាញទិន្នន័យប្រវត្តិได้ទេ' });
     }
 });
 
