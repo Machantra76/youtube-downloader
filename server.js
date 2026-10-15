@@ -1,7 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-// ប្តូរមកប្រើ @distube/ytdl-core វិញដើម្បីកុំឱ្យติด Error ជាមួយ YouTube API
-const ytdl = require('@distube/ytdl-core');
 const path = require('path');
 const { Pool } = require('pg');
 
@@ -32,31 +30,27 @@ pool.query(`
 // បង្ហាញ Frontend ពី Folder public
 app.use(express.static(path.join(__dirname, 'public')));
 
-// API សម្រាប់ទាញយកវីដេអូ YouTube និងកត់ត្រាចូល Database
+// API សម្រាប់កត់ត្រាប្រវត្តិ និងបញ្ជូន Link ទាញយកប្រកបដោយស្ថេរភាព
 app.get('/download', async (req, res) => {
     try {
         const videoURL = req.query.url;
-        const quality = req.query.quality || 'highest';
 
-        if (!ytdl.validateURL(videoURL)) {
+        if (!videoURL || (!videoURL.includes('youtube.com') && !videoURL.includes('youtu.be'))) {
             return res.status(400).json({ success: false, error: 'តំណភ្ជាប់ YouTube មិនត្រឹមត្រូវទេ!' });
         }
 
-        // យកព័ត៌មានវីដេអូ
-        const info = await ytdl.getInfo(videoURL);
-        const title = info.videoDetails.title;
-        const cleanTitle = title.replace(/[^\w\s]/gi, ''); // កាត់អក្សរពិសេសចេញសម្រាប់ដាក់ឈ្មោះፋ៊ីល
-
-        // រក្សាទុកប្រវត្តិចូលក្នុង Neon PostgreSQL Database
+        // ចុះឈ្មោះប្រវត្តិចូលក្នុង Neon PostgreSQL Database
+        const dummyTitle = "YouTube Video (" + new Date().toLocaleDateString('km-KH') + ")";
         await pool.query(
             'INSERT INTO download_history (video_url, video_title) VALUES ($1, $2)',
-            [videoURL, title]
+            [videoURL, dummyTitle]
         );
 
-        res.header('Content-Disposition', `attachment; filename="${cleanTitle}.mp4"`);
-        
-        // ផ្ដល់ទិន្នន័យវីដេអូទៅ Browser ជា Stream ដោយប្រើ @distube/ytdl-core
-        ytdl(videoURL, { quality: quality, filter: 'videoandaudio' }).pipe(res);
+        // ส่ง URL ទៅកាន់ Frontend សម្រាប់ Redirect ទាញយកវីដេអូដោយសុវត្ថិភាព
+        res.json({ 
+            success: true, 
+            redirectUrl: `https://en.savefrom.net/1-youtube-downloader-7/?url=${encodeURIComponent(videoURL)}` 
+        });
 
     } catch (err) {
         console.error("Download Error:", err);
@@ -64,14 +58,14 @@ app.get('/download', async (req, res) => {
     }
 });
 
-// API មើលប្រវត្តិការ Download ទាំងអស់
+// API មើលប្រវត្តិការ Download ទាំងអស់ពី Database
 app.get('/api/history', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM download_history ORDER BY created_at DESC LIMIT 50');
         res.json({ success: true, data: result.rows });
     } catch (err) {
         console.error("Error fetching history:", err);
-        res.status(500).json({ success: false, error: 'មិនអាចទាញទិន្នន័យប្រវត្តិได้ទេ' });
+        res.status(500).json({ success: false, error: 'មិនអាចទាញទិន្នន័យប្រវត្តិបានទេ' });
     }
 });
 
