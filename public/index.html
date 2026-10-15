@@ -163,7 +163,7 @@
     </div>
 
     <script>
-        async function startDownload() {
+        function startDownload() {
             let url = document.getElementById('videoUrl').value.trim();
             let quality = document.getElementById('videoQuality').value;
             let statusMsg = document.getElementById('statusMessage');
@@ -173,22 +173,16 @@
                 return;
             }
 
-            statusMsg.innerHTML = '<span class="text-info"><span class="spinner-border spinner-border-sm me-1"></span> កំពុងរៀបចំប្រព័ន្ធទាញយក... សូមរង់ចាំបន្តិច!</span>';
+            statusMsg.innerHTML = '<span class="text-info"><span class="spinner-border spinner-border-sm me-1"></span> កំពុងរៀបចំទាញយកវីដេអូ... សូមរង់ចាំបន្តិច!</span>';
 
-            try {
-                let response = await fetch(`/download?url=${encodeURIComponent(url)}&quality=${quality}`);
-                let result = await response.json();
+            // បើក Link Download ដោយផ្ទាល់ដើម្បីឱ្យ Browser ចាប់ផ្តើមទាញយក File MP4 ចូលเครื่อง
+            window.location.href = `/download?url=${encodeURIComponent(url)}&quality=${quality}`;
 
-                if (result.success) {
-                    statusMsg.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i> រៀបចំរួចរាល់! កំពុងបើកទំព័រ Download...</span>';
-                    window.open(result.redirectUrl, '_blank');
-                    setTimeout(loadHistory, 2500);
-                } else {
-                    statusMsg.innerHTML = `<span class="text-danger">❌ ${result.error}</span>`;
-                }
-            } catch (err) {
-                statusMsg.innerHTML = '<span class="text-danger">❌ មានបញ្ហាក្នុងការតភ្ជាប់ Server!</span>';
-            }
+            setTimeout(() => {
+                statusMsg.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i> ការទាញយកបានចាប់ផ្តើម! សូមពិនិត្យមើល Download Manager ក្នុងเครื่องរបស់អ្នក។</span>';
+                // ផ្ទុកប្រវត្តិសាស្រ្តឡើងវិញបន្ទាប់ពី Download
+                setTimeout(loadHistory, 4000);
+            }, 3000);
         }
 
         async function loadHistory() {
