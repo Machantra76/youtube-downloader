@@ -184,6 +184,35 @@
                 setTimeout(loadHistory, 4000);
             }, 3000);
         }
+        async function startDownload() {
+            let url = document.getElementById('videoUrl').value.trim();
+            let quality = document.getElementById('videoQuality').value;
+            let statusMsg = document.getElementById('statusMessage');
+
+            if (!url) {
+                alert("⚠ សូមដាក់បញ្ចូលតំណភ្ជាប់ YouTube ជាមុនសិន!");
+                return;
+            }
+
+            statusMsg.innerHTML = '<span class="text-info"><span class="spinner-border spinner-border-sm me-1"></span> កំពុងរៀបចំប្រព័ន្ធទាញយក... សូមរង់ចាំបន្តិច!</span>';
+
+            try {
+                let response = await fetch(`/download?url=${encodeURIComponent(url)}&quality=${quality}`);
+                let result = await response.json();
+
+                if (result.success) {
+                    statusMsg.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i> កត់ត្រាប្រវត្តិជោគជ័យ! កំពុងបើកទំព័រទាញយក...</span>';
+                    // បើកទំព័រទាញយកវីដេអូក្នុង Tab ថ្មី
+                    window.open(result.redirectUrl, '_blank');
+                    // ផ្ទុកតារាងប្រវត្តិឡើងវិញ
+                    setTimeout(loadHistory, 2500);
+                } else {
+                    statusMsg.innerHTML = `<span class="text-danger">❌ ${result.error}</span>`;
+                }
+            } catch (err) {
+                statusMsg.innerHTML = '<span class="text-danger">❌ មានបញ្ហាក្នុងការតភ្ជាប់ Server!</span>';
+            }
+        }
 
         async function loadHistory() {
             try {
