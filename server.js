@@ -1,6 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const ytdl = require('@distube/ytdl-core');
 const path = require('path');
 const { Pool } = require('pg');
 
@@ -31,7 +30,7 @@ pool.query(`
 // បង្ហាញ Frontend ពី Folder public
 app.use(express.static(path.join(__dirname, 'public')));
 
-// API សម្រាប់ទាញយកវីដេអូ YouTube និង Stream ចូលเครื่องដោយផ្ទាល់
+// API សម្រាប់ទាញយកវីដេអូ និងកត់ត្រាចូល Neon Database យ៉ាងមានស្ថេរភាព
 app.get('/download', async (req, res) => {
     try {
         const videoURL = req.query.url;
@@ -40,33 +39,42 @@ app.get('/download', async (req, res) => {
             return res.status(400).json({ success: false, error: 'តំណភ្ជាប់ YouTube មិនត្រឹមត្រូវទេ!' });
         }
 
-        // យកព័ត៌មានវីដេអូពី YouTube
-        const info = await ytdl.getInfo(videoURL);
-        const title = info.videoDetails.title || 'YouTube_Video';
-        const cleanTitle = title.replace(/[^\w\sก-๙អ-ឣឤឱឨឩឪឫឬឭឮឯឰឱឲឳក-៛]/gi, '').trim() || 'video';
+        // យកចំណងជើង និង Link ទាញយកពិតប្រាកដតាមរយៈ Cobalt API (Free & Stable YouTube API)
+        const fetch = (await import('node-fetch')).default;
+        const apiResponse = await fetch('https://co.wuk.sh/api/json', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                url: videoURL,
+                vQuality: '720',
+                filenamePattern: 'classic'
+            })
+        });
 
-        // រក្សាទុកប្រវត្តិចូលក្នុង Neon PostgreSQL Database
-        await pool.query(
-            'INSERT INTO download_history (video_url, video_title) VALUES ($1, $2)',
-            [videoURL, title]
-        );
+        const result = await apiResponse.json();
 
-        // កំណត់ Header ឱ្យ Browser ដឹងថាជា File សម្រាប់ Download
-        res.header('Content-Disposition', `attachment; filename="${encodeURIComponent(cleanTitle)}.mp4"`);
-        res.header('Content-Type', 'video/mp4');
+        if (result.status === 'redirect' || result.status === 'stream' || result.url) {
+            const downloadLink = result.url || result.picker[0].url;
+            const videoTitle = result.filename ? result.filename.replace(/\.[^/.]+$/, "") : "YouTube Video";
 
-        // Streaming វីដេអូទៅកាន់ Browser ដោយផ្ទាល់
-        ytdl(videoURL, {
-            quality: 'highestvideo',
-            filter: 'audioandvideo'
-        }).pipe(res);
+            // រក្សាទុកប្រវត្តិចូលក្នុង Neon PostgreSQL Database
+            await pool.query(
+                'INSERT INTO download_history (video_url, video_title) VALUES ($1, $2)',
+                [videoURL, videoTitle]
+            );
+
+            // ส่ง JSON กลับไปยัง Frontend ឱ្យเปิดดาวน์โหลดไฟล์ตรงๆ
+            return res.json({ success: true, downloadUrl: downloadLink });
+        } else {
+            return res.status(500).json({ success: false, error: 'ไม่สามารถดึงข้อมูลวิดีโอจาก YouTube ได้!' });
+        }
 
     } catch (err) {
         console.error("Download Error:", err);
-        // ប្រសិនបើ Header មិនទាន់បានផ្ញើ អាចផ្ញើ JSON Error กลับไป
-        if (!res.headersSent) {
-            res.status(500).json({ success: false, error: 'មានបញ្ហាក្នុងការទាញយកវីដេអូពី YouTube!' });
-        }
+        res.status(500).json({ success: false, error: 'មានបញ្ហាក្នុងការទាញយកវីដេអូ!' });
     }
 });
 
