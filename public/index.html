@@ -163,8 +163,7 @@
     </div>
 
     <script>
-        // មុខងារពេលចុច Download
-        function startDownload() {
+        async function startDownload() {
             let url = document.getElementById('videoUrl').value.trim();
             let quality = document.getElementById('videoQuality').value;
             let statusMsg = document.getElementById('statusMessage');
@@ -174,18 +173,24 @@
                 return;
             }
 
-            statusMsg.innerHTML = '<span class="text-info"><span class="spinner-border spinner-border-sm me-1"></span> កំពុងរៀបចំទាញយកវីដេអូ... សូមរង់ចាំបន្តិច!</span>';
+            statusMsg.innerHTML = '<span class="text-info"><span class="spinner-border spinner-border-sm me-1"></span> កំពុងរៀបចំប្រព័ន្ធទាញយក... សូមរង់ចាំបន្តិច!</span>';
 
-            window.location.href = `/download?url=${encodeURIComponent(url)}&quality=${quality}`;
+            try {
+                let response = await fetch(`/download?url=${encodeURIComponent(url)}&quality=${quality}`);
+                let result = await response.json();
 
-            setTimeout(() => {
-                statusMsg.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i> ការទាញយកបានចាប់ផ្តើមរួចរាល់!</span>';
-                // ផ្ទុកប្រវត្តិសាស្រ្តឡើងវិញបន្ទាប់ពី Download ជោគជ័យ
-                setTimeout(loadHistory, 4000);
-            }, 3500);
+                if (result.success) {
+                    statusMsg.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i> រៀបចំរួចរាល់! កំពុងបើកទំព័រ Download...</span>';
+                    window.open(result.redirectUrl, '_blank');
+                    setTimeout(loadHistory, 2500);
+                } else {
+                    statusMsg.innerHTML = `<span class="text-danger">❌ ${result.error}</span>`;
+                }
+            } catch (err) {
+                statusMsg.innerHTML = '<span class="text-danger">❌ មានបញ្ហាក្នុងការតភ្ជាប់ Server!</span>';
+            }
         }
 
-        // មុខងារទាញយកប្រវត្តិចូល Table
         async function loadHistory() {
             try {
                 let response = await fetch('/api/history');
@@ -200,7 +205,7 @@
                             <tr>
                                 <td>${index + 1}</td>
                                 <td class="text-truncate" style="max-width: 250px;" title="${item.video_title || 'គ្មានចំណងជើង'}">${item.video_title || 'គ្មានចំណងជើង'}</td>
-                                <td><a href="${item.video_url}" target="_blank" class="text-info text-decoration-none text-truncate d-inline-block" style="max-width: 180px;"><i class="bi bi-box-arrow-up-right"></i>  వీಕ್ಷിക്കရန်</a></td>
+                                <td><a href="${item.video_url}" target="_blank" class="text-info text-decoration-none text-truncate d-inline-block" style="max-width: 180px;"><i class="bi bi-box-arrow-up-right"></i> មើលលីង</a></td>
                                 <td class="text-secondary small">${dateStr}</td>
                             </tr>
                         `;
@@ -214,7 +219,6 @@
             }
         }
 
-        // ហៅទាញប្រវត្តិមកបង្ហាញពេលបើក Web លើកដំបូង
         window.onload = loadHistory;
     </script>
 </body>
