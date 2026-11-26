@@ -239,7 +239,6 @@
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      position: relative;
     }
     .order-img-wrap img {
       width: 100%;
@@ -282,7 +281,7 @@
     .st-Pending { background: #fef3c7; color: #92400e; }
     .st-Washing { background: #dbeafe; color: #1e40af; }
     .st-Ready { background: #dcfce7; color: #166534; }
-    .st-Picked\ Up { background: #e2e8f0; color: #334155; }
+    .st-PickedUp { background: #e2e8f0; color: #334155; }
 
     .order-meta { font-size: 12px; color: #475569; line-height: 1.5; }
     .order-footer {
@@ -446,7 +445,7 @@
           </div>
 
           <div id="ordersCardsGrid" class="cards-grid">
-            <div class="empty-msg">កំពុងទាញទិន្នន័យ...</div>
+            <div style="grid-column:1/-1;text-align:center;color:#64748b;padding:24px;">កំពុងទាញទិន្នន័យ...</div>
           </div>
         </div>
       </div>
@@ -507,10 +506,23 @@
     let currentUser = null;
     let selectedImageBase64 = null;
 
+    const STATUS_CLASS_MAP = {
+      'Pending': 'st-Pending',
+      'Washing': 'st-Washing',
+      'Ready': 'st-Ready',
+      'Picked Up': 'st-PickedUp'
+    };
+
     function escapeHtml(str) {
-      return String(str || '').replace(/[&<>"']/g, m => ({
-        '&': '&', '<': '<', '>': '>', '"': '"', "'": '''
-      }[m]));
+      return String(str || '').replace(/[&<>"']/g, function (m) {
+        return {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        }[m];
+      });
     }
 
     async function checkSession() {
@@ -609,7 +621,6 @@
         cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
     }
 
-    // Compress / read image to Base64 Data URL
     document.getElementById('imageFile').addEventListener('change', (e) => {
       const file = e.target.files[0];
       const box = document.getElementById('imagePreviewBox');
@@ -654,7 +665,6 @@
       const json = await res.json();
       const rows = json.data || [];
 
-      // Update summary stats
       document.getElementById('statTotal').textContent = rows.length;
       const activeCount = rows.filter(r => r.status === 'Pending' || r.status === 'Washing').length;
       const readyCount = rows.filter(r => r.status === 'Ready').length;
@@ -670,7 +680,7 @@
       }
 
       grid.innerHTML = rows.map(o => {
-        const statusCls = `st-${String(o.status).replace(' ', '\\ ')}`;
+        const statusCls = STATUS_CLASS_MAP[o.status] || 'st-Pending';
         const imgHtml = o.image_data
           ? `<img src="${o.image_data}" alt="${escapeHtml(o.order_code)}" />`
           : `<div class="order-img-placeholder">👕 មិនមានរូបភាព<br/><span>${escapeHtml(o.category)}</span></div>`;
