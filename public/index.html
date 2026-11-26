@@ -1,248 +1,815 @@
 <!DOCTYPE html>
 <html lang="km">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ប្រព័ន្ធទាញយកវីដេអូ YouTube (YouTube Video Downloader)</title>
-    <!-- Bootstrap 5 -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&family=Kantumruy+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-body: #0f172a;
-            --card-bg: #1e293b;
-            --border-color: #334155;
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --accent-color: #6366f1;
-            --accent-hover: #4f46e5;
-        }
-        body { 
-            background-color: var(--bg-body); 
-            font-family: 'Kantumruy Pro', 'Battambang', sans-serif; 
-            color: var(--text-primary);
-            min-height: 100vh;
-            padding: 40px 0;
-        }
-        .card-custom {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
-            padding: 2.5rem;
-            margin-bottom: 2rem;
-        }
-        .form-control, .form-select {
-            background-color: #0f172a;
-            border: 1px solid var(--border-color);
-            color: #f8fafc;
-            border-radius: 12px;
-            padding: 0.75rem 1rem;
-            font-size: 14px;
-        }
-        .form-control:focus, .form-select:focus {
-            background-color: #0f172a;
-            color: #f8fafc;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-        }
-        .form-control::placeholder { color: #64748b; }
-        .btn-download {
-            background-color: var(--accent-color);
-            border: none;
-            border-radius: 12px;
-            padding: 0.75rem 1.5rem;
-            font-weight: 600;
-            color: white;
-            transition: all 0.2s;
-        }
-        .btn-download:hover {
-            background-color: var(--accent-hover);
-            transform: translateY(-1px);
-        }
-        .app-badge {
-            background-color: rgba(99, 102, 241, 0.1);
-            color: #818cf8;
-            border: 1px solid rgba(99, 102, 241, 0.2);
-            font-size: 12px;
-            padding: 4px 12px;
-            border-radius: 50rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .table-dark-custom {
-            background-color: transparent;
-            color: var(--text-primary);
-        }
-        .table-dark-custom th {
-            background-color: #0f172a;
-            color: var(--text-secondary);
-            border-bottom: 1px solid var(--border-color);
-            font-size: 13px;
-        }
-        .table-dark-custom td {
-            background-color: transparent;
-            color: var(--text-primary);
-            border-bottom: 1px solid var(--border-color);
-            vertical-align: middle;
-            font-size: 13px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ប្រព័ន្ធគ្រប់គ្រងហាងបោកអ៊ុត - Laundry Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Kantumruy Pro', sans-serif;
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+    .hidden { display: none !important; }
+
+    /* Login Screen */
+    .login-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%);
+    }
+    .login-card {
+      width: 100%;
+      max-width: 400px;
+      background: #fff;
+      border-radius: 16px;
+      padding: 26px;
+      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.28);
+    }
+    .login-card h1 { margin: 0 0 6px; font-size: 20px; color: #0f172a; }
+    .login-card p { margin: 0 0 18px; font-size: 13px; color: #64748b; }
+
+    /* Top Bar & Main Menu */
+    header {
+      background: linear-gradient(135deg, #0f172a, #1e3a8a);
+      color: #fff;
+      padding: 14px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .brand h1 { margin: 0; font-size: 18px; }
+    .brand p { margin: 2px 0 0; font-size: 11px; color: #bfdbfe; }
+    .nav-menu {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .nav-btn {
+      border: 1px solid rgba(255,255,255,0.22);
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 9px;
+      font-family: 'Kantumruy Pro', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+    .nav-btn:hover {
+      transform: scale(0.97);
+      box-shadow: 0 0 0 2px rgba(147, 197, 253, 0.7);
+      background: rgba(255,255,255,0.18);
+    }
+    .nav-btn.active {
+      background: #2563eb;
+      border-color: #93c5fd;
+    }
+    .user-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+    }
+    .btn-logout {
+      background: #ef4444;
+      color: #fff;
+      border: none;
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-family: 'Kantumruy Pro', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Layout */
+    .container {
+      max-width: 1260px;
+      margin: 20px auto;
+      padding: 0 16px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    @media (max-width: 850px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    .stat-box {
+      background: #fff;
+      border-radius: 12px;
+      padding: 14px 16px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 8px rgba(15,23,42,0.04);
+    }
+    .stat-label { font-size: 12px; color: #64748b; }
+    .stat-val { font-size: 20px; font-weight: 700; margin-top: 4px; color: #0f172a; }
+
+    .orders-layout {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+    @media (max-width: 960px) {
+      .orders-layout { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 18px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+    }
+    .card h2 {
+      margin: 0 0 14px;
+      font-size: 16px;
+      color: #1e3a8a;
+    }
+    .form-group { margin-bottom: 11px; }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #334155;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 8px 11px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-family: 'Kantumruy Pro', sans-serif;
+      font-size: 13px;
+      background: #fff;
+    }
+    .btn {
+      border: none;
+      border-radius: 8px;
+      padding: 9px 14px;
+      font-family: 'Kantumruy Pro', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .btn:hover {
+      transform: scale(0.98);
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.35);
+    }
+    .btn-primary {
+      background: #1d4ed8;
+      color: #fff;
+      width: 100%;
+    }
+    .btn-danger {
+      background: #fee2e2;
+      color: #b91c1c;
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+
+    /* Image preview inside form */
+    .preview-box {
+      margin-top: 8px;
+      border: 1px dashed #94a3b8;
+      border-radius: 10px;
+      padding: 8px;
+      text-align: center;
+      background: #f8fafc;
+    }
+    .preview-box img {
+      max-height: 150px;
+      max-width: 100%;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+
+    /* Filter Toolbar */
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .toolbar input, .toolbar select {
+      flex: 1;
+      min-width: 170px;
+    }
+
+    /* Order Image Cards Grid */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(265px, 1fr));
+      gap: 14px;
+    }
+    .order-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 2px 10px rgba(15,23,42,0.04);
+    }
+    .order-img-wrap {
+      height: 155px;
+      background: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    .order-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .order-img-placeholder {
+      color: #475569;
+      font-size: 12px;
+      text-align: center;
+      padding: 10px;
+    }
+    .order-body { padding: 12px; }
+    .order-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .order-code { font-weight: 700; color: #1d4ed8; font-size: 13px; }
+    .cat-tag {
+      display: inline-block;
+      background: #eff6ff;
+      color: #1e40af;
+      border: 1px solid #bfdbfe;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-bottom: 6px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .st-Pending { background: #fef3c7; color: #92400e; }
+    .st-Washing { background: #dbeafe; color: #1e40af; }
+    .st-Ready { background: #dcfce7; color: #166534; }
+    .st-Picked\ Up { background: #e2e8f0; color: #334155; }
+
+    .order-meta { font-size: 12px; color: #475569; line-height: 1.5; }
+    .order-footer {
+      padding: 10px 12px;
+      border-top: 1px solid #f1f5f9;
+      background: #f8fafc;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Users Table */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+    th { background: #f8fafc; color: #334155; }
+    .err-msg { color: #b91c1c; font-size: 12px; margin-top: 8px; }
+    .ok-msg { color: #15803d; font-size: 12px; margin-top: 8px; }
+  </style>
 </head>
 <body>
 
-    <div class="container" style="max-width: 800px;">
-        
-        <!-- Form Downloader -->
-        <div class="card-custom">
-            <div class="text-center mb-4">
-                <div class="mb-3">
-                    <span class="app-badge">
-                        <i class="bi bi-youtube text-danger"></i> YouTube Media Engine
-                    </span>
-                </div>
-                <h3 class="fw-bold text-white mb-2 fs-4">ទាញយកវីដេអូ YouTube</h3>
-                <p class="text-secondary small m-0">បិទភ្ជាប់លីង (URL) ដើម្បីទាញយកវីដេអូរបស់អ្នកដោយសុវត្ថិភាព</p>
-            </div>
-            
-            <div class="mb-3">
-                <label class="form-label small text-secondary fw-bold mb-2">តំណភ្ជាប់វីដេអូ (Video URL)</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-dark border-secondary text-secondary rounded-start-3"><i class="bi bi-link-45deg"></i></span>
-                    <input type="text" class="form-control border-start-0" id="videoUrl" placeholder="https://www.youtube.com/watch?v=...">
-                </div>
-            </div>
-            
-            <div class="mb-4">
-                <label class="form-label small text-secondary fw-bold mb-2">កម្រិតគុណភាពវីដេអូ (Quality)</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-dark border-secondary text-secondary rounded-start-3"><i class="bi bi-sliders"></i></span>
-                    <select class="form-select border-start-0" id="videoQuality">
-                        <option value="highest">ច្បាស់បំផុត (Highest Quality - HD)</option>
-                        <option value="lowest">ធម្មតា / រហ័ស (Standard Quality)</option>
-                    </select>
-                </div>
-            </div>
-
-            <button onclick="startDownload()" class="btn btn-download w-100 shadow-sm" id="downloadBtn">
-                <i class="bi bi-cloud-arrow-down-fill me-2"></i> ចុចទាញយកវីដេអូ (Download)
-            </button>
-
-            <div id="statusMessage" class="text-center mt-3 small fw-semibold"></div>
+  <!-- LOGIN VIEW -->
+  <div id="loginView" class="login-wrap">
+    <div class="login-card">
+      <h1>🧺 ចូលប្រព័ន្ធហាងបោកអ៊ុត</h1>
+      <p>សូម Login ដើម្បីចូល Dashboard, គ្រប់គ្រងអាវ/ខោ និងអ្នកប្រើប្រាស់</p>
+      <form id="loginForm">
+        <div class="form-group">
+          <label>ឈ្មោះគណនី (Username)</label>
+          <input type="text" id="loginUsername" required placeholder="admin" />
         </div>
-
-        <!-- Download History Table -->
-        <div class="card-custom">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="fw-bold text-white m-0 fs-5"><i class="bi bi-clock-history me-2 text-indigo"></i> ប្រវត្តិនៃการទាញយក (Download History)</h5>
-                <button onclick="loadHistory()" class="btn btn-sm btn-outline-secondary text-white"><i class="bi bi-arrow-clockwise"></i> ផ្ទុកឡើងវិញ</button>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-dark-custom align-middle">
-                    <thead>
-                        <tr>
-                            <th>ល.រ (No)</th>
-                            <th>ចំណងជើងវីដេអូ (Title)</th>
-                            <th>តំណភ្ជាប់ (URL)</th>
-                            <th>កាលបរិច្ឆេទ (Date)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="historyTableBody">
-                        <tr>
-                            <td colspan="4" class="text-center text-secondary py-3">កំពុងទាញទិន្នន័យ...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+        <div class="form-group">
+          <label>ពាក្យសម្ងាត់ (Password)</label>
+          <input type="password" id="loginPassword" required placeholder="••••••••" />
         </div>
-
+        <button type="submit" class="btn btn-primary">ចូលប្រើប្រាស់ (Login)</button>
+        <div id="loginError" class="err-msg"></div>
+      </form>
     </div>
+  </div>
 
-    <script>
-        function startDownload() {
-            let url = document.getElementById('videoUrl').value.trim();
-            let quality = document.getElementById('videoQuality').value;
-            let statusMsg = document.getElementById('statusMessage');
+  <!-- MAIN DASHBOARD VIEW -->
+  <div id="appView" class="hidden">
+    <header>
+      <div class="brand">
+        <h1>🧺 ប្រព័ន្ធគ្រប់គ្រងហាងបោកអ៊ុត</h1>
+        <p id="dbBadge">កំពុងភ្ជាប់ Database...</p>
+      </div>
 
-            if (!url) {
-                alert("⚠ សូមដាក់បញ្ចូលតំណភ្ជាប់ YouTube ជាមុនសិន!");
-                return;
-            }
+      <nav class="nav-menu">
+        <button class="nav-btn active" id="tabOrders" onclick="switchMenu('orders')">📋 វិក្កយបត្រ & កាតរូបភាព</button>
+        <button class="nav-btn hidden" id="tabUsers" onclick="switchMenu('users')">👥 បង្កើត & គ្រប់គ្រង User</button>
+      </nav>
 
-            statusMsg.innerHTML = '<span class="text-info"><span class="spinner-border spinner-border-sm me-1"></span> កំពុងរៀបចំទាញយកវីដេអូ... សូមរង់ចាំបន្តិច!</span>';
+      <div class="user-box">
+        <span id="currentUserInfo"></span>
+        <button class="btn-logout" onclick="logout()">ចាកចេញ</button>
+      </div>
+    </header>
 
-            // បើក Link Download ដោយផ្ទាល់ដើម្បីឱ្យ Browser ចាប់ផ្តើមទាញយក File MP4 ចូលเครื่อง
-            window.location.href = `/download?url=${encodeURIComponent(url)}&quality=${quality}`;
+    <div class="container">
+      <!-- Summary Stats -->
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-label">វិក្កយបត្រសរុប</div>
+          <div class="stat-val" id="statTotal">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">កំពុងបោក / រង់ចាំ</div>
+          <div class="stat-val" id="statActive">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">រួចរាល់ (Ready)</div>
+          <div class="stat-val" id="statReady">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">ចំណូលសរុប ($)</div>
+          <div class="stat-val" id="statRevenue">$0.00</div>
+        </div>
+      </div>
 
-            setTimeout(() => {
-                statusMsg.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i> ការទាញយកបានចាប់ផ្តើម! សូមពិនិត្យមើល Download Manager ក្នុងเครื่องរបស់អ្នក។</span>';
-                // ផ្ទុកប្រវត្តិសាស្រ្តឡើងវិញបន្ទាប់ពី Download
-                setTimeout(loadHistory, 4000);
-            }, 3000);
-        }
-        async function startDownload() {
-            let url = document.getElementById('videoUrl').value.trim();
-            let quality = document.getElementById('videoQuality').value;
-            let statusMsg = document.getElementById('statusMessage');
+      <!-- MENU 1: LAUNDRY ORDERS + IMAGE CARDS -->
+      <div id="sectionOrders" class="orders-layout">
+        <div class="card">
+          <h2>+ បង្កើតវិក្កយបត្រអាវ / ខោ</h2>
+          <form id="orderForm">
+            <div class="form-group">
+              <label>ឈ្មោះអតិថិជន *</label>
+              <input type="text" id="customer_name" required placeholder="ឧ. វណ្ណា" />
+            </div>
+            <div class="form-group">
+              <label>លេខទូរស័ព្ទ *</label>
+              <input type="text" id="phone" required placeholder="012 345 678" />
+            </div>
 
-            if (!url) {
-                alert("⚠ សូមដាក់បញ្ចូលតំណភ្ជាប់ YouTube ជាមុនសិន!");
-                return;
-            }
+            <div class="form-group">
+              <label>Category ប្រភេទអាវ / ខោ *</label>
+              <select id="category" required></select>
+            </div>
 
-            statusMsg.innerHTML = '<span class="text-info"><span class="spinner-border spinner-border-sm me-1"></span> កំពុងរៀបចំប្រព័ន្ធទាញយក... សូមរង់ចាំបន្តិច!</span>';
+            <div class="form-group">
+              <label>សេវាកម្មបោកអ៊ុត *</label>
+              <select id="service_type" required>
+                <option value="បោក និងបត់ (Wash & Fold)">បោក និងបត់ (Wash & Fold)</option>
+                <option value="បោក និងអ៊ុត (Wash & Iron)">បោក និងអ៊ុត (Wash & Iron)</option>
+                <option value="អ៊ុតសុទ្ធ (Iron Only)">អ៊ុតសុទ្ធ (Iron Only)</option>
+                <option value="បោកស្ងួត (Dry Clean)">បោកស្ងួត (Dry Clean)</option>
+              </select>
+            </div>
 
-            try {
-                let response = await fetch(`/download?url=${encodeURIComponent(url)}&quality=${quality}`);
-                let result = await response.json();
+            <div class="form-row">
+              <div class="form-group">
+                <label>ចំនួន (PCS)</label>
+                <input type="number" min="1" id="item_count" value="1" required />
+              </div>
+              <div class="form-group">
+                <label>ទម្ងន់ (Kg)</label>
+                <input type="number" step="0.1" min="0.1" id="weight_kg" value="1.0" required />
+              </div>
+            </div>
 
-                if (result.success) {
-                    statusMsg.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i> កត់ត្រាប្រវត្តិជោគជ័យ! កំពុងបើកទំព័រទាញយក...</span>';
-                    // បើកទំព័រទាញយកវីដេអូក្នុង Tab ថ្មី
-                    window.open(result.redirectUrl, '_blank');
-                    // ផ្ទុកតារាងប្រវត្តិឡើងវិញ
-                    setTimeout(loadHistory, 2500);
-                } else {
-                    statusMsg.innerHTML = `<span class="text-danger">❌ ${result.error}</span>`;
-                }
-            } catch (err) {
-                statusMsg.innerHTML = '<span class="text-danger">❌ មានបញ្ហាក្នុងការតភ្ជាប់ Server!</span>';
-            }
-        }
+            <div class="form-group">
+              <label>តម្លៃ ($)</label>
+              <input type="number" step="0.01" min="0" id="price" value="2.50" required />
+            </div>
 
-        async function loadHistory() {
-            try {
-                let response = await fetch('/api/history');
-                let result = await response.json();
-                let tbody = document.getElementById('historyTableBody');
-                
-                if (result.success && result.data.length > 0) {
-                    tbody.innerHTML = '';
-                    result.data.forEach((item, index) => {
-                        let dateStr = new Date(item.created_at).toLocaleString('km-KH');
-                        tbody.innerHTML += `
-                            <tr>
-                                <td>${index + 1}</td>
-                                <td class="text-truncate" style="max-width: 250px;" title="${item.video_title || 'គ្មានចំណងជើង'}">${item.video_title || 'គ្មានចំណងជើង'}</td>
-                                <td><a href="${item.video_url}" target="_blank" class="text-info text-decoration-none text-truncate d-inline-block" style="max-width: 180px;"><i class="bi bi-box-arrow-up-right"></i> មើលលីង</a></td>
-                                <td class="text-secondary small">${dateStr}</td>
-                            </tr>
-                        `;
-                    });
-                } else {
-                    tbody.innerHTML = `<tr><td colspan="4" class="text-center text-secondary py-3">មិនទាន់មានប្រវត្តិទាញយកនៅឡើយទេ។</td></tr>`;
-                }
-            } catch (err) {
-                console.error("Error loading history:", err);
-                document.getElementById('historyTableBody').innerHTML = `<tr><td colspan="4" class="text-center text-danger py-3">មានបញ្ហាក្នុងការទាញទិន្នន័យប្រវត្តិ!</td></tr>`;
-            }
-        }
+            <div class="form-group">
+              <label>រូបភាពអាវ / ខោ (សម្រាប់កាតរូបភាព)</label>
+              <input type="file" id="imageFile" accept="image/*" />
+              <div id="imagePreviewBox" class="preview-box hidden">
+                <img id="imagePreviewImg" alt="Preview" />
+              </div>
+            </div>
 
-        window.onload = loadHistory;
-    </script>
+            <div class="form-group">
+              <label>កំណត់សម្គាល់</label>
+              <textarea id="notes" rows="2" placeholder="ពណ៌សាច់ក្រណាត់ ប្រឡាក់ប្រេង..."></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary">រក្សាទុកវិក្កយបត្រ</button>
+            <div id="orderMsg" class="ok-msg"></div>
+            <div id="orderErr" class="err-msg"></div>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>🖼️ កាតរូបភាព និងបញ្ជីវិក្កយបត្រ</h2>
+          <div class="toolbar">
+            <input type="text" id="searchInput" placeholder="ស្វែងរកលេខកូដ, ឈ្មោះ, ទូរស័ព្ទ..." />
+            <select id="filterCategory">
+              <option value="ALL">Category អាវ/ខោ ទាំងអស់</option>
+            </select>
+            <select id="filterStatus">
+              <option value="ALL">ស្ថានភាពទាំងអស់</option>
+              <option value="Pending">Pending</option>
+              <option value="Washing">Washing</option>
+              <option value="Ready">Ready</option>
+              <option value="Picked Up">Picked Up</option>
+            </select>
+          </div>
+
+          <div id="ordersCardsGrid" class="cards-grid">
+            <div class="empty-msg">កំពុងទាញទិន្នន័យ...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MENU 2: USER MANAGEMENT (ADMIN) -->
+      <div id="sectionUsers" class="orders-layout hidden">
+        <div class="card">
+          <h2>+ បង្កើតគណនី User ថ្មី</h2>
+          <form id="createUserForm">
+            <div class="form-group">
+              <label>Username *</label>
+              <input type="text" id="newUsername" required placeholder="staff01" />
+            </div>
+            <div class="form-group">
+              <label>ឈ្មោះពេញ *</label>
+              <input type="text" id="newFullName" required placeholder="បុគ្គលិកទទួលទំនិញ" />
+            </div>
+            <div class="form-group">
+              <label>Password (យ៉ាងតិច ៦ តួអក្សរ) *</label>
+              <input type="password" id="newPassword" minlength="6" required placeholder="••••••••" />
+            </div>
+            <div class="form-group">
+              <label>តួនាទី (Role)</label>
+              <select id="newRole">
+                <option value="staff">Staff (បុគ្គលិក)</option>
+                <option value="admin">Admin (អ្នកគ្រប់គ្រង)</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary">បង្កើត User</button>
+            <div id="userMsg" class="ok-msg"></div>
+            <div id="userErr" class="err-msg"></div>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>👥 បញ្ជីអ្នកប្រើប្រាស់ប្រព័ន្ធ</h2>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Username</th>
+                  <th>ឈ្មោះពេញ</th>
+                  <th>Role</th>
+                  <th>កាលបរិច្ឆេទ (KH)</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = window.location.origin;
+    let currentUser = null;
+    let selectedImageBase64 = null;
+
+    function escapeHtml(str) {
+      return String(str || '').replace(/[&<>"']/g, m => ({
+        '&': '&', '<': '<', '>': '>', '"': '"', "'": '''
+      }[m]));
+    }
+
+    async function checkSession() {
+      const res = await fetch(`${API}/api/auth/me`);
+      const data = await res.json();
+      if (data.user) {
+        currentUser = data.user;
+        showApp();
+      } else {
+        showLogin();
+      }
+    }
+
+    function showLogin() {
+      document.getElementById('loginView').classList.remove('hidden');
+      document.getElementById('appView').classList.add('hidden');
+    }
+
+    function showApp() {
+      document.getElementById('loginView').classList.add('hidden');
+      document.getElementById('appView').classList.remove('hidden');
+      document.getElementById('currentUserInfo').textContent =
+        `${currentUser.full_name} (${currentUser.role})`;
+
+      if (currentUser.role === 'admin') {
+        document.getElementById('tabUsers').classList.remove('hidden');
+      } else {
+        document.getElementById('tabUsers').classList.add('hidden');
+        switchMenu('orders');
+      }
+
+      checkHealth();
+      loadMeta();
+      loadOrders();
+      if (currentUser.role === 'admin') loadUsers();
+    }
+
+    function switchMenu(menu) {
+      const isOrders = menu === 'orders';
+      document.getElementById('sectionOrders').classList.toggle('hidden', !isOrders);
+      document.getElementById('sectionUsers').classList.toggle('hidden', isOrders);
+      document.getElementById('tabOrders').classList.toggle('active', isOrders);
+      document.getElementById('tabUsers').classList.toggle('active', !isOrders);
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      document.getElementById('loginError').textContent = '';
+      const res = await fetch(`${API}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: document.getElementById('loginUsername').value,
+          password: document.getElementById('loginPassword').value
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        currentUser = data.user;
+        showApp();
+      } else {
+        document.getElementById('loginError').textContent = data.error || 'Login បរាជ័យ';
+      }
+    });
+
+    async function logout() {
+      await fetch(`${API}/api/auth/logout`, { method: 'POST' });
+      currentUser = null;
+      showLogin();
+    }
+
+    async function checkHealth() {
+      const badge = document.getElementById('dbBadge');
+      try {
+        const res = await fetch(`${API}/api/health`);
+        const data = await res.json();
+        badge.textContent = data.success
+          ? '🟢 PostgreSQL Connected (DATABASE_URL • No LocalStorage)'
+          : '🔴 Database Error';
+      } catch {
+        badge.textContent = '🔴 Offline';
+      }
+    }
+
+    async function loadMeta() {
+      const res = await fetch(`${API}/api/meta`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const cats = data.categories || [];
+
+      const formCat = document.getElementById('category');
+      const filterCat = document.getElementById('filterCategory');
+
+      formCat.innerHTML = cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+      filterCat.innerHTML = `<option value="ALL">Category អាវ/ខោ ទាំងអស់</option>` +
+        cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+    }
+
+    // Compress / read image to Base64 Data URL
+    document.getElementById('imageFile').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      const box = document.getElementById('imagePreviewBox');
+      const img = document.getElementById('imagePreviewImg');
+      selectedImageBase64 = null;
+
+      if (!file) {
+        box.classList.add('hidden');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const tempImg = new Image();
+        tempImg.onload = () => {
+          const canvas = document.createElement('canvas');
+          const maxW = 640;
+          const scale = tempImg.width > maxW ? maxW / tempImg.width : 1;
+          canvas.width = Math.round(tempImg.width * scale);
+          canvas.height = Math.round(tempImg.height * scale);
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(tempImg, 0, 0, canvas.width, canvas.height);
+          selectedImageBase64 = canvas.toDataURL('image/jpeg', 0.78);
+          img.src = selectedImageBase64;
+          box.classList.remove('hidden');
+        };
+        tempImg.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    async function loadOrders() {
+      const search = document.getElementById('searchInput').value;
+      const category = document.getElementById('filterCategory').value;
+      const status = document.getElementById('filterStatus').value;
+      const params = new URLSearchParams({ search, category, status });
+
+      const grid = document.getElementById('ordersCardsGrid');
+      const res = await fetch(`${API}/api/orders?${params.toString()}`);
+      if (res.status === 401) return showLogin();
+
+      const json = await res.json();
+      const rows = json.data || [];
+
+      // Update summary stats
+      document.getElementById('statTotal').textContent = rows.length;
+      const activeCount = rows.filter(r => r.status === 'Pending' || r.status === 'Washing').length;
+      const readyCount = rows.filter(r => r.status === 'Ready').length;
+      const revenue = rows.reduce((sum, r) => sum + Number(r.price || 0), 0);
+
+      document.getElementById('statActive').textContent = activeCount;
+      document.getElementById('statReady').textContent = readyCount;
+      document.getElementById('statRevenue').textContent = `$${revenue.toFixed(2)}`;
+
+      if (rows.length === 0) {
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#64748b;padding:24px;">មិនមានវិក្កយបត្រទេ</div>';
+        return;
+      }
+
+      grid.innerHTML = rows.map(o => {
+        const statusCls = `st-${String(o.status).replace(' ', '\\ ')}`;
+        const imgHtml = o.image_data
+          ? `<img src="${o.image_data}" alt="${escapeHtml(o.order_code)}" />`
+          : `<div class="order-img-placeholder">👕 មិនមានរូបភាព<br/><span>${escapeHtml(o.category)}</span></div>`;
+
+        return `
+          <div class="order-card">
+            <div>
+              <div class="order-img-wrap">${imgHtml}</div>
+              <div class="order-body">
+                <div class="order-top">
+                  <span class="order-code">${escapeHtml(o.order_code)}</span>
+                  <span class="badge ${statusCls}">${escapeHtml(o.status)}</span>
+                </div>
+                <div class="cat-tag">${escapeHtml(o.category)}</div>
+                <div class="order-meta">
+                  <div><strong>អតិថិជន៖</strong> ${escapeHtml(o.customer_name)} (${escapeHtml(o.phone)})</div>
+                  <div><strong>សេវាកម្ម៖</strong> ${escapeHtml(o.service_type)}</div>
+                  <div><strong>ចំនួន / ទម្ងន់៖</strong> ${Number(o.item_count || 1)} pcs • ${Number(o.weight_kg)} kg</div>
+                  <div><strong>តម្លៃ៖</strong> <strong style="color:#0f172a;">$${Number(o.price).toFixed(2)}</strong></div>
+                  ${o.notes ? `<div><strong>កំណត់សម្គាល់៖</strong> ${escapeHtml(o.notes)}</div>` : ''}
+                  <div style="font-size:11px;color:#94a3b8;margin-top:4px;">${escapeHtml(o.created_at_kh || '')}</div>
+                </div>
+              </div>
+            </div>
+            <div class="order-footer">
+              <select onchange="updateOrderStatus(${o.id}, this.value)" style="width:auto;padding:5px 8px;font-size:12px;">
+                <option value="Pending" ${o.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                <option value="Washing" ${o.status === 'Washing' ? 'selected' : ''}>Washing</option>
+                <option value="Ready" ${o.status === 'Ready' ? 'selected' : ''}>Ready</option>
+                <option value="Picked Up" ${o.status === 'Picked Up' ? 'selected' : ''}>Picked Up</option>
+              </select>
+              <button class="btn btn-danger" onclick="deleteOrder(${o.id})">លុប</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    document.getElementById('orderForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      document.getElementById('orderMsg').textContent = '';
+      document.getElementById('orderErr').textContent = '';
+
+      const payload = {
+        customer_name: document.getElementById('customer_name').value,
+        phone: document.getElementById('phone').value,
+        category: document.getElementById('category').value,
+        service_type: document.getElementById('service_type').value,
+        item_count: document.getElementById('item_count').value,
+        weight_kg: document.getElementById('weight_kg').value,
+        price: document.getElementById('price').value,
+        image_data: selectedImageBase64,
+        notes: document.getElementById('notes').value
+      };
+
+      const res = await fetch(`${API}/api/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        e.target.reset();
+        document.getElementById('item_count').value = '1';
+        document.getElementById('weight_kg').value = '1.0';
+        document.getElementById('price').value = '2.50';
+        selectedImageBase64 = null;
+        document.getElementById('imagePreviewBox').classList.add('hidden');
+        document.getElementById('orderMsg').textContent = '✅ រក្សាទុកវិក្កយបត្រ និងកាតរូបភាពរួចរាល់!';
+        loadOrders();
+      } else {
+        document.getElementById('orderErr').textContent = data.error || 'មិនអាចរក្សាទុកបានទេ';
+      }
+    });
+
+    async function updateOrderStatus(id, status) {
+      const res = await fetch(`${API}/api/orders/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      const data = await res.json();
+      if (data.success) loadOrders();
+    }
+
+    async function deleteOrder(id) {
+      if (!confirm('តើអ្នកចង់លុបវិក្កយបត្រនេះមែនទេ?')) return;
+      const res = await fetch(`${API}/api/orders/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) loadOrders();
+    }
+
+    async function loadUsers() {
+      const res = await fetch(`${API}/api/users`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const tbody = document.getElementById('usersTableBody');
+      tbody.innerHTML = (data.data || []).map(u => `
+        <tr>
+          <td>${u.id}</td>
+          <td><strong>${escapeHtml(u.username)}</strong></td>
+          <td>${escapeHtml(u.full_name)}</td>
+          <td>${escapeHtml(u.role)}</td>
+          <td>${escapeHtml(u.created_at_kh || '')}</td>
+        </tr>
+      `).join('');
+    }
+
+    document.getElementById('createUserForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      document.getElementById('userMsg').textContent = '';
+      document.getElementById('userErr').textContent = '';
+
+      const res = await fetch(`${API}/api/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: document.getElementById('newUsername').value,
+          full_name: document.getElementById('newFullName').value,
+          password: document.getElementById('newPassword').value,
+          role: document.getElementById('newRole').value
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        e.target.reset();
+        document.getElementById('userMsg').textContent = '✅ បង្កើត User ថ្មីបានជោគជ័យ!';
+        loadUsers();
+      } else {
+        document.getElementById('userErr').textContent = data.error || 'បង្កើត User បរាជ័យ';
+      }
+    });
+
+    document.getElementById('searchInput').addEventListener('input', loadOrders);
+    document.getElementById('filterCategory').addEventListener('change', loadOrders);
+    document.getElementById('filterStatus').addEventListener('change', loadOrders);
+
+    checkSession();
+  </script>
 </body>
 </html>
