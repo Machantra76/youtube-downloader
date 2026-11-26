@@ -36,29 +36,71 @@
       border-radius: 20px;
       font-size: 0.85rem;
       font-weight: 600;
-      padding: 6px 15px;
+      padding: 6px 16px;
       transition: all 0.2s ease;
     }
 
-    .laundry-type-card {
+    /* 🟢 កាតទំនិញ (Product Card) រចនាបថដូច POS គំរូ 100% */
+    .product-card {
       cursor: pointer;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       border: 2px solid transparent !important;
       border-radius: 16px;
       background-color: #ffffff;
-      box-shadow: 0 4px 16px rgba(149, 157, 165, 0.1);
-      padding: 14px 12px;
-      height: 120px;
+      box-shadow: 0 4px 16px rgba(149, 157, 165, 0.08);
+      overflow: hidden; 
+      position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      text-align: center;
+      padding: 0px !important; 
+      height: 140px;
     }
-    .laundry-type-card:hover {
-      transform: translateY(-4px) scale(0.98);
+
+    .product-card:hover {
+      transform: translateY(-5px) scale(1.02);
       border-color: #0d6efd !important;
-      box-shadow: 0 0 18px rgba(13, 110, 253, 0.35), 0 8px 20px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 0 20px rgba(13, 110, 253, 0.4), 0 10px 24px rgba(0, 0, 0, 0.12);
+    }
+    
+    .product-img-wrapper {
+      width: 100% !important;
+      height: 100% !important; 
+      background-color: #ffffff;
+      position: relative;
+      overflow: hidden;
+      border-radius: 16px !important;  
+      margin: 0 !important;
+    }
+    
+    .product-img-wrapper img {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      display: block;
+      background-color: #ffffff;
+      transition: transform 0.3s ease;
+    }
+
+    .product-card:hover .product-img-wrapper img {
+      transform: scale(1.08);
+    }
+
+    .product-overlay-info {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(15, 23, 42, 0.82);
+      backdrop-filter: blur(3px);
+      padding: 6px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom-left-radius: 16px;
+      border-bottom-right-radius: 16px;
+      z-index: 4;
     }
 
     .order-photo-card {
@@ -483,17 +525,18 @@
     let finalCalculatedTotal = 0;
     let receiptModalObj = null;
 
+    // 🟢 កាតមុខទំនិញបោកអ៊ុត ដែលបានភ្ជាប់ជាមួយរូបភាព high quality
     const LAUNDRY_CATALOG = [
-      { id: 1, name: 'អាវយឺត (T-Shirt)', group: 'អាវ (Shirts)', price: 1.00, icon: 'fa-shirt', color: 'text-primary' },
-      { id: 2, name: 'អាវសាច់ក្រណាត់ (Shirt)', group: 'អាវ (Shirts)', price: 1.50, icon: 'fa-user-tie', color: 'text-info' },
-      { id: 3, name: 'អាវធំ / អាវក្រៅ (Jacket)', group: 'អាវ (Shirts)', price: 2.50, icon: 'fa-vest', color: 'text-dark' },
-      { id: 4, name: 'ខោជើងវែង (Long Pants)', group: 'ខោ (Pants)', price: 1.50, icon: 'fa-person', color: 'text-success' },
-      { id: 5, name: 'ខោខូវប៊យ (Jeans)', group: 'ខោ (Pants)', price: 2.00, icon: 'fa-socks', color: 'text-primary' },
-      { id: 6, name: 'ខោខ្លី (Shorts)', group: 'ខោ (Pants)', price: 1.00, icon: 'fa-person-running', color: 'text-warning' },
-      { id: 7, name: 'កម្រាលពូក (Bed Sheet)', group: 'កម្រាលពូក & ភួយ', price: 3.50, icon: 'fa-bed', color: 'text-danger' },
-      { id: 8, name: 'ភួយ / ផួយក្រាស់ (Blanket)', group: 'កម្រាលពូក & ភួយ', price: 4.50, icon: 'fa-mattress-pillow', color: 'text-secondary' },
-      { id: 9, name: 'សំពត់ / ឈុត (Skirt & Suit)', group: 'ផ្សេងៗ (Others)', price: 3.00, icon: 'fa-person-dress', color: 'text-purple' },
-      { id: 10, name: 'ទំនិញផ្សេងៗ (Other Item)', group: 'ផ្សេងៗ (Others)', price: 1.50, icon: 'fa-box-open', color: 'text-muted' }
+      { id: 1, name: 'អាវយឺត (T-Shirt)', group: 'អាវ (Shirts)', price: 1.00, image_url: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=300&q=80' },
+      { id: 2, name: 'អាវសាច់ក្រណាត់ (Shirt)', group: 'អាវ (Shirts)', price: 1.50, image_url: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=300&q=80' },
+      { id: 3, name: 'អាវធំ / អាវក្រៅ (Jacket)', group: 'អាវ (Shirts)', price: 2.50, image_url: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=300&q=80' },
+      { id: 4, name: 'ខោជើងវែង (Long Pants)', group: 'ខោ (Pants)', price: 1.50, image_url: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=300&q=80' },
+      { id: 5, name: 'ខោខូវប៊យ (Jeans)', group: 'ខោ (Pants)', price: 2.00, image_url: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=300&q=80' },
+      { id: 6, name: 'ខោខ្លី (Shorts)', group: 'ខោ (Pants)', price: 1.00, image_url: 'https://images.unsplash.com/photo-1591195853828-11db59a44f6b?w=300&q=80' },
+      { id: 7, name: 'កម្រាលពូក (Bed Sheet)', group: 'កម្រាលពូក & ភួយ', price: 3.50, image_url: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=300&q=80' },
+      { id: 8, name: 'ភួយ / ផួយក្រាស់ (Blanket)', group: 'កម្រាលពូក & ភួយ', price: 4.50, image_url: 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=300&q=80' },
+      { id: 9, name: 'សំពត់ / ឈុត (Skirt & Suit)', group: 'ផ្សេងៗ (Others)', price: 3.00, image_url: 'https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=300&q=80' },
+      { id: 10, name: 'ទំនិញផ្សេងៗ (Other Item)', group: 'ផ្សេងៗ (Others)', price: 1.50, image_url: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=300&q=80' }
     ];
 
     function escapeHtml(str) {
@@ -613,6 +656,7 @@
       renderCatalogCards();
     }
 
+    // 🟢 កូដបង្ហាញកាតរូបភាព Render លទ្ធផលរូបភាពទំនិញ
     function renderCatalogCards() {
       const grid = document.getElementById('laundryTypesGrid');
       const items = activeGroupFilter === 'All'
@@ -620,11 +664,15 @@
         : LAUNDRY_CATALOG.filter(x => x.group === activeGroupFilter);
 
       grid.innerHTML = items.map(item => `
-        <div class="col-6 col-sm-4 col-lg-3">
-          <div class="laundry-type-card" onclick="addLaundryItem(${item.id})">
-            <i class="fa-solid ${item.icon} fs-3 mb-2 ${item.color}"></i>
-            <div class="fw-bold small text-dark">${escapeHtml(item.name)}</div>
-            <div class="badge bg-primary-subtle text-primary mt-1">$${item.price.toFixed(2)}</div>
+        <div class="col-6 col-sm-4 col-md-3 col-lg-3">
+          <div class="product-card position-relative" onclick="addLaundryItem(${item.id})">
+            <div class="product-img-wrapper">
+              <img src="${item.image_url}" alt="${escapeHtml(item.name)}" onerror="this.src='https://via.placeholder.com/300x200?text=Laundry+Item'">
+            </div>
+            <div class="product-overlay-info">
+              <span class="text-white fw-bold text-truncate" style="font-size: 0.8rem; max-width: 68%;" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</span>
+              <span class="text-warning fw-bold" style="font-size: 0.8rem;">$${item.price.toFixed(2)}</span>
+            </div>
           </div>
         </div>
       `).join('');
