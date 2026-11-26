@@ -236,6 +236,9 @@
               <p class="text-muted small mb-0">ចុចលើប្រភេទដើម្បីបន្ថែមចូលវិក្កយបត្រ ឬចុចប៊ូតុង <i class="fa-solid fa-pen"></i> ដើម្បីកំណត់តម្លៃ និងប្តូររូប</p>
             </div>
             <div class="d-flex align-items-center gap-2 flex-wrap">
+              <button type="button" class="btn btn-outline-secondary btn-sm fw-bold shadow-sm" onclick="addNewCategoryGroup()">
+                <i class="fa-solid fa-folder-plus me-1"></i> + ក្រុមថ្មី
+              </button>
               <button type="button" class="btn btn-outline-primary btn-sm fw-bold shadow-sm" onclick="openEditCatalogModal(null)">
                 <i class="fa-solid fa-plus me-1"></i> បន្ថែមមុខទំនិញថ្មី
               </button>
@@ -478,12 +481,7 @@
           <div class="row g-2 mb-2">
             <div class="col-6">
               <label class="form-label small fw-bold">ក្រុម / Category</label>
-              <select id="editCatalogGroup" class="form-select form-select-sm">
-                <option value="អាវ (Shirts)">អាវ (Shirts)</option>
-                <option value="ខោ (Pants)">ខោ (Pants)</option>
-                <option value="កម្រាលពូក & ភួយ">កម្រាលពូក & ភួយ</option>
-                <option value="ផ្សេងៗ (Others)">ផ្សេងៗ (Others)</option>
-              </select>
+              <select id="editCatalogGroup" class="form-select form-select-sm"></select>
             </div>
             <div class="col-6">
               <label class="form-label small fw-bold">តម្លៃ ($ USD) *</label>
@@ -588,6 +586,7 @@
   <script>
     const API = window.location.origin;
     const CATALOG_SESSION_KEY = 'laundry_pos_catalog_v1';
+    const GROUPS_SESSION_KEY = 'laundry_pos_groups_v1';
     let currentUser = null;
     let cart = [];
     let ordersCache = [];
@@ -596,6 +595,13 @@
     let finalCalculatedTotal = 0;
     let receiptModalObj = null;
     let editCatalogModalObj = null;
+
+    const DEFAULT_GROUPS = [
+      'អាវ (Shirts)',
+      'ខោ (Pants)',
+      'កម្រាលពូក & ភួយ',
+      'ផ្សេងៗ (Others)'
+    ];
 
     const DEFAULT_LAUNDRY_CATALOG = [
       { id: 1, name: 'អាវយឺត (T-Shirt)', group: 'អាវ (Shirts)', price: 1.00, image_url: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=300&q=80' },
@@ -610,7 +616,25 @@
       { id: 10, name: 'ទំនិញផ្សេងៗ (Other Item)', group: 'ផ្សេងៗ (Others)', price: 1.50, image_url: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=300&q=80' }
     ];
 
+    let LAUNDRY_GROUPS = loadSavedGroups();
     let LAUNDRY_CATALOG = loadSavedCatalog();
+
+    function loadSavedGroups() {
+      try {
+        const raw = sessionStorage.getItem(GROUPS_SESSION_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch {}
+      return [...DEFAULT_GROUPS];
+    }
+
+    function persistGroups() {
+      try {
+        sessionStorage.setItem(GROUPS_SESSION_KEY, JSON.stringify(LAUNDRY_GROUPS));
+      } catch {}
+    }
 
     function loadSavedCatalog() {
       try {
@@ -641,6 +665,7 @@
       receiptModalObj = new bootstrap.Modal(document.getElementById('receiptModal'));
       editCatalogModalObj = new bootstrap.Modal(document.getElementById('editCatalogModal'));
       renderGroupButtons();
+      renderCategorySelectOptions();
       renderCatalogCards();
       await checkSession();
     });
@@ -733,12 +758,38 @@
     }
 
     function renderGroupButtons() {
-      const groups = ['All', 'អាវ (Shirts)', 'ខោ (Pants)', 'កម្រាលពូក & ភួយ', 'ផ្សេងៗ (Others)'];
+      const groups = ['All', ...LAUNDRY_GROUPS];
       const bar = document.getElementById('categoryFilterBar');
       bar.innerHTML = groups.map(g => {
         const active = activeGroupFilter === g ? 'btn-dark' : 'btn-outline-dark';
-        return `<button type="button" class="btn ${active} category-btn shadow-sm" onclick="selectGroupFilter('${g}')">${g === 'All' ? 'ទាំងអស់ / All' : g}</button>`;
+        const safeGroup = g.replace(/'/g, "\\'");
+        return `<button type="button" class="btn ${active} category-btn shadow-sm" onclick="selectGroupFilter('${safeGroup}')">${g === 'All' ? 'ទាំងអស់ / All' : escapeHtml(g)}</button>`;
       }).join('');
+    }
+
+    function renderCategorySelectOptions(selectedValue = '') {
+      const sel = document.getElementById('editCatalogGroup');
+      if (!sel) return;
+      const target = selectedValue || LAUNDRY_GROUPS[0] || '';
+      sel.innerHTML = LAUNDRY_GROUPS.map(g =>
+        `<option value="${escapeHtml(g)}" ${g === target ? 'selected' : ''}>${escapeHtml(g)}</option>`
+      ).join('');
+    }
+
+    function addNewCategoryGroup() {
+      const input = prompt('បញ្ចូលឈ្មោះ ក្រុម / Category ថ្មី:');
+      if (!input) return;
+      const groupName = input.trim();
+      if (!groupName) return;
+
+      if (!LAUNDRY_GROUPS.includes(groupName)) {
+        LAUNDRY_GROUPS.push(groupName);
+        persistGroups();
+      }
+      activeGroupFilter = groupName;
+      renderGroupButtons();
+      renderCategorySelectOptions(groupName);
+      renderCatalogCards();
     }
 
     function selectGroupFilter(groupName) {
@@ -753,6 +804,11 @@
       const items = activeGroupFilter === 'All'
         ? LAUNDRY_CATALOG
         : LAUNDRY_CATALOG.filter(x => x.group === activeGroupFilter);
+
+      if (items.length === 0) {
+        grid.innerHTML = '<div class="col-12 text-center text-muted py-4 small">មិនទាន់មានមុខទំនិញក្នុងក្រុមនេះទេ</div>';
+        return;
+      }
 
       grid.innerHTML = items.map(item => `
         <div class="col-6 col-sm-4 col-md-3 col-lg-3">
@@ -779,7 +835,8 @@
         document.getElementById('catalogModalTitle').innerHTML = '<i class="fa-solid fa-plus me-1"></i> បន្ថែមមុខទំនិញថ្មី';
         document.getElementById('editCatalogId').value = '';
         document.getElementById('editCatalogName').value = '';
-        document.getElementById('editCatalogGroup').value = 'អាវ (Shirts)';
+        const defaultGrp = activeGroupFilter !== 'All' ? activeGroupFilter : (LAUNDRY_GROUPS[0] || '');
+        renderCategorySelectOptions(defaultGrp);
         document.getElementById('editCatalogPrice').value = '1.50';
         document.getElementById('editCatalogImageUrl').value = 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=300&q=80';
       } else {
@@ -788,7 +845,12 @@
         document.getElementById('catalogModalTitle').innerHTML = '<i class="fa-solid fa-pen-to-square me-1"></i> កំណត់តម្លៃ និងប្តូររូបភាព';
         document.getElementById('editCatalogId').value = found.id;
         document.getElementById('editCatalogName').value = found.name;
-        document.getElementById('editCatalogGroup').value = found.group || 'ផ្សេងៗ (Others)';
+        if (found.group && !LAUNDRY_GROUPS.includes(found.group)) {
+          LAUNDRY_GROUPS.push(found.group);
+          persistGroups();
+          renderGroupButtons();
+        }
+        renderCategorySelectOptions(found.group || LAUNDRY_GROUPS[0] || '');
         document.getElementById('editCatalogPrice').value = Number(found.price).toFixed(2);
         document.getElementById('editCatalogImageUrl').value = found.image_url || '';
       }
