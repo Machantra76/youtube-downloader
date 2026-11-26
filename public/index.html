@@ -432,7 +432,6 @@
     </header>
 
     <div class="container">
-      <!-- Summary Stats -->
       <div class="stats-grid">
         <div class="stat-box">
           <div class="stat-label">វិក្កយបត្រសរុប</div>
@@ -465,12 +464,10 @@
               <label>លេខទូរស័ព្ទ *</label>
               <input type="text" id="phone" required placeholder="012 345 678" />
             </div>
-
             <div class="form-group">
               <label>Category ប្រភេទអាវ / ខោ *</label>
               <select id="category" required></select>
             </div>
-
             <div class="form-group">
               <label>សេវាកម្មបោកអ៊ុត *</label>
               <select id="service_type" required>
@@ -480,7 +477,6 @@
                 <option value="បោកស្ងួត (Dry Clean)">បោកស្ងួត (Dry Clean)</option>
               </select>
             </div>
-
             <div class="form-row">
               <div class="form-group">
                 <label>ចំនួន (PCS)</label>
@@ -491,12 +487,10 @@
                 <input type="number" step="0.1" min="0.1" id="weight_kg" value="1.0" required />
               </div>
             </div>
-
             <div class="form-group">
               <label>តម្លៃ ($)</label>
               <input type="number" step="0.01" min="0" id="price" value="2.50" required />
             </div>
-
             <div class="form-group">
               <label>រូបភាពអាវ / ខោ (សម្រាប់កាតរូបភាព)</label>
               <input type="file" id="imageFile" accept="image/*" />
@@ -504,12 +498,10 @@
                 <img id="imagePreviewImg" alt="Preview" />
               </div>
             </div>
-
             <div class="form-group">
               <label>កំណត់សម្គាល់</label>
               <textarea id="notes" rows="2" placeholder="ពណ៌សាច់ក្រណាត់ ប្រឡាក់ប្រេង..."></textarea>
             </div>
-
             <button type="submit" class="btn btn-primary">រក្សាទុកវិក្កយបត្រ</button>
             <div id="orderMsg" class="ok-msg"></div>
             <div id="orderErr" class="err-msg"></div>
@@ -531,7 +523,6 @@
               <option value="Picked Up">Picked Up</option>
             </select>
           </div>
-
           <div id="ordersCardsGrid" class="cards-grid">
             <div style="grid-column:1/-1;text-align:center;color:#64748b;padding:24px;">កំពុងទាញទិន្នន័យ...</div>
           </div>
@@ -608,19 +599,15 @@
     };
 
     function escapeHtml(str) {
-      return String(str || '').replace(/[&<>"']/g, function (m) {
-        return {
-          '&': '&',
-          '<': '<',
-          '>': '>',
-          '"': '"',
-          "'": '''
-        }[m];
-      });
+      return String(str || '')
+        .replace(/&/g, '&')
+        .replace(/</g, '<')
+        .replace(/>/g, '>')
+        .replace(/"/g, '"');
     }
 
     async function checkSession() {
-      const res = await fetch(`${API}/api/auth/me`);
+      const res = await fetch(API + '/api/auth/me');
       const data = await res.json();
       if (data.user) {
         currentUser = data.user;
@@ -639,7 +626,7 @@
       document.getElementById('loginView').classList.add('hidden');
       document.getElementById('appView').classList.remove('hidden');
       document.getElementById('currentUserInfo').textContent =
-        `${currentUser.full_name} (${currentUser.role})`;
+        currentUser.full_name + ' (' + currentUser.role + ')';
 
       if (currentUser.role === 'admin') {
         document.getElementById('tabUsers').classList.remove('hidden');
@@ -662,10 +649,10 @@
       document.getElementById('tabUsers').classList.toggle('active', !isOrders);
     }
 
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    document.getElementById('loginForm').addEventListener('submit', async function (e) {
       e.preventDefault();
       document.getElementById('loginError').textContent = '';
-      const res = await fetch(`${API}/api/auth/login`, {
+      const res = await fetch(API + '/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -683,7 +670,7 @@
     });
 
     async function logout() {
-      await fetch(`${API}/api/auth/logout`, { method: 'POST' });
+      await fetch(API + '/api/auth/logout', { method: 'POST' });
       currentUser = null;
       showLogin();
     }
@@ -691,18 +678,18 @@
     async function checkHealth() {
       const badge = document.getElementById('dbBadge');
       try {
-        const res = await fetch(`${API}/api/health`);
+        const res = await fetch(API + '/api/health');
         const data = await res.json();
         badge.textContent = data.success
           ? '🟢 PostgreSQL Connected (DATABASE_URL • No LocalStorage)'
           : '🔴 Database Error';
-      } catch {
+      } catch (err) {
         badge.textContent = '🔴 Offline';
       }
     }
 
     async function loadMeta() {
-      const res = await fetch(`${API}/api/meta`);
+      const res = await fetch(API + '/api/meta');
       if (!res.ok) return;
       const data = await res.json();
       const cats = data.categories || [];
@@ -710,12 +697,17 @@
       const formCat = document.getElementById('category');
       const filterCat = document.getElementById('filterCategory');
 
-      formCat.innerHTML = cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
-      filterCat.innerHTML = `<option value="ALL">Category អាវ/ខោ ទាំងអស់</option>` +
-        cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+      formCat.innerHTML = cats.map(function (c) {
+        return '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>';
+      }).join('');
+
+      filterCat.innerHTML = '<option value="ALL">Category អាវ/ខោ ទាំងអស់</option>' +
+        cats.map(function (c) {
+          return '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>';
+        }).join('');
     }
 
-    document.getElementById('imageFile').addEventListener('change', (e) => {
+    document.getElementById('imageFile').addEventListener('change', function (e) {
       const file = e.target.files[0];
       const box = document.getElementById('imagePreviewBox');
       const img = document.getElementById('imagePreviewImg');
@@ -727,9 +719,9 @@
       }
 
       const reader = new FileReader();
-      reader.onload = () => {
+      reader.onload = function () {
         const tempImg = new Image();
-        tempImg.onload = () => {
+        tempImg.onload = function () {
           const canvas = document.createElement('canvas');
           const maxW = 640;
           const scale = tempImg.width > maxW ? maxW / tempImg.width : 1;
@@ -750,10 +742,10 @@
       const search = document.getElementById('searchInput').value;
       const category = document.getElementById('filterCategory').value;
       const status = document.getElementById('filterStatus').value;
-      const params = new URLSearchParams({ search, category, status });
+      const params = new URLSearchParams({ search: search, category: category, status: status });
 
       const grid = document.getElementById('ordersCardsGrid');
-      const res = await fetch(`${API}/api/orders?${params.toString()}`);
+      const res = await fetch(API + '/api/orders?' + params.toString());
       if (res.status === 401) return showLogin();
 
       const json = await res.json();
@@ -761,111 +753,101 @@
       cachedOrders = rows;
 
       document.getElementById('statTotal').textContent = rows.length;
-      const activeCount = rows.filter(r => r.status === 'Pending' || r.status === 'Washing').length;
-      const readyCount = rows.filter(r => r.status === 'Ready').length;
-      const revenue = rows.reduce((sum, r) => sum + Number(r.price || 0), 0);
+      const activeCount = rows.filter(function (r) {
+        return r.status === 'Pending' || r.status === 'Washing';
+      }).length;
+      const readyCount = rows.filter(function (r) {
+        return r.status === 'Ready';
+      }).length;
+      const revenue = rows.reduce(function (sum, r) {
+        return sum + Number(r.price || 0);
+      }, 0);
 
       document.getElementById('statActive').textContent = activeCount;
       document.getElementById('statReady').textContent = readyCount;
-      document.getElementById('statRevenue').textContent = `$${revenue.toFixed(2)}`;
+      document.getElementById('statRevenue').textContent = '$' + revenue.toFixed(2);
 
       if (rows.length === 0) {
         grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#64748b;padding:24px;">មិនមានវិក្កយបត្រទេ</div>';
         return;
       }
 
-      grid.innerHTML = rows.map(o => {
+      grid.innerHTML = rows.map(function (o) {
         const statusCls = STATUS_CLASS_MAP[o.status] || 'st-Pending';
         const imgHtml = o.image_data
-          ? `<img src="${o.image_data}" alt="${escapeHtml(o.order_code)}" />`
-          : `<div class="order-img-placeholder">👕 មិនមានរូបភាព<br/><span>${escapeHtml(o.category)}</span></div>`;
+          ? '<img src="' + o.image_data + '" alt="' + escapeHtml(o.order_code) + '" />'
+          : '<div class="order-img-placeholder">👕 មិនមានរូបភាព<br/><span>' + escapeHtml(o.category) + '</span></div>';
 
-        return `
-          <div class="order-card">
-            <div>
-              <div class="order-img-wrap">${imgHtml}</div>
-              <div class="order-body">
-                <div class="order-top">
-                  <span class="order-code">${escapeHtml(o.order_code)}</span>
-                  <span class="badge ${statusCls}">${escapeHtml(o.status)}</span>
-                </div>
-                <div class="cat-tag">${escapeHtml(o.category)}</div>
-                <div class="order-meta">
-                  <div><strong>អតិថិជន៖</strong> ${escapeHtml(o.customer_name)} (${escapeHtml(o.phone)})</div>
-                  <div><strong>សេវាកម្ម៖</strong> ${escapeHtml(o.service_type)}</div>
-                  <div><strong>ចំនួន / ទម្ងន់៖</strong> ${Number(o.item_count || 1)} pcs • ${Number(o.weight_kg)} kg</div>
-                  <div><strong>តម្លៃ៖</strong> <strong style="color:#0f172a;">$${Number(o.price).toFixed(2)}</strong></div>
-                  ${o.notes ? `<div><strong>កំណត់សម្គាល់៖</strong> ${escapeHtml(o.notes)}</div>` : ''}
-                  <div style="font-size:11px;color:#94a3b8;margin-top:4px;">${escapeHtml(o.created_at_kh || '')}</div>
-                </div>
-              </div>
-            </div>
-            <div class="order-footer">
-              <select onchange="updateOrderStatus(${o.id}, this.value)" style="width:auto;padding:5px 8px;font-size:12px;">
-                <option value="Pending" ${o.status === 'Pending' ? 'selected' : ''}>Pending</option>
-                <option value="Washing" ${o.status === 'Washing' ? 'selected' : ''}>Washing</option>
-                <option value="Ready" ${o.status === 'Ready' ? 'selected' : ''}>Ready</option>
-                <option value="Picked Up" ${o.status === 'Picked Up' ? 'selected' : ''}>Picked Up</option>
-              </select>
-              <div class="footer-actions">
-                <button class="btn btn-print" onclick="openInvoice(${o.id})">🖨️ Print</button>
-                <button class="btn btn-danger" onclick="deleteOrder(${o.id})">លុប</button>
-              </div>
-            </div>
-          </div>
-        `;
+        const notesHtml = o.notes
+          ? '<div><strong>កំណត់សម្គាល់៖</strong> ' + escapeHtml(o.notes) + '</div>'
+          : '';
+
+        return (
+          '<div class="order-card">' +
+            '<div>' +
+              '<div class="order-img-wrap">' + imgHtml + '</div>' +
+              '<div class="order-body">' +
+                '<div class="order-top">' +
+                  '<span class="order-code">' + escapeHtml(o.order_code) + '</span>' +
+                  '<span class="badge ' + statusCls + '">' + escapeHtml(o.status) + '</span>' +
+                '</div>' +
+                '<div class="cat-tag">' + escapeHtml(o.category) + '</div>' +
+                '<div class="order-meta">' +
+                  '<div><strong>អតិថិជន៖</strong> ' + escapeHtml(o.customer_name) + ' (' + escapeHtml(o.phone) + ')</div>' +
+                  '<div><strong>សេវាកម្ម៖</strong> ' + escapeHtml(o.service_type) + '</div>' +
+                  '<div><strong>ចំនួន / ទម្ងន់៖</strong> ' + Number(o.item_count || 1) + ' pcs • ' + Number(o.weight_kg) + ' kg</div>' +
+                  '<div><strong>តម្លៃ៖</strong> <strong style="color:#0f172a;">$' + Number(o.price).toFixed(2) + '</strong></div>' +
+                  notesHtml +
+                  '<div style="font-size:11px;color:#94a3b8;margin-top:4px;">' + escapeHtml(o.created_at_kh || '') + '</div>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="order-footer">' +
+              '<select onchange="updateOrderStatus(' + o.id + ', this.value)" style="width:auto;padding:5px 8px;font-size:12px;">' +
+                '<option value="Pending"' + (o.status === 'Pending' ? ' selected' : '') + '>Pending</option>' +
+                '<option value="Washing"' + (o.status === 'Washing' ? ' selected' : '') + '>Washing</option>' +
+                '<option value="Ready"' + (o.status === 'Ready' ? ' selected' : '') + '>Ready</option>' +
+                '<option value="Picked Up"' + (o.status === 'Picked Up' ? ' selected' : '') + '>Picked Up</option>' +
+              '</select>' +
+              '<div class="footer-actions">' +
+                '<button class="btn btn-print" onclick="openInvoice(' + o.id + ')">🖨️ Print</button>' +
+                '<button class="btn btn-danger" onclick="deleteOrder(' + o.id + ')">លុប</button>' +
+              '</div>' +
+            '</div>' +
+          '</div>'
+        );
       }).join('');
     }
 
     function openInvoice(orderId) {
-      const order = cachedOrders.find(item => Number(item.id) === Number(orderId));
+      const order = cachedOrders.find(function (item) {
+        return Number(item.id) === Number(orderId);
+      });
       if (!order) return;
 
+      const notesRow = order.notes
+        ? '<div class="invoice-row"><span>កំណត់សម្គាល់៖</span><span>' + escapeHtml(order.notes) + '</span></div>'
+        : '';
+
       const sheet = document.getElementById('invoiceSheet');
-      sheet.innerHTML = `
-        <div class="invoice-header">
-          <h3>🧺 វិក្កយបត្របោកអ៊ុត (LAUNDRY INVOICE)</h3>
-          <p>លេខកូដ៖ <strong>${escapeHtml(order.order_code)}</strong> • ${escapeHtml(order.created_at_kh || '')}</p>
-        </div>
-        <div class="invoice-row">
-          <span>អតិថិជន៖</span>
-          <strong>${escapeHtml(order.customer_name)}</strong>
-        </div>
-        <div class="invoice-row">
-          <span>លេខទូរស័ព្ទ៖</span>
-          <span>${escapeHtml(order.phone)}</span>
-        </div>
-        <div class="invoice-row">
-          <span>ប្រភេទ (Category)៖</span>
-          <span>${escapeHtml(order.category)}</span>
-        </div>
-        <div class="invoice-row">
-          <span>សេវាកម្ម៖</span>
-          <span>${escapeHtml(order.service_type)}</span>
-        </div>
-        <div class="invoice-row">
-          <span>ចំនួន / ទម្ងន់៖</span>
-          <span>${Number(order.item_count || 1)} pcs • ${Number(order.weight_kg)} kg</span>
-        </div>
-        <div class="invoice-row">
-          <span>ស្ថានភាព៖</span>
-          <span>${escapeHtml(order.status)}</span>
-        </div>
-        ${order.notes ? `
-          <div class="invoice-row">
-            <span>កំណត់សម្គាល់៖</span>
-            <span>${escapeHtml(order.notes)}</span>
-          </div>
-        ` : ''}
-        <div class="invoice-total">
-          <span>តម្លៃសរុប (Total)</span>
-          <span>$${Number(order.price).toFixed(2)}</span>
-        </div>
-        <div class="invoice-btns">
-          <button class="btn btn-secondary" onclick="closeInvoice()">បិទ</button>
-          <button class="btn btn-do-print" onclick="window.print()">🖨️ ព្រីនវិក្កយបត្រ</button>
-        </div>
-      `;
+      sheet.innerHTML =
+        '<div class="invoice-header">' +
+          '<h3>🧺 វិក្កយបត្របោកអ៊ុត (LAUNDRY INVOICE)</h3>' +
+          '<p>លេខកូដ៖ <strong>' + escapeHtml(order.order_code) + '</strong> • ' + escapeHtml(order.created_at_kh || '') + '</p>' +
+        '</div>' +
+        '<div class="invoice-row"><span>អតិថិជន៖</span><strong>' + escapeHtml(order.customer_name) + '</strong></div>' +
+        '<div class="invoice-row"><span>លេខទូរស័ព្ទ៖</span><span>' + escapeHtml(order.phone) + '</span></div>' +
+        '<div class="invoice-row"><span>ប្រភេទ (Category)៖</span><span>' + escapeHtml(order.category) + '</span></div>' +
+        '<div class="invoice-row"><span>សេវាកម្ម៖</span><span>' + escapeHtml(order.service_type) + '</span></div>' +
+        '<div class="invoice-row"><span>ចំនួន / ទម្ងន់៖</span><span>' + Number(order.item_count || 1) + ' pcs • ' + Number(order.weight_kg) + ' kg</span></div>' +
+        '<div class="invoice-row"><span>ស្ថានភាព៖</span><span>' + escapeHtml(order.status) + '</span></div>' +
+        notesRow +
+        '<div class="invoice-total"><span>តម្លៃសរុប (Total)</span><span>$' + Number(order.price).toFixed(2) + '</span></div>' +
+        '<div class="invoice-btns">' +
+          '<button class="btn btn-secondary" onclick="closeInvoice()">បិទ</button>' +
+          '<button class="btn btn-do-print" onclick="window.print()">🖨️ ព្រីនវិក្កយបត្រ</button>' +
+        '</div>';
+
       document.getElementById('invoiceModal').classList.remove('hidden');
     }
 
@@ -873,7 +855,7 @@
       document.getElementById('invoiceModal').classList.add('hidden');
     }
 
-    document.getElementById('orderForm').addEventListener('submit', async (e) => {
+    document.getElementById('orderForm').addEventListener('submit', async function (e) {
       e.preventDefault();
       document.getElementById('orderMsg').textContent = '';
       document.getElementById('orderErr').textContent = '';
@@ -890,7 +872,7 @@
         notes: document.getElementById('notes').value
       };
 
-      const res = await fetch(`${API}/api/orders`, {
+      const res = await fetch(API + '/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -912,10 +894,10 @@
     });
 
     async function updateOrderStatus(id, status) {
-      const res = await fetch(`${API}/api/orders/${id}/status`, {
+      const res = await fetch(API + '/api/orders/' + id + '/status', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status })
+        body: JSON.stringify({ status: status })
       });
       const data = await res.json();
       if (data.success) loadOrders();
@@ -923,33 +905,35 @@
 
     async function deleteOrder(id) {
       if (!confirm('តើអ្នកចង់លុបវិក្កយបត្រនេះមែនទេ?')) return;
-      const res = await fetch(`${API}/api/orders/${id}`, { method: 'DELETE' });
+      const res = await fetch(API + '/api/orders/' + id, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) loadOrders();
     }
 
     async function loadUsers() {
-      const res = await fetch(`${API}/api/users`);
+      const res = await fetch(API + '/api/users');
       if (!res.ok) return;
       const data = await res.json();
       const tbody = document.getElementById('usersTableBody');
-      tbody.innerHTML = (data.data || []).map(u => `
-        <tr>
-          <td>${u.id}</td>
-          <td><strong>${escapeHtml(u.username)}</strong></td>
-          <td>${escapeHtml(u.full_name)}</td>
-          <td>${escapeHtml(u.role)}</td>
-          <td>${escapeHtml(u.created_at_kh || '')}</td>
-        </tr>
-      `).join('');
+      tbody.innerHTML = (data.data || []).map(function (u) {
+        return (
+          '<tr>' +
+            '<td>' + u.id + '</td>' +
+            '<td><strong>' + escapeHtml(u.username) + '</strong></td>' +
+            '<td>' + escapeHtml(u.full_name) + '</td>' +
+            '<td>' + escapeHtml(u.role) + '</td>' +
+            '<td>' + escapeHtml(u.created_at_kh || '') + '</td>' +
+          '</tr>'
+        );
+      }).join('');
     }
 
-    document.getElementById('createUserForm').addEventListener('submit', async (e) => {
+    document.getElementById('createUserForm').addEventListener('submit', async function (e) {
       e.preventDefault();
       document.getElementById('userMsg').textContent = '';
       document.getElementById('userErr').textContent = '';
 
-      const res = await fetch(`${API}/api/users`, {
+      const res = await fetch(API + '/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
