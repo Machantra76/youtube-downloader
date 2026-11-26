@@ -15,7 +15,6 @@
     }
     .hidden { display: none !important; }
 
-    /* Login Screen */
     .login-wrap {
       min-height: 100vh;
       display: flex;
@@ -35,7 +34,6 @@
     .login-card h1 { margin: 0 0 6px; font-size: 20px; color: #0f172a; }
     .login-card p { margin: 0 0 18px; font-size: 13px; color: #64748b; }
 
-    /* Top Bar & Main Menu */
     header {
       background: linear-gradient(135deg, #0f172a, #1e3a8a);
       color: #fff;
@@ -93,9 +91,8 @@
       cursor: pointer;
     }
 
-    /* Layout */
     .container {
-      max-width: 1260px;
+      max-width: 1280px;
       margin: 20px auto;
       padding: 0 16px;
     }
@@ -120,11 +117,11 @@
 
     .orders-layout {
       display: grid;
-      grid-template-columns: 380px 1fr;
+      grid-template-columns: 430px 1fr;
       gap: 18px;
       align-items: start;
     }
-    @media (max-width: 960px) {
+    @media (max-width: 980px) {
       .orders-layout { grid-template-columns: 1fr; }
     }
 
@@ -146,6 +143,11 @@
       grid-template-columns: 1fr 1fr;
       gap: 10px;
     }
+    .form-row-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
     label {
       display: block;
       font-size: 12px;
@@ -155,13 +157,67 @@
     }
     input, select, textarea {
       width: 100%;
-      padding: 8px 11px;
+      padding: 8px 10px;
       border: 1px solid #cbd5e1;
       border-radius: 8px;
       font-family: 'Kantumruy Pro', sans-serif;
       font-size: 13px;
       background: #fff;
     }
+
+    /* Multi-item rows */
+    .items-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .item-box {
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .item-box-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #1e3a8a;
+    }
+    .btn-add-item {
+      background: #dcfce7;
+      color: #166534;
+      width: 100%;
+      margin-bottom: 12px;
+    }
+    .btn-remove-item {
+      background: #fee2e2;
+      color: #b91c1c;
+      padding: 4px 8px;
+      font-size: 11px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-family: 'Kantumruy Pro', sans-serif;
+      font-weight: 600;
+    }
+    .total-banner {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #1d4ed8;
+    }
+
     .btn {
       border: none;
       border-radius: 8px;
@@ -194,7 +250,6 @@
       font-size: 12px;
     }
 
-    /* Image preview inside form */
     .preview-box {
       margin-top: 8px;
       border: 1px dashed #94a3b8;
@@ -210,7 +265,6 @@
       object-fit: cover;
     }
 
-    /* Filter Toolbar */
     .toolbar {
       display: flex;
       gap: 10px;
@@ -222,10 +276,9 @@
       min-width: 170px;
     }
 
-    /* Order Image Cards Grid */
     .cards-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(265px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(275px, 1fr));
       gap: 14px;
     }
     .order-card {
@@ -239,7 +292,7 @@
       box-shadow: 0 2px 10px rgba(15,23,42,0.04);
     }
     .order-img-wrap {
-      height: 155px;
+      height: 150px;
       background: #e2e8f0;
       display: flex;
       align-items: center;
@@ -266,17 +319,6 @@
       margin-bottom: 6px;
     }
     .order-code { font-weight: 700; color: #1d4ed8; font-size: 13px; }
-    .cat-tag {
-      display: inline-block;
-      background: #eff6ff;
-      color: #1e40af;
-      border: 1px solid #bfdbfe;
-      font-size: 11px;
-      font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 999px;
-      margin-bottom: 6px;
-    }
     .badge {
       display: inline-block;
       padding: 3px 8px;
@@ -288,6 +330,23 @@
     .st-Washing { background: #dbeafe; color: #1e40af; }
     .st-Ready { background: #dcfce7; color: #166534; }
     .st-PickedUp { background: #e2e8f0; color: #334155; }
+
+    .item-lines-list {
+      margin: 8px 0;
+      padding: 8px;
+      background: #f8fafc;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      font-size: 12px;
+    }
+    .item-line-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 3px 0;
+      border-bottom: 1px dashed #e2e8f0;
+    }
+    .item-line-row:last-child { border-bottom: none; }
 
     .order-meta { font-size: 12px; color: #475569; line-height: 1.5; }
     .order-footer {
@@ -306,7 +365,6 @@
       align-items: center;
     }
 
-    /* Users Table */
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th, td { padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left; }
     th { background: #f8fafc; color: #334155; }
@@ -327,7 +385,7 @@
     .invoice-sheet {
       background: #fff;
       width: 100%;
-      max-width: 440px;
+      max-width: 480px;
       border-radius: 14px;
       padding: 22px;
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
@@ -344,8 +402,18 @@
       display: flex;
       justify-content: space-between;
       font-size: 13px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       gap: 10px;
+    }
+    .invoice-items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+      font-size: 12px;
+    }
+    .invoice-items-table th, .invoice-items-table td {
+      border-bottom: 1px solid #e2e8f0;
+      padding: 6px 4px;
     }
     .invoice-total {
       border-top: 1px dashed #cbd5e1;
@@ -392,11 +460,10 @@
 </head>
 <body>
 
-  <!-- LOGIN VIEW -->
   <div id="loginView" class="login-wrap">
     <div class="login-card">
       <h1>🧺 ចូលប្រព័ន្ធហាងបោកអ៊ុត</h1>
-      <p>សូម Login ដើម្បីចូល Dashboard, គ្រប់គ្រងអាវ/ខោ និងអ្នកប្រើប្រាស់</p>
+      <p>សូម Login ដើម្បីចូល Dashboard, គ្រប់គ្រងអាវ/ខោ/កម្រាលពូក និងអ្នកប្រើប្រាស់</p>
       <form id="loginForm">
         <div class="form-group">
           <label>ឈ្មោះគណនី (Username)</label>
@@ -412,7 +479,6 @@
     </div>
   </div>
 
-  <!-- MAIN DASHBOARD VIEW -->
   <div id="appView" class="hidden">
     <header>
       <div class="brand">
@@ -451,57 +517,43 @@
         </div>
       </div>
 
-      <!-- MENU 1: LAUNDRY ORDERS + IMAGE CARDS -->
       <div id="sectionOrders" class="orders-layout">
         <div class="card">
-          <h2>+ បង្កើតវិក្កយបត្រអាវ / ខោ</h2>
+          <h2>+ បង្កើតវិក្កយបត្រថ្មី (ច្រើនមុខទំនិញ)</h2>
           <form id="orderForm">
-            <div class="form-group">
-              <label>ឈ្មោះអតិថិជន *</label>
-              <input type="text" id="customer_name" required placeholder="ឧ. វណ្ណា" />
-            </div>
-            <div class="form-group">
-              <label>លេខទូរស័ព្ទ *</label>
-              <input type="text" id="phone" required placeholder="012 345 678" />
-            </div>
-            <div class="form-group">
-              <label>Category ប្រភេទអាវ / ខោ *</label>
-              <select id="category" required></select>
-            </div>
-            <div class="form-group">
-              <label>សេវាកម្មបោកអ៊ុត *</label>
-              <select id="service_type" required>
-                <option value="បោក និងបត់ (Wash & Fold)">បោក និងបត់ (Wash & Fold)</option>
-                <option value="បោក និងអ៊ុត (Wash & Iron)">បោក និងអ៊ុត (Wash & Iron)</option>
-                <option value="អ៊ុតសុទ្ធ (Iron Only)">អ៊ុតសុទ្ធ (Iron Only)</option>
-                <option value="បោកស្ងួត (Dry Clean)">បោកស្ងួត (Dry Clean)</option>
-              </select>
-            </div>
             <div class="form-row">
               <div class="form-group">
-                <label>ចំនួន (PCS)</label>
-                <input type="number" min="1" id="item_count" value="1" required />
+                <label>ឈ្មោះអតិថិជន *</label>
+                <input type="text" id="customer_name" required placeholder="ឧ. វណ្ណា" />
               </div>
               <div class="form-group">
-                <label>ទម្ងន់ (Kg)</label>
-                <input type="number" step="0.1" min="0.1" id="weight_kg" value="1.0" required />
+                <label>លេខទូរស័ព្ទ *</label>
+                <input type="text" id="phone" required placeholder="012 345 678" />
               </div>
             </div>
-            <div class="form-group">
-              <label>តម្លៃ ($)</label>
-              <input type="number" step="0.01" min="0" id="price" value="2.50" required />
+
+            <label>បញ្ជីមុខទំនិញក្នុងវិក្កយបត្រ (អាវ, ខោ, កម្រាលពូក, ផ្សេងៗ) *</label>
+            <div id="itemsContainer" class="items-container"></div>
+            <button type="button" class="btn btn-add-item" onclick="addItemRow()">+ បន្ថែមមុខទំនិញ (អាវ / ខោ / កម្រាលពូក...)</button>
+
+            <div class="total-banner">
+              <span>តម្លៃសរុបវិក្កយបត្រ (Total)</span>
+              <span id="formTotalPrice">$0.00</span>
             </div>
+
             <div class="form-group">
-              <label>រូបភាពអាវ / ខោ (សម្រាប់កាតរូបភាព)</label>
+              <label>រូបភាពទំនិញ (សម្រាប់កាតរូបភាព)</label>
               <input type="file" id="imageFile" accept="image/*" />
               <div id="imagePreviewBox" class="preview-box hidden">
                 <img id="imagePreviewImg" alt="Preview" />
               </div>
             </div>
+
             <div class="form-group">
               <label>កំណត់សម្គាល់</label>
-              <textarea id="notes" rows="2" placeholder="ពណ៌សាច់ក្រណាត់ ប្រឡាក់ប្រេង..."></textarea>
+              <textarea id="notes" rows="2" placeholder="ពណ៌សាច់ក្រណាត់ កម្រាលពូកទំហំធំ..."></textarea>
             </div>
+
             <button type="submit" class="btn btn-primary">រក្សាទុកវិក្កយបត្រ</button>
             <div id="orderMsg" class="ok-msg"></div>
             <div id="orderErr" class="err-msg"></div>
@@ -513,7 +565,7 @@
           <div class="toolbar">
             <input type="text" id="searchInput" placeholder="ស្វែងរកលេខកូដ, ឈ្មោះ, ទូរស័ព្ទ..." />
             <select id="filterCategory">
-              <option value="ALL">Category អាវ/ខោ ទាំងអស់</option>
+              <option value="ALL">Category ទាំងអស់</option>
             </select>
             <select id="filterStatus">
               <option value="ALL">ស្ថានភាពទាំងអស់</option>
@@ -523,13 +575,13 @@
               <option value="Picked Up">Picked Up</option>
             </select>
           </div>
+
           <div id="ordersCardsGrid" class="cards-grid">
             <div style="grid-column:1/-1;text-align:center;color:#64748b;padding:24px;">កំពុងទាញទិន្នន័យ...</div>
           </div>
         </div>
       </div>
 
-      <!-- MENU 2: USER MANAGEMENT (ADMIN) -->
       <div id="sectionUsers" class="orders-layout hidden">
         <div class="card">
           <h2>+ បង្កើតគណនី User ថ្មី</h2>
@@ -580,7 +632,6 @@
     </div>
   </div>
 
-  <!-- PRINT INVOICE MODAL -->
   <div id="invoiceModal" class="invoice-modal hidden" onclick="if(event.target===this) closeInvoice()">
     <div class="invoice-sheet" id="invoiceSheet"></div>
   </div>
@@ -590,6 +641,23 @@
     let currentUser = null;
     let selectedImageBase64 = null;
     let cachedOrders = [];
+    let categoriesList = [
+      'អាវយឺត (T-Shirt)',
+      'អាវសាច់ក្រណាត់ / អាវធំ (Shirt & Jacket)',
+      'ខោជើងវែង (Long Pants)',
+      'ខោខូវប៊យ (Jeans)',
+      'ខោខ្លី (Shorts)',
+      'កម្រាលពូក / ភួយ (Bed Sheet & Blanket)',
+      'សំពត់ / ឈុត (Skirt & Suit)',
+      'ផ្សេងៗ (Others)'
+    ];
+
+    const SERVICE_OPTIONS = [
+      'បោក និងបត់ (Wash & Fold)',
+      'បោក និងអ៊ុត (Wash & Iron)',
+      'អ៊ុតសុទ្ធ (Iron Only)',
+      'បោកស្ងួត (Dry Clean)'
+    ];
 
     const STATUS_CLASS_MAP = {
       'Pending': 'st-Pending',
@@ -604,6 +672,90 @@
         .replace(/</g, '<')
         .replace(/>/g, '>')
         .replace(/"/g, '"');
+    }
+
+    function addItemRow(defaults) {
+      const d = defaults || {};
+      const container = document.getElementById('itemsContainer');
+      const index = container.children.length + 1;
+      const box = document.createElement('div');
+      box.className = 'item-box';
+
+      const catOptions = categoriesList.map(function (c) {
+        const sel = (d.category || categoriesList[0]) === c ? ' selected' : '';
+        return '<option value="' + escapeHtml(c) + '"' + sel + '>' + escapeHtml(c) + '</option>';
+      }).join('');
+
+      const srvOptions = SERVICE_OPTIONS.map(function (s) {
+        const sel = (d.service_type || SERVICE_OPTIONS[0]) === s ? ' selected' : '';
+        return '<option value="' + escapeHtml(s) + '"' + sel + '>' + escapeHtml(s) + '</option>';
+      }).join('');
+
+      box.innerHTML =
+        '<div class="item-box-head">' +
+          '<span class="item-title">មុខទំនិញ #' + index + '</span>' +
+          '<button type="button" class="btn-remove-item" onclick="removeItemRow(this)">លុបមុខនេះ</button>' +
+        '</div>' +
+        '<div class="form-row">' +
+          '<div class="form-group">' +
+            '<label>ប្រភេទ (អាវ/ខោ/កម្រាលពូក)</label>' +
+            '<select class="item-category">' + catOptions + '</select>' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<label>សេវាកម្ម</label>' +
+            '<select class="item-service">' + srvOptions + '</select>' +
+          '</div>' +
+        '</div>' +
+        '<div class="form-row-3">' +
+          '<div class="form-group" style="margin-bottom:0;">' +
+            '<label>ចំនួន (PCS)</label>' +
+            '<input type="number" min="1" class="item-count" value="' + (d.item_count || 1) + '" oninput="recalcTotal()" required />' +
+          '</div>' +
+          '<div class="form-group" style="margin-bottom:0;">' +
+            '<label>ទម្ងន់ (Kg)</label>' +
+            '<input type="number" step="0.1" min="0" class="item-weight" value="' + (d.weight_kg !== undefined ? d.weight_kg : 1) + '" required />' +
+          '</div>' +
+          '<div class="form-group" style="margin-bottom:0;">' +
+            '<label>តម្លៃ ($)</label>' +
+            '<input type="number" step="0.01" min="0" class="item-price" value="' + (d.price !== undefined ? d.price : 2) + '" oninput="recalcTotal()" required />' +
+          '</div>' +
+        '</div>';
+
+      container.appendChild(box);
+      refreshItemNumbers();
+      recalcTotal();
+    }
+
+    function removeItemRow(btn) {
+      const container = document.getElementById('itemsContainer');
+      if (container.children.length <= 1) {
+        alert('វិក្កយបត្រត្រូវមានយ៉ាងហោចណាស់ ១ មុខទំនិញ');
+        return;
+      }
+      btn.closest('.item-box').remove();
+      refreshItemNumbers();
+      recalcTotal();
+    }
+
+    function refreshItemNumbers() {
+      const boxes = document.querySelectorAll('#itemsContainer .item-box');
+      boxes.forEach(function (box, idx) {
+        const title = box.querySelector('.item-title');
+        if (title) title.textContent = 'មុខទំនិញ #' + (idx + 1);
+      });
+    }
+
+    function recalcTotal() {
+      let sum = 0;
+      document.querySelectorAll('#itemsContainer .item-price').forEach(function (inp) {
+        sum += Number(inp.value || 0);
+      });
+      document.getElementById('formTotalPrice').textContent = '$' + sum.toFixed(2);
+    }
+
+    function resetItemsForm() {
+      document.getElementById('itemsContainer').innerHTML = '';
+      addItemRow({ category: categoriesList[0], item_count: 1, weight_kg: 1, price: 2 });
     }
 
     async function checkSession() {
@@ -636,7 +788,7 @@
       }
 
       checkHealth();
-      loadMeta();
+      loadMetaAndInitItems();
       loadOrders();
       if (currentUser.role === 'admin') loadUsers();
     }
@@ -681,30 +833,29 @@
         const res = await fetch(API + '/api/health');
         const data = await res.json();
         badge.textContent = data.success
-          ? '🟢 PostgreSQL Connected (DATABASE_URL • No LocalStorage)'
+          ? '🟢 PostgreSQL Connected (DATABASE_URL • Multi-Item Invoice)'
           : '🔴 Database Error';
       } catch (err) {
         badge.textContent = '🔴 Offline';
       }
     }
 
-    async function loadMeta() {
+    async function loadMetaAndInitItems() {
       const res = await fetch(API + '/api/meta');
-      if (!res.ok) return;
-      const data = await res.json();
-      const cats = data.categories || [];
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.categories) && data.categories.length > 0) {
+          categoriesList = data.categories;
+        }
+      }
 
-      const formCat = document.getElementById('category');
       const filterCat = document.getElementById('filterCategory');
-
-      formCat.innerHTML = cats.map(function (c) {
-        return '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>';
-      }).join('');
-
-      filterCat.innerHTML = '<option value="ALL">Category អាវ/ខោ ទាំងអស់</option>' +
-        cats.map(function (c) {
+      filterCat.innerHTML = '<option value="ALL">Category ទាំងអស់</option>' +
+        categoriesList.map(function (c) {
           return '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>';
         }).join('');
+
+      resetItemsForm();
     }
 
     document.getElementById('imageFile').addEventListener('change', function (e) {
@@ -737,6 +888,19 @@
       };
       reader.readAsDataURL(file);
     });
+
+    function getOrderItemsArray(order) {
+      if (Array.isArray(order.items_json) && order.items_json.length > 0) {
+        return order.items_json;
+      }
+      return [{
+        category: order.category,
+        service_type: order.service_type,
+        item_count: order.item_count || 1,
+        weight_kg: order.weight_kg || 0,
+        price: order.price || 0
+      }];
+    }
 
     async function loadOrders() {
       const search = document.getElementById('searchInput').value;
@@ -778,6 +942,16 @@
           ? '<img src="' + o.image_data + '" alt="' + escapeHtml(o.order_code) + '" />'
           : '<div class="order-img-placeholder">👕 មិនមានរូបភាព<br/><span>' + escapeHtml(o.category) + '</span></div>';
 
+        const list = getOrderItemsArray(o);
+        const linesHtml = list.map(function (it) {
+          return (
+            '<div class="item-line-row">' +
+              '<span>' + escapeHtml(it.category) + ' (' + Number(it.item_count || 1) + ' pcs)</span>' +
+              '<strong>$' + Number(it.price || 0).toFixed(2) + '</strong>' +
+            '</div>'
+          );
+        }).join('');
+
         const notesHtml = o.notes
           ? '<div><strong>កំណត់សម្គាល់៖</strong> ' + escapeHtml(o.notes) + '</div>'
           : '';
@@ -791,12 +965,13 @@
                   '<span class="order-code">' + escapeHtml(o.order_code) + '</span>' +
                   '<span class="badge ' + statusCls + '">' + escapeHtml(o.status) + '</span>' +
                 '</div>' +
-                '<div class="cat-tag">' + escapeHtml(o.category) + '</div>' +
                 '<div class="order-meta">' +
                   '<div><strong>អតិថិជន៖</strong> ' + escapeHtml(o.customer_name) + ' (' + escapeHtml(o.phone) + ')</div>' +
-                  '<div><strong>សេវាកម្ម៖</strong> ' + escapeHtml(o.service_type) + '</div>' +
-                  '<div><strong>ចំនួន / ទម្ងន់៖</strong> ' + Number(o.item_count || 1) + ' pcs • ' + Number(o.weight_kg) + ' kg</div>' +
-                  '<div><strong>តម្លៃ៖</strong> <strong style="color:#0f172a;">$' + Number(o.price).toFixed(2) + '</strong></div>' +
+                '</div>' +
+                '<div class="item-lines-list">' + linesHtml + '</div>' +
+                '<div class="order-meta">' +
+                  '<div><strong>សរុបចំនួន / ទម្ងន់៖</strong> ' + Number(o.item_count || 1) + ' pcs • ' + Number(o.weight_kg) + ' kg</div>' +
+                  '<div><strong>តម្លៃសរុប៖</strong> <strong style="color:#1d4ed8;">$' + Number(o.price).toFixed(2) + '</strong></div>' +
                   notesHtml +
                   '<div style="font-size:11px;color:#94a3b8;margin-top:4px;">' + escapeHtml(o.created_at_kh || '') + '</div>' +
                 '</div>' +
@@ -825,6 +1000,19 @@
       });
       if (!order) return;
 
+      const list = getOrderItemsArray(order);
+      const tableRows = list.map(function (it, idx) {
+        return (
+          '<tr>' +
+            '<td>' + (idx + 1) + '</td>' +
+            '<td><strong>' + escapeHtml(it.category) + '</strong><br/><span style="color:#64748b;font-size:11px;">' + escapeHtml(it.service_type || '') + '</span></td>' +
+            '<td>' + Number(it.item_count || 1) + '</td>' +
+            '<td>' + Number(it.weight_kg || 0) + ' kg</td>' +
+            '<td style="text-align:right;"><strong>$' + Number(it.price || 0).toFixed(2) + '</strong></td>' +
+          '</tr>'
+        );
+      }).join('');
+
       const notesRow = order.notes
         ? '<div class="invoice-row"><span>កំណត់សម្គាល់៖</span><span>' + escapeHtml(order.notes) + '</span></div>'
         : '';
@@ -837,10 +1025,11 @@
         '</div>' +
         '<div class="invoice-row"><span>អតិថិជន៖</span><strong>' + escapeHtml(order.customer_name) + '</strong></div>' +
         '<div class="invoice-row"><span>លេខទូរស័ព្ទ៖</span><span>' + escapeHtml(order.phone) + '</span></div>' +
-        '<div class="invoice-row"><span>ប្រភេទ (Category)៖</span><span>' + escapeHtml(order.category) + '</span></div>' +
-        '<div class="invoice-row"><span>សេវាកម្ម៖</span><span>' + escapeHtml(order.service_type) + '</span></div>' +
-        '<div class="invoice-row"><span>ចំនួន / ទម្ងន់៖</span><span>' + Number(order.item_count || 1) + ' pcs • ' + Number(order.weight_kg) + ' kg</span></div>' +
         '<div class="invoice-row"><span>ស្ថានភាព៖</span><span>' + escapeHtml(order.status) + '</span></div>' +
+        '<table class="invoice-items-table">' +
+          '<thead><tr><th>#</th><th>មុខទំនិញ</th><th>ចំនួន</th><th>ទម្ងន់</th><th style="text-align:right;">តម្លៃ</th></tr></thead>' +
+          '<tbody>' + tableRows + '</tbody>' +
+        '</table>' +
         notesRow +
         '<div class="invoice-total"><span>តម្លៃសរុប (Total)</span><span>$' + Number(order.price).toFixed(2) + '</span></div>' +
         '<div class="invoice-btns">' +
@@ -860,14 +1049,21 @@
       document.getElementById('orderMsg').textContent = '';
       document.getElementById('orderErr').textContent = '';
 
+      const items = [];
+      document.querySelectorAll('#itemsContainer .item-box').forEach(function (box) {
+        items.push({
+          category: box.querySelector('.item-category').value,
+          service_type: box.querySelector('.item-service').value,
+          item_count: box.querySelector('.item-count').value,
+          weight_kg: box.querySelector('.item-weight').value,
+          price: box.querySelector('.item-price').value
+        });
+      });
+
       const payload = {
         customer_name: document.getElementById('customer_name').value,
         phone: document.getElementById('phone').value,
-        category: document.getElementById('category').value,
-        service_type: document.getElementById('service_type').value,
-        item_count: document.getElementById('item_count').value,
-        weight_kg: document.getElementById('weight_kg').value,
-        price: document.getElementById('price').value,
+        items: items,
         image_data: selectedImageBase64,
         notes: document.getElementById('notes').value
       };
@@ -881,12 +1077,10 @@
 
       if (data.success) {
         e.target.reset();
-        document.getElementById('item_count').value = '1';
-        document.getElementById('weight_kg').value = '1.0';
-        document.getElementById('price').value = '2.50';
+        resetItemsForm();
         selectedImageBase64 = null;
         document.getElementById('imagePreviewBox').classList.add('hidden');
-        document.getElementById('orderMsg').textContent = '✅ រក្សាទុកវិក្កយបត្រ និងកាតរូបភាពរួចរាល់!';
+        document.getElementById('orderMsg').textContent = '✅ រក្សាទុកវិក្កយបត្រច្រើនមុខទំនិញរួចរាល់!';
         loadOrders();
       } else {
         document.getElementById('orderErr').textContent = data.error || 'មិនអាចរក្សាទុកបានទេ';
