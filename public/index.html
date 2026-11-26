@@ -40,12 +40,12 @@
       transition: all 0.2s ease;
     }
 
-    /* 🟢 កាតទំនិញ (Product Card) ពង្រីកទទឹង និងបន្ថយបណ្តោយឱ្យស្អាត */
+    /* 🟢 កាតទំនិញ (Product Card) រាងការ៉េ ពង្រីកកម្ពស់ និងបង្រួមទទឹងឱ្យសមសួន */
     .product-card {
       cursor: pointer;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       border: 2px solid transparent !important;
-      border-radius: 14px;
+      border-radius: 16px;
       background-color: #ffffff;
       box-shadow: 0 4px 16px rgba(149, 157, 165, 0.08);
       overflow: hidden;
@@ -55,13 +55,13 @@
       align-items: center;
       justify-content: center;
       padding: 0px !important;
-      height: 112px;
+      height: 155px;
     }
 
     .product-card:hover {
-      transform: translateY(-4px) scale(1.015);
+      transform: translateY(-5px) scale(1.02);
       border-color: #0d6efd !important;
-      box-shadow: 0 0 20px rgba(13, 110, 253, 0.38), 0 10px 22px rgba(0, 0, 0, 0.12);
+      box-shadow: 0 0 20px rgba(13, 110, 253, 0.4), 0 10px 24px rgba(0, 0, 0, 0.12);
     }
 
     .product-img-wrapper {
@@ -70,7 +70,7 @@
       background-color: #ffffff;
       position: relative;
       overflow: hidden;
-      border-radius: 14px !important;
+      border-radius: 16px !important;
       margin: 0 !important;
     }
 
@@ -84,7 +84,7 @@
     }
 
     .product-card:hover .product-img-wrapper img {
-      transform: scale(1.07);
+      transform: scale(1.08);
     }
 
     .product-overlay-info {
@@ -92,26 +92,25 @@
       bottom: 0;
       left: 0;
       right: 0;
-      background: rgba(15, 23, 42, 0.84);
+      background: rgba(15, 23, 42, 0.82);
       backdrop-filter: blur(3px);
-      padding: 6px 12px;
+      padding: 6px 10px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 8px;
-      border-bottom-left-radius: 14px;
-      border-bottom-right-radius: 14px;
+      border-bottom-left-radius: 16px;
+      border-bottom-right-radius: 16px;
       z-index: 4;
     }
 
     .edit-catalog-btn {
       position: absolute;
-      top: 7px;
-      right: 7px;
+      top: 8px;
+      right: 8px;
       z-index: 6;
       border-radius: 999px;
-      width: 28px;
-      height: 28px;
+      width: 30px;
+      height: 30px;
       padding: 0;
       display: inline-flex;
       align-items: center;
@@ -272,7 +271,7 @@
           </div>
 
           <div class="d-flex flex-wrap gap-2 mb-3" id="categoryFilterBar"></div>
-          <div class="row g-3" id="laundryTypesGrid"></div>
+          <div class="row g-2" id="laundryTypesGrid"></div>
         </div>
 
         <div class="col-12 col-md-5 col-lg-4">
@@ -1055,7 +1054,7 @@
       renderCatalogCards();
     }
 
-    // 🟢 កូដបង្ហាញកាតរូបភាព Render លទ្ធផលរូបភាពទំនិញ + ប៊ូតុងកែតម្លៃ/ប្តូររូប (ទទឹងធំជាងមុន បណ្តោយទាបជាងមុន)
+    // 🟢 កូដបង្ហាញកាតរូបភាព Render លទ្ធផលរូបភាពទំនិញ + ប៊ូតុងកែតម្លៃ/ប្តូររូប (រាងការ៉េ)
     function renderCatalogCards() {
       const grid = document.getElementById('laundryTypesGrid');
       const items = activeGroupFilter === 'All'
@@ -1068,7 +1067,7 @@
       }
 
       grid.innerHTML = items.map(item => `
-        <div class="col-6 col-sm-6 col-md-6 col-xl-4">
+        <div class="col-6 col-sm-4 col-md-4 col-lg-3">
           <div class="product-card position-relative" onclick="addLaundryItem(${Number(item.id)})">
             <button type="button" class="btn btn-light btn-sm edit-catalog-btn border" title="កែតម្លៃ និងប្តូររូប"
               onclick="event.stopPropagation(); openEditCatalogModal(${Number(item.id)})">
@@ -1078,8 +1077,8 @@
               <img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.name)}" onerror="this.src='https://via.placeholder.com/300x200?text=Laundry+Item'">
             </div>
             <div class="product-overlay-info">
-              <span class="text-white fw-bold text-truncate" style="font-size: 0.85rem;" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</span>
-              <span class="text-warning fw-bold text-nowrap" style="font-size: 0.85rem;">$${Number(item.price).toFixed(2)}</span>
+              <span class="text-white fw-bold text-truncate" style="font-size: 0.8rem; max-width: 68%;" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</span>
+              <span class="text-warning fw-bold" style="font-size: 0.8rem;">$${Number(item.price).toFixed(2)}</span>
             </div>
           </div>
         </div>
@@ -1556,7 +1555,7 @@
       const tbody = document.getElementById('dailySummaryTableBody');
       const rows = Array.from(dailyMap.entries()).sort((a, b) => b[0].localeCompare(a[0]));
       if (rows.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3 small">មិនមានទិន្នន័យចំណូលសម្រាប់ខែនេះទេ</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3 small">មិនទាន់មានទិន្នន័យចំណូលសម្រាប់ខែនេះទេ</td></tr>';
       } else {
         tbody.innerHTML = rows.map(([dayKey, info]) => `
           <tr>
