@@ -40,12 +40,12 @@
       transition: all 0.2s ease;
     }
 
-    /* 🟢 កាតទំនិញ (Product Card) រាងការ៉េ ពង្រីកកម្ពស់ និងបង្រួមទទឹងឱ្យសមសួន */
+    /* 🟢 កាតទំនិញ (Product Card) រាងការ៉េ ពង្រីកកម្ពស់ 190px */
     .product-card {
       cursor: pointer;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       border: 2px solid transparent !important;
-      border-radius: 16px;
+      border-radius: 18px;
       background-color: #ffffff;
       box-shadow: 0 4px 16px rgba(149, 157, 165, 0.08);
       overflow: hidden;
@@ -55,7 +55,7 @@
       align-items: center;
       justify-content: center;
       padding: 0px !important;
-      height: 155px;
+      height: 190px;
     }
 
     .product-card:hover {
@@ -70,7 +70,7 @@
       background-color: #ffffff;
       position: relative;
       overflow: hidden;
-      border-radius: 16px !important;
+      border-radius: 18px !important;
       margin: 0 !important;
     }
 
@@ -98,8 +98,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom-left-radius: 16px;
-      border-bottom-right-radius: 16px;
+      border-bottom-left-radius: 18px;
+      border-bottom-right-radius: 18px;
       z-index: 4;
     }
 
@@ -868,10 +868,10 @@
 
     function escapeHtml(str) {
       return String(str || '')
-        .replace(/&/g, '&')
-        .replace(/</g, '<')
-        .replace(/>/g, '>')
-        .replace(/"/g, '"');
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
     }
 
     function initReportFilterDefaults() {
@@ -1054,7 +1054,7 @@
       renderCatalogCards();
     }
 
-    // 🟢 កូដបង្ហាញកាតរូបភាព Render លទ្ធផលរូបភាពទំនិញ + ប៊ូតុងកែតម្លៃ/ប្តូររូប (រាងការ៉េ)
+    // 🟢 កូដបង្ហាញកាតរូបភាព Render លទ្ធផលរូបភាពទំនិញ + ប៊ូតុងកែតម្លៃ/ប្តូររូប (រាងការ៉េ 190px)
     function renderCatalogCards() {
       const grid = document.getElementById('laundryTypesGrid');
       const items = activeGroupFilter === 'All'
