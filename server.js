@@ -21,8 +21,8 @@ const pool = new Pool({
 
 app.set('trust proxy', 1);
 app.use(cors());
-app.use(express.json({ limit: '8mb' }));
-app.use(express.urlencoded({ extended: true, limit: '8mb' }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 app.use(
   session({
@@ -33,7 +33,7 @@ app.use(
     cookie: {
       httpOnly: true,
       sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production' && process.env.FORCE_HTTP !== 'true',
+      secure: 'auto',
       maxAge: 1000 * 60 * 60 * 24 * 7
     }
   })
@@ -41,15 +41,15 @@ app.use(
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Standard clothing categories (Shirts & Pants focus + standard items)
 const STANDARD_CATEGORIES = [
   'អាវយឺត (T-Shirt)',
   'អាវសាច់ក្រណាត់ / អាវធំ (Shirt & Jacket)',
   'ខោជើងវែង (Long Pants)',
   'ខោខូវប៊យ (Jeans)',
   'ខោខ្លី (Shorts)',
+  'កម្រាលពូក / ភួយ (Bed Sheet & Blanket)',
   'សំពត់ / ឈុត (Skirt & Suit)',
-  'ផ្សេងៗ / ភួយ-កម្រាល (Others & Bedding)'
+  'ផ្សេងៗ (Others)'
 ];
 
 const ALLOWED_STATUSES = ['Pending', 'Washing', 'Ready', 'Picked Up'];
@@ -95,6 +95,7 @@ async function initDatabase() {
       item_count INTEGER NOT NULL DEFAULT 1,
       weight_kg NUMERIC(10, 2) NOT NULL DEFAULT 1,
       price NUMERIC(12, 2) NOT NULL DEFAULT 0,
+      items_json JSONB NOT NULL DEFAULT '[]'::jsonb,
       status VARCHAR(20) NOT NULL DEFAULT 'Pending',
       image_data TEXT,
       notes TEXT,
@@ -104,29 +105,38 @@ async function initDatabase() {
     );
   `);
 
-  // Safe column migration if upgrading from earlier version
   await pool.query(`ALTER TABLE laundry_orders ADD COLUMN IF NOT EXISTS category VARCHAR(100) NOT NULL DEFAULT 'អាវយឺត (T-Shirt)';`);
   await pool.query(`ALTER TABLE laundry_orders ADD COLUMN IF NOT EXISTS item_count INTEGER NOT NULL DEFAULT 1;`);
+  await pool.query(`ALTER TABLE laundry_orders ADD COLUMN IF NOT EXISTS items_json JSONB NOT NULL DEFAULT '[]'::jsonb;`);
   await pool.query(`ALTER TABLE laundry_orders ADD COLUMN IF NOT EXISTS image_data TEXT;`);
   await pool.query(`ALTER TABLE laundry_orders ADD COLUMN IF NOT EXISTS created_by VARCHAR(60);`);
 
-  // Seed default admin if no users exist
-  const countRes = await pool.query('SELECT COUNT(*)::int AS cnt FROM users');
-  if (countRes.rows[0].cnt === 0) {
-    const defaultAdminUser = process.env.DEFAULT_ADMIN_USER || 'admin';
-    const defaultAdminPass = process.env.DEFAULT_ADMIN_PASS || 'Admin@123';
-    const hash = await bcrypt.hash(defaultAdminPass, 10);
+  const defaultAdminUser = String(process.env.DEFAULT_ADMIN_USER || 'admin').trim();
+  const defaultAdminPass = String(process.env.DEFAULT_ADMIN_PASS || 'Admin@123');
+  const hash = await bcrypt.hash(defaultAdminPass, 10);
+
+  const existingAdmin = await pool.query(
+    `SELECT id FROM users WHERE LOWER(username) = LOWER($1)`,
+    [defaultAdminUser]
+  );
+
+  if (existingAdmin.rows.length === 0) {
     await pool.query(
       `INSERT INTO users (username, full_name, password_hash, role) VALUES ($1, $2, $3, 'admin')`,
       [defaultAdminUser, 'អ្នកគ្រប់គ្រងហាង (Admin)', hash]
     );
-    console.log(`✅ Default admin created -> username: "${defaultAdminUser}", password: "${defaultAdminPass}"`);
+    console.log(`✅ Default admin created -> username: "${defaultAdminUser}"`);
+  } else if (process.env.FORCE_RESET_ADMIN === 'true') {
+    await pool.query(
+      `UPDATE users SET password_hash = $1, is_active = TRUE, role = 'admin' WHERE id = $2`,
+      [hash, existingAdmin.rows[0].id]
+    );
+    console.log(`✅ Admin password reset for "${defaultAdminUser}"`);
   }
 
   console.log('✅ PostgreSQL tables (users, laundry_orders) are ready.');
 }
 
-// Health check
 app.get('/api/health', async (req, res) => {
   try {
     await pool.query('SELECT 1');
@@ -137,7 +147,6 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-// Metadata: categories & statuses
 app.get('/api/meta', requireAuth, (req, res) => {
   res.json({
     success: true,
@@ -146,7 +155,6 @@ app.get('/api/meta', requireAuth, (req, res) => {
   });
 });
 
-// Auth: Login
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -180,14 +188,19 @@ app.post('/api/auth/login', async (req, res) => {
       role: user.role
     };
 
-    res.json({ success: true, user: req.session.user });
+    req.session.save((saveErr) => {
+      if (saveErr) {
+        console.error('Session save error:', saveErr);
+        return res.status(500).json({ success: false, error: 'មិនអាចរក្សា Session បានទេ' });
+      }
+      res.json({ success: true, user: req.session.user });
+    });
   } catch (err) {
     console.error('POST /api/auth/login error:', err);
     res.status(500).json({ success: false, error: 'មានបញ្ហាក្នុងការ Login' });
   }
 });
 
-// Auth: Logout
 app.post('/api/auth/logout', (req, res) => {
   req.session.destroy(() => {
     res.clearCookie('laundry.sid');
@@ -195,7 +208,6 @@ app.post('/api/auth/logout', (req, res) => {
   });
 });
 
-// Auth: Current session user
 app.get('/api/auth/me', (req, res) => {
   if (!req.session || !req.session.user) {
     return res.json({ success: true, user: null });
@@ -203,7 +215,6 @@ app.get('/api/auth/me', (req, res) => {
   res.json({ success: true, user: req.session.user });
 });
 
-// Users: List users (Admin only)
 app.get('/api/users', requireAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
@@ -224,7 +235,6 @@ app.get('/api/users', requireAdmin, async (req, res) => {
   }
 });
 
-// Users: Create new user (Admin only)
 app.post('/api/users', requireAdmin, async (req, res) => {
   try {
     const { username, full_name, password, role } = req.body;
@@ -262,7 +272,6 @@ app.post('/api/users', requireAdmin, async (req, res) => {
   }
 });
 
-// Orders: Get all orders (filter by ?status=, ?category=, ?search=)
 app.get('/api/orders', requireAuth, async (req, res) => {
   try {
     const { status, category, search } = req.query;
@@ -276,7 +285,8 @@ app.get('/api/orders', requireAuth, async (req, res) => {
 
     if (category && category !== 'ALL') {
       values.push(category);
-      conditions.push(`category = $${values.length}`);
+      const idx = values.length;
+      conditions.push(`(category = $${idx} OR EXISTS (SELECT 1 FROM jsonb_array_elements(items_json) elem WHERE elem->>'category' = $${idx}))`);
     }
 
     if (search && String(search).trim() !== '') {
@@ -303,23 +313,44 @@ app.get('/api/orders', requireAuth, async (req, res) => {
   }
 });
 
-// Orders: Create new laundry order (with category + image_data)
+// Create order with MULTIPLE items (អាវ, ខោ, កម្រាលពូក, ផ្សេងៗ...) in ONE invoice
 app.post('/api/orders', requireAuth, async (req, res) => {
   const client = await pool.connect();
   try {
-    const { customer_name, phone, category, service_type, item_count, weight_kg, price, image_data, notes } = req.body;
+    const { customer_name, phone, items, image_data, notes } = req.body;
 
-    if (!customer_name || !phone || !service_type) {
+    if (!customer_name || !phone || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({
         success: false,
-        error: 'customer_name, phone, and service_type are required'
+        error: 'ត្រូវបញ្ចូលឈ្មោះអតិថិជន លេខទូរស័ព្ទ និងយ៉ាងហោចណាស់ ១ មុខទំនិញ'
       });
     }
 
-    const chosenCategory = STANDARD_CATEGORIES.includes(category) ? category : STANDARD_CATEGORIES[0];
-    const parsedCount = Number.isInteger(Number(item_count)) && Number(item_count) > 0 ? Number(item_count) : 1;
-    const parsedWeight = Number(weight_kg) > 0 ? Number(weight_kg) : 1;
-    const parsedPrice = Number(price) >= 0 ? Number(price) : 0;
+    const cleanItems = items.map((it) => {
+      const cat = STANDARD_CATEGORIES.includes(it.category) ? it.category : STANDARD_CATEGORIES[0];
+      const srv = String(it.service_type || 'បោក និងបត់ (Wash & Fold)').trim();
+      const cnt = Number.isInteger(Number(it.item_count)) && Number(it.item_count) > 0 ? Number(it.item_count) : 1;
+      const wt = Number(it.weight_kg) >= 0 ? Number(it.weight_kg) : 0;
+      const pr = Number(it.price) >= 0 ? Number(it.price) : 0;
+      return {
+        category: cat,
+        service_type: srv,
+        item_count: cnt,
+        weight_kg: wt,
+        price: pr
+      };
+    });
+
+    const totalCount = cleanItems.reduce((sum, x) => sum + x.item_count, 0);
+    const totalWeight = cleanItems.reduce((sum, x) => sum + x.weight_kg, 0);
+    const totalPrice = cleanItems.reduce((sum, x) => sum + x.price, 0);
+
+    const summaryCategory =
+      cleanItems.length === 1
+        ? cleanItems[0].category
+        : `${cleanItems[0].category} (+${cleanItems.length - 1} មុខទៀត)`;
+    const summaryService =
+      cleanItems.length === 1 ? cleanItems[0].service_type : 'ច្រើនសេវាកម្ម (Multi-item)';
 
     let cleanImage = null;
     if (typeof image_data === 'string' && image_data.startsWith('data:image/')) {
@@ -335,20 +366,21 @@ app.post('/api/orders', requireAuth, async (req, res) => {
     const insertRes = await client.query(
       `
       INSERT INTO laundry_orders
-        (order_code, customer_name, phone, category, service_type, item_count, weight_kg, price, status, image_data, notes, created_by)
+        (order_code, customer_name, phone, category, service_type, item_count, weight_kg, price, items_json, status, image_data, notes, created_by)
       VALUES
-        ($1, $2, $3, $4, $5, $6, $7, $8, 'Pending', $9, $10, $11)
+        ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, 'Pending', $10, $11, $12)
       RETURNING *, to_char(created_at AT TIME ZONE 'Asia/Phnom_Penh', 'DD/MM/YYYY HH24:MI') AS created_at_kh
       `,
       [
         orderCode,
         String(customer_name).trim(),
         String(phone).trim(),
-        chosenCategory,
-        String(service_type).trim(),
-        parsedCount,
-        parsedWeight,
-        parsedPrice,
+        summaryCategory,
+        summaryService,
+        totalCount,
+        totalWeight,
+        totalPrice,
+        JSON.stringify(cleanItems),
         cleanImage,
         notes ? String(notes).trim() : null,
         req.session.user.username
@@ -366,7 +398,6 @@ app.post('/api/orders', requireAuth, async (req, res) => {
   }
 });
 
-// Orders: Update status
 app.patch('/api/orders/:id/status', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
@@ -397,7 +428,6 @@ app.patch('/api/orders/:id/status', requireAuth, async (req, res) => {
   }
 });
 
-// Orders: Delete order
 app.delete('/api/orders/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
@@ -412,7 +442,6 @@ app.delete('/api/orders/:id', requireAuth, async (req, res) => {
   }
 });
 
-// Fallback to index.html
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
