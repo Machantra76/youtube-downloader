@@ -181,6 +181,12 @@
       color: #fff;
       width: 100%;
     }
+    .btn-print {
+      background: #dbeafe;
+      color: #1e40af;
+      padding: 6px 10px;
+      font-size: 12px;
+    }
     .btn-danger {
       background: #fee2e2;
       color: #b91c1c;
@@ -292,6 +298,12 @@
       gap: 6px;
       align-items: center;
       justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    .footer-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
     }
 
     /* Users Table */
@@ -300,6 +312,82 @@
     th { background: #f8fafc; color: #334155; }
     .err-msg { color: #b91c1c; font-size: 12px; margin-top: 8px; }
     .ok-msg { color: #15803d; font-size: 12px; margin-top: 8px; }
+
+    /* Invoice Modal & Print Styles */
+    .invoice-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 999;
+    }
+    .invoice-sheet {
+      background: #fff;
+      width: 100%;
+      max-width: 440px;
+      border-radius: 14px;
+      padding: 22px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+    }
+    .invoice-header {
+      text-align: center;
+      border-bottom: 1px dashed #cbd5e1;
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+    }
+    .invoice-header h3 { margin: 0; font-size: 18px; color: #0f172a; }
+    .invoice-header p { margin: 4px 0 0; font-size: 12px; color: #64748b; }
+    .invoice-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      margin-bottom: 8px;
+      gap: 10px;
+    }
+    .invoice-total {
+      border-top: 1px dashed #cbd5e1;
+      padding-top: 10px;
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 16px;
+      font-weight: 700;
+      color: #1d4ed8;
+    }
+    .invoice-btns {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #0f172a;
+      flex: 1;
+    }
+    .btn-do-print {
+      background: #1d4ed8;
+      color: #fff;
+      flex: 1;
+    }
+
+    @media print {
+      body * { visibility: hidden !important; }
+      #invoiceModal, #invoiceModal * { visibility: visible !important; }
+      #invoiceModal {
+        position: static !important;
+        background: none !important;
+        padding: 0 !important;
+      }
+      .invoice-sheet {
+        box-shadow: none !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+      }
+      .invoice-btns { display: none !important; }
+    }
   </style>
 </head>
 <body>
@@ -501,10 +589,16 @@
     </div>
   </div>
 
+  <!-- PRINT INVOICE MODAL -->
+  <div id="invoiceModal" class="invoice-modal hidden" onclick="if(event.target===this) closeInvoice()">
+    <div class="invoice-sheet" id="invoiceSheet"></div>
+  </div>
+
   <script>
     const API = window.location.origin;
     let currentUser = null;
     let selectedImageBase64 = null;
+    let cachedOrders = [];
 
     const STATUS_CLASS_MAP = {
       'Pending': 'st-Pending',
@@ -516,11 +610,11 @@
     function escapeHtml(str) {
       return String(str || '').replace(/[&<>"']/g, function (m) {
         return {
-          '&': '&amp;',
-          '<': '&lt;',
-          '>': '&gt;',
-          '"': '&quot;',
-          "'": '&#39;'
+          '&': '&',
+          '<': '<',
+          '>': '>',
+          '"': '"',
+          "'": '''
         }[m];
       });
     }
@@ -664,6 +758,7 @@
 
       const json = await res.json();
       const rows = json.data || [];
+      cachedOrders = rows;
 
       document.getElementById('statTotal').textContent = rows.length;
       const activeCount = rows.filter(r => r.status === 'Pending' || r.status === 'Washing').length;
@@ -712,11 +807,70 @@
                 <option value="Ready" ${o.status === 'Ready' ? 'selected' : ''}>Ready</option>
                 <option value="Picked Up" ${o.status === 'Picked Up' ? 'selected' : ''}>Picked Up</option>
               </select>
-              <button class="btn btn-danger" onclick="deleteOrder(${o.id})">លុប</button>
+              <div class="footer-actions">
+                <button class="btn btn-print" onclick="openInvoice(${o.id})">🖨️ Print</button>
+                <button class="btn btn-danger" onclick="deleteOrder(${o.id})">លុប</button>
+              </div>
             </div>
           </div>
         `;
       }).join('');
+    }
+
+    function openInvoice(orderId) {
+      const order = cachedOrders.find(item => Number(item.id) === Number(orderId));
+      if (!order) return;
+
+      const sheet = document.getElementById('invoiceSheet');
+      sheet.innerHTML = `
+        <div class="invoice-header">
+          <h3>🧺 វិក្កយបត្របោកអ៊ុត (LAUNDRY INVOICE)</h3>
+          <p>លេខកូដ៖ <strong>${escapeHtml(order.order_code)}</strong> • ${escapeHtml(order.created_at_kh || '')}</p>
+        </div>
+        <div class="invoice-row">
+          <span>អតិថិជន៖</span>
+          <strong>${escapeHtml(order.customer_name)}</strong>
+        </div>
+        <div class="invoice-row">
+          <span>លេខទូរស័ព្ទ៖</span>
+          <span>${escapeHtml(order.phone)}</span>
+        </div>
+        <div class="invoice-row">
+          <span>ប្រភេទ (Category)៖</span>
+          <span>${escapeHtml(order.category)}</span>
+        </div>
+        <div class="invoice-row">
+          <span>សេវាកម្ម៖</span>
+          <span>${escapeHtml(order.service_type)}</span>
+        </div>
+        <div class="invoice-row">
+          <span>ចំនួន / ទម្ងន់៖</span>
+          <span>${Number(order.item_count || 1)} pcs • ${Number(order.weight_kg)} kg</span>
+        </div>
+        <div class="invoice-row">
+          <span>ស្ថានភាព៖</span>
+          <span>${escapeHtml(order.status)}</span>
+        </div>
+        ${order.notes ? `
+          <div class="invoice-row">
+            <span>កំណត់សម្គាល់៖</span>
+            <span>${escapeHtml(order.notes)}</span>
+          </div>
+        ` : ''}
+        <div class="invoice-total">
+          <span>តម្លៃសរុប (Total)</span>
+          <span>$${Number(order.price).toFixed(2)}</span>
+        </div>
+        <div class="invoice-btns">
+          <button class="btn btn-secondary" onclick="closeInvoice()">បិទ</button>
+          <button class="btn btn-do-print" onclick="window.print()">🖨️ ព្រីនវិក្កយបត្រ</button>
+        </div>
+      `;
+      document.getElementById('invoiceModal').classList.remove('hidden');
+    }
+
+    function closeInvoice() {
+      document.getElementById('invoiceModal').classList.add('hidden');
     }
 
     document.getElementById('orderForm').addEventListener('submit', async (e) => {
