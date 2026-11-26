@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ប្រព័ន្ធគ្រប់គ្រងហាងបោកអ៊ុត - Laundry Dashboard</title>
+  <title>ប្រព័ន្ធគ្រប់គ្រងហាងបោកអ៊ុត (Laundry POS & Invoice)</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
-    * { box-sizing: border-box; }
     body {
-      margin: 0;
       font-family: 'Kantumruy Pro', sans-serif;
-      background: #f1f5f9;
+      background-color: #f4f7fa;
       color: #0f172a;
     }
     .hidden { display: none !important; }
@@ -25,646 +25,476 @@
     }
     .login-card {
       width: 100%;
-      max-width: 400px;
-      background: #fff;
-      border-radius: 16px;
-      padding: 26px;
+      max-width: 410px;
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 28px;
       box-shadow: 0 20px 45px rgba(15, 23, 42, 0.28);
     }
-    .login-card h1 { margin: 0 0 6px; font-size: 20px; color: #0f172a; }
-    .login-card p { margin: 0 0 18px; font-size: 13px; color: #64748b; }
 
-    header {
-      background: linear-gradient(135deg, #0f172a, #1e3a8a);
-      color: #fff;
-      padding: 14px 22px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-    .brand h1 { margin: 0; font-size: 18px; }
-    .brand p { margin: 2px 0 0; font-size: 11px; color: #bfdbfe; }
-    .nav-menu {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-    .nav-btn {
-      border: 1px solid rgba(255,255,255,0.22);
-      background: rgba(255,255,255,0.08);
-      color: #fff;
-      padding: 8px 14px;
-      border-radius: 9px;
-      font-family: 'Kantumruy Pro', sans-serif;
-      font-size: 13px;
+    .category-btn {
+      border-radius: 20px;
+      font-size: 0.85rem;
       font-weight: 600;
+      padding: 6px 15px;
+      transition: all 0.2s ease;
+    }
+
+    .laundry-type-card {
       cursor: pointer;
-      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
-    }
-    .nav-btn:hover {
-      transform: scale(0.97);
-      box-shadow: 0 0 0 2px rgba(147, 197, 253, 0.7);
-      background: rgba(255,255,255,0.18);
-    }
-    .nav-btn.active {
-      background: #2563eb;
-      border-color: #93c5fd;
-    }
-    .user-box {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 12px;
-    }
-    .btn-logout {
-      background: #ef4444;
-      color: #fff;
-      border: none;
-      padding: 7px 12px;
-      border-radius: 8px;
-      font-family: 'Kantumruy Pro', sans-serif;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .container {
-      max-width: 1280px;
-      margin: 20px auto;
-      padding: 0 16px;
-    }
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      margin-bottom: 18px;
-    }
-    @media (max-width: 850px) {
-      .stats-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-    .stat-box {
-      background: #fff;
-      border-radius: 12px;
-      padding: 14px 16px;
-      border: 1px solid #e2e8f0;
-      box-shadow: 0 2px 8px rgba(15,23,42,0.04);
-    }
-    .stat-label { font-size: 12px; color: #64748b; }
-    .stat-val { font-size: 20px; font-weight: 700; margin-top: 4px; color: #0f172a; }
-
-    .orders-layout {
-      display: grid;
-      grid-template-columns: 430px 1fr;
-      gap: 18px;
-      align-items: start;
-    }
-    @media (max-width: 980px) {
-      .orders-layout { grid-template-columns: 1fr; }
-    }
-
-    .card {
-      background: #fff;
-      border-radius: 14px;
-      padding: 18px;
-      border: 1px solid #e2e8f0;
-      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
-    }
-    .card h2 {
-      margin: 0 0 14px;
-      font-size: 16px;
-      color: #1e3a8a;
-    }
-    .form-group { margin-bottom: 11px; }
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-    .form-row-3 {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 8px;
-    }
-    label {
-      display: block;
-      font-size: 12px;
-      font-weight: 600;
-      margin-bottom: 4px;
-      color: #334155;
-    }
-    input, select, textarea {
-      width: 100%;
-      padding: 8px 10px;
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
-      font-family: 'Kantumruy Pro', sans-serif;
-      font-size: 13px;
-      background: #fff;
-    }
-
-    /* Multi-item rows */
-    .items-container {
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 2px solid transparent !important;
+      border-radius: 16px;
+      background-color: #ffffff;
+      box-shadow: 0 4px 16px rgba(149, 157, 165, 0.1);
+      padding: 14px 12px;
+      height: 120px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-    .item-box {
-      border: 1px solid #cbd5e1;
-      background: #f8fafc;
-      border-radius: 10px;
-      padding: 10px;
-    }
-    .item-box-head {
-      display: flex;
-      justify-content: space-between;
       align-items: center;
-      margin-bottom: 8px;
-      font-size: 12px;
-      font-weight: 700;
-      color: #1e3a8a;
-    }
-    .btn-add-item {
-      background: #dcfce7;
-      color: #166534;
-      width: 100%;
-      margin-bottom: 12px;
-    }
-    .btn-remove-item {
-      background: #fee2e2;
-      color: #b91c1c;
-      padding: 4px 8px;
-      font-size: 11px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      font-family: 'Kantumruy Pro', sans-serif;
-      font-weight: 600;
-    }
-    .total-banner {
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
-      border-radius: 10px;
-      padding: 10px 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-      font-size: 14px;
-      font-weight: 700;
-      color: #1d4ed8;
-    }
-
-    .btn {
-      border: none;
-      border-radius: 8px;
-      padding: 9px 14px;
-      font-family: 'Kantumruy Pro', sans-serif;
-      font-weight: 600;
-      font-size: 13px;
-      cursor: pointer;
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-    }
-    .btn:hover {
-      transform: scale(0.98);
-      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.35);
-    }
-    .btn-primary {
-      background: #1d4ed8;
-      color: #fff;
-      width: 100%;
-    }
-    .btn-print {
-      background: #dbeafe;
-      color: #1e40af;
-      padding: 6px 10px;
-      font-size: 12px;
-    }
-    .btn-danger {
-      background: #fee2e2;
-      color: #b91c1c;
-      padding: 6px 10px;
-      font-size: 12px;
-    }
-
-    .preview-box {
-      margin-top: 8px;
-      border: 1px dashed #94a3b8;
-      border-radius: 10px;
-      padding: 8px;
+      justify-content: center;
       text-align: center;
-      background: #f8fafc;
     }
-    .preview-box img {
-      max-height: 150px;
-      max-width: 100%;
-      border-radius: 8px;
-      object-fit: cover;
+    .laundry-type-card:hover {
+      transform: translateY(-4px) scale(0.98);
+      border-color: #0d6efd !important;
+      box-shadow: 0 0 18px rgba(13, 110, 253, 0.35), 0 8px 20px rgba(0, 0, 0, 0.1);
     }
 
-    .toolbar {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 14px;
-      flex-wrap: wrap;
-    }
-    .toolbar input, .toolbar select {
-      flex: 1;
-      min-width: 170px;
-    }
-
-    .cards-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(275px, 1fr));
-      gap: 14px;
-    }
-    .order-card {
+    .order-photo-card {
       border: 1px solid #e2e8f0;
-      border-radius: 12px;
-      overflow: hidden;
+      border-radius: 14px;
       background: #fff;
+      overflow: hidden;
+      box-shadow: 0 3px 12px rgba(15, 23, 42, 0.05);
+      height: 100%;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      box-shadow: 0 2px 10px rgba(15,23,42,0.04);
     }
-    .order-img-wrap {
-      height: 150px;
+    .order-photo-box {
+      height: 140px;
       background: #e2e8f0;
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
     }
-    .order-img-wrap img {
+    .order-photo-box img {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
-    .order-img-placeholder {
-      color: #475569;
-      font-size: 12px;
-      text-align: center;
-      padding: 10px;
-    }
-    .order-body { padding: 12px; }
-    .order-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 6px;
-    }
-    .order-code { font-weight: 700; color: #1d4ed8; font-size: 13px; }
-    .badge {
-      display: inline-block;
-      padding: 3px 8px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 700;
-    }
-    .st-Pending { background: #fef3c7; color: #92400e; }
-    .st-Washing { background: #dbeafe; color: #1e40af; }
-    .st-Ready { background: #dcfce7; color: #166534; }
-    .st-PickedUp { background: #e2e8f0; color: #334155; }
 
-    .item-lines-list {
-      margin: 8px 0;
-      padding: 8px;
-      background: #f8fafc;
-      border-radius: 8px;
-      border: 1px solid #e2e8f0;
-      font-size: 12px;
+    @media (min-width: 992px) {
+      .cart-container {
+        position: sticky;
+        top: 16px;
+      }
     }
-    .item-line-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 6px;
-      padding: 3px 0;
-      border-bottom: 1px dashed #e2e8f0;
-    }
-    .item-line-row:last-child { border-bottom: none; }
-
-    .order-meta { font-size: 12px; color: #475569; line-height: 1.5; }
-    .order-footer {
-      padding: 10px 12px;
-      border-top: 1px solid #f1f5f9;
-      background: #f8fafc;
-      display: flex;
-      gap: 6px;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-    }
-    .footer-actions {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-    }
-
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th, td { padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left; }
-    th { background: #f8fafc; color: #334155; }
-    .err-msg { color: #b91c1c; font-size: 12px; margin-top: 8px; }
-    .ok-msg { color: #15803d; font-size: 12px; margin-top: 8px; }
-
-    /* Invoice Modal & Print Styles */
-    .invoice-modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.55);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      z-index: 999;
-    }
-    .invoice-sheet {
-      background: #fff;
-      width: 100%;
-      max-width: 480px;
-      border-radius: 14px;
-      padding: 22px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
-    }
-    .invoice-header {
-      text-align: center;
-      border-bottom: 1px dashed #cbd5e1;
-      padding-bottom: 12px;
-      margin-bottom: 14px;
-    }
-    .invoice-header h3 { margin: 0; font-size: 18px; color: #0f172a; }
-    .invoice-header p { margin: 4px 0 0; font-size: 12px; color: #64748b; }
-    .invoice-row {
-      display: flex;
-      justify-content: space-between;
-      font-size: 13px;
-      margin-bottom: 6px;
-      gap: 10px;
-    }
-    .invoice-items-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 10px 0;
-      font-size: 12px;
-    }
-    .invoice-items-table th, .invoice-items-table td {
-      border-bottom: 1px solid #e2e8f0;
-      padding: 6px 4px;
-    }
-    .invoice-total {
-      border-top: 1px dashed #cbd5e1;
-      padding-top: 10px;
-      margin-top: 10px;
-      display: flex;
-      justify-content: space-between;
-      font-size: 16px;
-      font-weight: 700;
-      color: #1d4ed8;
-    }
-    .invoice-btns {
-      display: flex;
-      gap: 10px;
-      margin-top: 16px;
-    }
-    .btn-secondary {
-      background: #e2e8f0;
-      color: #0f172a;
-      flex: 1;
-    }
-    .btn-do-print {
-      background: #1d4ed8;
-      color: #fff;
-      flex: 1;
+    .cart-items-box {
+      max-height: 230px;
+      overflow-y: auto;
     }
 
     @media print {
       body * { visibility: hidden !important; }
-      #invoiceModal, #invoiceModal * { visibility: visible !important; }
-      #invoiceModal {
-        position: static !important;
-        background: none !important;
-        padding: 0 !important;
+      #printableInvoice, #printableInvoice * { visibility: visible !important; }
+      #printableInvoice {
+        position: fixed !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 80mm !important;
+        max-width: 80mm !important;
+        margin: 0 !important;
+        padding: 4mm !important;
+        font-size: 12px !important;
+        background: #ffffff !important;
       }
-      .invoice-sheet {
-        box-shadow: none !important;
-        max-width: 100% !important;
-        padding: 0 !important;
-      }
-      .invoice-btns { display: none !important; }
+      .modal-footer, .no-print { display: none !important; }
+      @page { size: auto; margin: 4mm; }
     }
   </style>
 </head>
 <body>
 
+  <!-- LOGIN VIEW -->
   <div id="loginView" class="login-wrap">
     <div class="login-card">
-      <h1>🧺 ចូលប្រព័ន្ធហាងបោកអ៊ុត</h1>
-      <p>សូម Login ដើម្បីចូល Dashboard, គ្រប់គ្រងអាវ/ខោ/កម្រាលពូក និងអ្នកប្រើប្រាស់</p>
+      <h4 class="fw-bold mb-1"><i class="fa-solid fa-jug-detergent text-primary me-2"></i> Laundry POS Login</h4>
+      <p class="text-muted small mb-3">ចូលប្រព័ន្ធគ្រប់គ្រងហាងបោកអ៊ុត (PostgreSQL Cloud API)</p>
       <form id="loginForm">
-        <div class="form-group">
-          <label>ឈ្មោះគណនី (Username)</label>
-          <input type="text" id="loginUsername" required placeholder="admin" />
+        <div class="mb-3">
+          <label class="form-label small fw-bold">Username</label>
+          <input type="text" id="loginUsername" class="form-control" required placeholder="admin" />
         </div>
-        <div class="form-group">
-          <label>ពាក្យសម្ងាត់ (Password)</label>
-          <input type="password" id="loginPassword" required placeholder="••••••••" />
+        <div class="mb-3">
+          <label class="form-label small fw-bold">Password</label>
+          <input type="password" id="loginPassword" class="form-control" required placeholder="••••••••" />
         </div>
-        <button type="submit" class="btn btn-primary">ចូលប្រើប្រាស់ (Login)</button>
-        <div id="loginError" class="err-msg"></div>
+        <button type="submit" class="btn btn-primary w-100 fw-bold py-2">
+          <i class="fa-solid fa-right-to-bracket me-1"></i> ចូលប្រើប្រាស់ (Login)
+        </button>
+        <div id="loginError" class="text-danger small mt-2 fw-bold"></div>
       </form>
     </div>
   </div>
 
+  <!-- MAIN APP VIEW -->
   <div id="appView" class="hidden">
-    <header>
-      <div class="brand">
-        <h1>🧺 ប្រព័ន្ធគ្រប់គ្រងហាងបោកអ៊ុត</h1>
-        <p id="dbBadge">កំពុងភ្ជាប់ Database...</p>
-      </div>
-
-      <nav class="nav-menu">
-        <button class="nav-btn active" id="tabOrders" onclick="switchMenu('orders')">📋 វិក្កយបត្រ & កាតរូបភាព</button>
-        <button class="nav-btn hidden" id="tabUsers" onclick="switchMenu('users')">👥 បង្កើត & គ្រប់គ្រង User</button>
-      </nav>
-
-      <div class="user-box">
-        <span id="currentUserInfo"></span>
-        <button class="btn-logout" onclick="logout()">ចាកចេញ</button>
-      </div>
-    </header>
-
-    <div class="container">
-      <div class="stats-grid">
-        <div class="stat-box">
-          <div class="stat-label">វិក្កយបត្រសរុប</div>
-          <div class="stat-val" id="statTotal">0</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-label">កំពុងបោក / រង់ចាំ</div>
-          <div class="stat-val" id="statActive">0</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-label">រួចរាល់ (Ready)</div>
-          <div class="stat-val" id="statReady">0</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-label">ចំណូលសរុប ($)</div>
-          <div class="stat-val" id="statRevenue">$0.00</div>
+    <nav class="navbar navbar-dark bg-dark px-3 py-2 shadow-sm">
+      <div class="container-fluid d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <span class="navbar-brand fw-bold fs-6 mb-0">
+          <i class="fa-solid fa-jug-detergent me-2 text-primary"></i> Laundry POS & Invoice
+        </span>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <span id="dbStatusBadge" class="badge bg-success">DB Connected</span>
+          <button class="btn btn-primary btn-sm fw-bold" id="navPosBtn" onclick="switchView('pos')">
+            <i class="fa-solid fa-cash-register me-1"></i> វិក្កយបត្រ & កន្រ្តក
+          </button>
+          <button class="btn btn-outline-light btn-sm fw-bold" id="navCardsBtn" onclick="switchView('cards')">
+            <i class="fa-solid fa-images me-1"></i> កាតរូបភាពទំនិញ
+          </button>
+          <button class="btn btn-outline-warning btn-sm fw-bold hidden" id="navUsersBtn" onclick="switchView('users')">
+            <i class="fa-solid fa-users-gear me-1"></i> បង្កើត User
+          </button>
+          <span id="cashierDisplay" class="text-white small fw-bold bg-secondary px-3 py-1 rounded-pill"></span>
+          <button class="btn btn-danger btn-sm fw-bold" onclick="logout()">
+            <i class="fa-solid fa-right-from-bracket"></i> ចាកចេញ
+          </button>
         </div>
       </div>
+    </nav>
 
-      <div id="sectionOrders" class="orders-layout">
-        <div class="card">
-          <h2>+ បង្កើតវិក្កយបត្រថ្មី (ច្រើនមុខទំនិញ)</h2>
-          <form id="orderForm">
-            <div class="form-row">
-              <div class="form-group">
-                <label>ឈ្មោះអតិថិជន *</label>
-                <input type="text" id="customer_name" required placeholder="ឧ. វណ្ណា" />
-              </div>
-              <div class="form-group">
-                <label>លេខទូរស័ព្ទ *</label>
-                <input type="text" id="phone" required placeholder="012 345 678" />
-              </div>
+    <div class="container-fluid py-3 px-2 px-md-3">
+
+      <!-- VIEW 1: POS MENU + MULTI-ITEM CART INVOICE -->
+      <div id="viewPos" class="row g-3">
+        <div class="col-12 col-md-7 col-lg-8">
+          <div class="mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+              <h4 class="fw-bold text-dark fs-5 mb-0">
+                <i class="fa-solid fa-shirt me-2 text-primary"></i> ប្រភេទអាវ / ខោ / កម្រាលពូក / ផ្សេងៗ
+              </h4>
+              <p class="text-muted small mb-0">ចុចលើប្រភេទណាមួយ ដើម្បីបន្ថែមចូលវិក្កយបត្រ (អាចដាក់ច្រើនមុខក្នុង ១ វិក្កយបត្រ)</p>
             </div>
-
-            <label>បញ្ជីមុខទំនិញក្នុងវិក្កយបត្រ (អាវ, ខោ, កម្រាលពូក, ផ្សេងៗ) *</label>
-            <div id="itemsContainer" class="items-container"></div>
-            <button type="button" class="btn btn-add-item" onclick="addItemRow()">+ បន្ថែមមុខទំនិញ (អាវ / ខោ / កម្រាលពូក...)</button>
-
-            <div class="total-banner">
-              <span>តម្លៃសរុបវិក្កយបត្រ (Total)</span>
-              <span id="formTotalPrice">$0.00</span>
+            <div class="bg-white px-3 py-1 rounded-3 shadow-sm border small">
+              <span class="fw-bold text-secondary">Rate:</span>
+              <span class="text-primary fw-bold">1$ =
+                <input type="number" id="exchangeRate" value="4100"
+                  class="form-control form-control-sm d-inline-block text-center fw-bold text-primary p-0 border-0 bg-transparent"
+                  style="width: 60px;" onchange="renderCart()" /> Riel
+              </span>
             </div>
-
-            <div class="form-group">
-              <label>រូបភាពទំនិញ (សម្រាប់កាតរូបភាព)</label>
-              <input type="file" id="imageFile" accept="image/*" />
-              <div id="imagePreviewBox" class="preview-box hidden">
-                <img id="imagePreviewImg" alt="Preview" />
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label>កំណត់សម្គាល់</label>
-              <textarea id="notes" rows="2" placeholder="ពណ៌សាច់ក្រណាត់ កម្រាលពូកទំហំធំ..."></textarea>
-            </div>
-
-            <button type="submit" class="btn btn-primary">រក្សាទុកវិក្កយបត្រ</button>
-            <div id="orderMsg" class="ok-msg"></div>
-            <div id="orderErr" class="err-msg"></div>
-          </form>
-        </div>
-
-        <div class="card">
-          <h2>🖼️ កាតរូបភាព និងបញ្ជីវិក្កយបត្រ</h2>
-          <div class="toolbar">
-            <input type="text" id="searchInput" placeholder="ស្វែងរកលេខកូដ, ឈ្មោះ, ទូរស័ព្ទ..." />
-            <select id="filterCategory">
-              <option value="ALL">Category ទាំងអស់</option>
-            </select>
-            <select id="filterStatus">
-              <option value="ALL">ស្ថានភាពទាំងអស់</option>
-              <option value="Pending">Pending</option>
-              <option value="Washing">Washing</option>
-              <option value="Ready">Ready</option>
-              <option value="Picked Up">Picked Up</option>
-            </select>
           </div>
 
-          <div id="ordersCardsGrid" class="cards-grid">
-            <div style="grid-column:1/-1;text-align:center;color:#64748b;padding:24px;">កំពុងទាញទិន្នន័យ...</div>
+          <div class="d-flex flex-wrap gap-2 mb-3" id="categoryFilterBar"></div>
+          <div class="row g-2" id="laundryTypesGrid"></div>
+        </div>
+
+        <div class="col-12 col-md-5 col-lg-4">
+          <div class="card shadow-sm border-0 rounded-4 p-3 cart-container bg-white">
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <label class="form-label small fw-bold text-secondary mb-1">ឈ្មោះអតិថិជន *</label>
+                <input type="text" id="customerNameInput" class="form-control form-control-sm fw-bold" placeholder="ឧ. សុខា" />
+              </div>
+              <div class="col-6">
+                <label class="form-label small fw-bold text-secondary mb-1">លេខទូរស័ព្ទ *</label>
+                <input type="text" id="customerPhoneInput" class="form-control form-control-sm fw-bold" placeholder="012 345 678" />
+              </div>
+            </div>
+
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <label class="form-label small fw-bold text-secondary mb-1">សេវាកម្មបោកអ៊ុត</label>
+                <select id="defaultServiceSelect" class="form-select form-select-sm" onchange="applyServiceToAllItems()">
+                  <option value="បោក និងបត់ (Wash & Fold)">បោក និងបត់ (Wash & Fold)</option>
+                  <option value="បោក និងអ៊ុត (Wash & Iron)">បោក និងអ៊ុត (Wash & Iron)</option>
+                  <option value="អ៊ុតសុទ្ធ (Iron Only)">អ៊ុតសុទ្ធ (Iron Only)</option>
+                  <option value="បោកស្ងួត (Dry Clean)">បោកស្ងួត (Dry Clean)</option>
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label small fw-bold text-secondary mb-1">រូបភាពទំនិញ (កាត)</label>
+                <input type="file" id="orderImageInput" class="form-control form-control-sm" accept="image/*" />
+              </div>
+            </div>
+
+            <div id="orderImagePreviewWrap" class="mb-2 text-center border rounded-3 p-1 bg-light hidden">
+              <img id="orderImagePreview" style="max-height: 95px; border-radius: 8px;" alt="Preview" />
+            </div>
+
+            <h5 class="fw-bold text-dark mb-2 fs-6">
+              <i class="fa-solid fa-receipt me-2 text-primary"></i> មុខទំនិញក្នុងវិក្កយបត្រ / Invoice Items
+            </h5>
+
+            <div class="cart-items-box border rounded-3 p-1 mb-2 bg-light">
+              <table class="table table-sm align-middle mb-0" style="font-size: 0.85rem;">
+                <thead class="table-light">
+                  <tr>
+                    <th>ប្រភេទ</th>
+                    <th class="text-center">ចំនួន</th>
+                    <th class="text-end">តម្លៃ</th>
+                    <th class="text-end">សរុប</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="cartTableBody">
+                  <tr><td colspan="5" class="text-center text-muted py-3 small">មិនទាន់មានមុខទំនិញ</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="mb-2">
+              <input type="text" id="orderNotesInput" class="form-control form-control-sm" placeholder="កំណត់សម្គាល់ (ឧ. ខោអាវពណ៌ស បំបែកបោក...)" />
+            </div>
+
+            <div class="border-top pt-2">
+              <div class="d-flex justify-content-between small mb-1">
+                <span class="text-muted">ទឹកប្រាក់រួម / Subtotal:</span>
+                <span id="subTotalDisplay" class="fw-bold">$0.00</span>
+              </div>
+
+              <div class="d-flex justify-content-between align-items-center small mb-1">
+                <span class="text-muted">បញ្ចុះតម្លៃ / Discount (%):</span>
+                <input type="number" id="discountPercent" value="0" min="0" max="100"
+                  class="form-control form-control-sm text-end w-25" oninput="renderCart()" />
+              </div>
+
+              <div class="d-flex justify-content-between align-items-center small mb-1">
+                <span class="text-muted">អាករ VAT (10%):</span>
+                <div class="form-check form-switch m-0">
+                  <input class="form-check-input" type="checkbox" id="vatToggle" onchange="renderCart()" />
+                </div>
+              </div>
+
+              <div class="bg-light p-2 rounded-3 mb-2 border">
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="fw-bold text-dark small">ទឹកប្រាក់សរុប / Grand Total:</span>
+                  <div class="text-end">
+                    <span id="grandTotalUSD" class="fw-bold fs-5 text-success">$0.00</span><br />
+                    <span id="grandTotalRiel" class="text-muted small fw-bold">0 រៀល</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row g-2 mb-2">
+                <div class="col-6">
+                  <label class="form-label small fw-bold mb-1">ទម្រង់បង់ប្រាក់:</label>
+                  <select class="form-select form-select-sm" id="paymentMethod">
+                    <option value="Cash">សាច់ប្រាក់ (Cash)</option>
+                    <option value="KHQR">វីង/បាគង (KHQR)</option>
+                    <option value="Credit Card">កាត (Card)</option>
+                  </select>
+                </div>
+                <div class="col-6">
+                  <label class="form-label small fw-bold mb-1">បានទទួលលុយ ($):</label>
+                  <input type="number" id="amountReceived" class="form-control form-control-sm text-end fw-bold text-primary"
+                    placeholder="0.00" oninput="calculateChange()" />
+                </div>
+              </div>
+
+              <div class="bg-success-subtle p-2 rounded-3 mb-2 d-flex justify-content-between align-items-center border border-success-subtle">
+                <span class="fw-bold text-success small">ប្រាក់អាប់សងវិញ / Change:</span>
+                <div class="text-end">
+                  <span id="changeUSD" class="fw-bold text-success">$0.00</span>
+                  <span id="changeRiel" class="text-success small fw-bold d-block">(0 រៀល)</span>
+                </div>
+              </div>
+
+              <button class="btn btn-outline-dark w-100 py-2 fw-bold small shadow-sm rounded-3 mb-2" onclick="previewCurrentCartInvoice()">
+                <i class="fa-solid fa-print me-1"></i> បង្ហាញវិក្កយបត្រដើម្បី Print (Preview Invoice)
+              </button>
+
+              <button class="btn btn-success w-100 py-2 fw-bold shadow-sm rounded-3" onclick="saveOrderAndPrint()">
+                <i class="fa-solid fa-check-circle me-1"></i> រក្សាទុកវិក្កយបត្រ & Print
+              </button>
+              <div id="posFeedback" class="small fw-bold mt-2 text-center"></div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div id="sectionUsers" class="orders-layout hidden">
-        <div class="card">
-          <h2>+ បង្កើតគណនី User ថ្មី</h2>
-          <form id="createUserForm">
-            <div class="form-group">
-              <label>Username *</label>
-              <input type="text" id="newUsername" required placeholder="staff01" />
+      <!-- VIEW 2: IMAGE CARDS & ORDERS LIST -->
+      <div id="viewCards" class="hidden">
+        <div class="card border-0 shadow-sm rounded-4 p-3 mb-3">
+          <div class="row g-2 align-items-center">
+            <div class="col-12 col-md-4">
+              <input type="text" id="searchOrdersInput" class="form-control form-control-sm"
+                placeholder="ស្វែងរកលេខកូដ, ឈ្មោះ, លេខទូរស័ព្ទ..." oninput="loadOrders()" />
             </div>
-            <div class="form-group">
-              <label>ឈ្មោះពេញ *</label>
-              <input type="text" id="newFullName" required placeholder="បុគ្គលិកទទួលទំនិញ" />
-            </div>
-            <div class="form-group">
-              <label>Password (យ៉ាងតិច ៦ តួអក្សរ) *</label>
-              <input type="password" id="newPassword" minlength="6" required placeholder="••••••••" />
-            </div>
-            <div class="form-group">
-              <label>តួនាទី (Role)</label>
-              <select id="newRole">
-                <option value="staff">Staff (បុគ្គលិក)</option>
-                <option value="admin">Admin (អ្នកគ្រប់គ្រង)</option>
+            <div class="col-6 col-md-4">
+              <select id="filterCategorySelect" class="form-select form-select-sm" onchange="loadOrders()">
+                <option value="ALL">Category អាវ/ខោ/កម្រាលពូក ទាំងអស់</option>
               </select>
             </div>
-            <button type="submit" class="btn btn-primary">បង្កើត User</button>
-            <div id="userMsg" class="ok-msg"></div>
-            <div id="userErr" class="err-msg"></div>
-          </form>
+            <div class="col-6 col-md-4">
+              <select id="filterStatusSelect" class="form-select form-select-sm" onchange="loadOrders()">
+                <option value="ALL">ស្ថានភាពទាំងអស់</option>
+                <option value="Pending">Pending</option>
+                <option value="Washing">Washing</option>
+                <option value="Ready">Ready</option>
+                <option value="Picked Up">Picked Up</option>
+              </select>
+            </div>
+          </div>
         </div>
+        <div class="row g-3" id="orderCardsGrid"></div>
+      </div>
 
-        <div class="card">
-          <h2>👥 បញ្ជីអ្នកប្រើប្រាស់ប្រព័ន្ធ</h2>
-          <div style="overflow-x:auto;">
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Username</th>
-                  <th>ឈ្មោះពេញ</th>
-                  <th>Role</th>
-                  <th>កាលបរិច្ឆេទ (KH)</th>
+      <!-- VIEW 3: CREATE USER (ADMIN) -->
+      <div id="viewUsers" class="hidden row g-3">
+        <div class="col-12 col-md-4">
+          <div class="card border-0 shadow-sm rounded-4 p-3">
+            <h5 class="fw-bold text-primary mb-3"><i class="fa-solid fa-user-plus me-1"></i> បង្កើតគណនី User ថ្មី</h5>
+            <form id="createUserForm">
+              <div class="mb-2">
+                <label class="form-label small fw-bold">Username *</label>
+                <input type="text" id="newUsername" class="form-control form-control-sm" required placeholder="staff01" />
+              </div>
+              <div class="mb-2">
+                <label class="form-label small fw-bold">ឈ្មោះពេញ *</label>
+                <input type="text" id="newFullName" class="form-control form-control-sm" required placeholder="បុគ្គលិកទទួលទំនិញ" />
+              </div>
+              <div class="mb-2">
+                <label class="form-label small fw-bold">Password (≥ 6 តួអក្សរ) *</label>
+                <input type="password" id="newPassword" class="form-control form-control-sm" minlength="6" required />
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-bold">Role</label>
+                <select id="newRole" class="form-select form-select-sm">
+                  <option value="staff">Staff (បុគ្គលិក)</option>
+                  <option value="admin">Admin (អ្នកគ្រប់គ្រង)</option>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-primary w-100 fw-bold">បង្កើត User</button>
+              <div id="userFormMsg" class="small fw-bold mt-2"></div>
+            </form>
+          </div>
+        </div>
+        <div class="col-12 col-md-8">
+          <div class="card border-0 shadow-sm rounded-4 p-3">
+            <h5 class="fw-bold mb-3"><i class="fa-solid fa-users me-1"></i> បញ្ជីអ្នកប្រើប្រាស់</h5>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>ឈ្មោះពេញ</th>
+                    <th>Role</th>
+                    <th>កាលបរិច្ឆេទ</th>
+                  </tr>
+                </thead>
+                <tbody id="usersTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PRINTABLE INVOICE MODAL -->
+  <div class="modal fade" id="receiptModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow rounded-4">
+        <div class="modal-body p-4" id="printableInvoice">
+          <div class="text-center mb-3">
+            <h4 class="fw-bold mb-1" style="font-size: 1.2rem;">🧺 LAUNDRY & IRON SHOP</h4>
+            <div class="text-muted small">វិក្កយបត្របោកអ៊ុត / LAUNDRY INVOICE</div>
+            <span id="receiptCodeBadge" class="badge bg-dark mt-1">LND-0001</span>
+            <hr class="my-2" />
+          </div>
+          <div class="d-flex justify-content-between small mb-1">
+            <span>អតិថិជន: <strong id="recCustomer"></strong></span>
+            <span id="recDate"></span>
+          </div>
+          <div class="d-flex justify-content-between small mb-2">
+            <span>ទូរស័ព្ទ: <strong id="recPhone"></strong></span>
+            <span>បង់ប្រាក់: <strong id="recPayment"></strong></span>
+          </div>
+          <div class="table-responsive mb-2">
+            <table class="table table-sm align-middle mb-0">
+              <thead class="table-light">
+                <tr class="small">
+                  <th>មុខទំនិញ</th>
+                  <th class="text-center">ចំនួន</th>
+                  <th class="text-end">តម្លៃ</th>
+                  <th class="text-end">សរុប</th>
                 </tr>
               </thead>
-              <tbody id="usersTableBody"></tbody>
+              <tbody id="recItemsBody"></tbody>
             </table>
           </div>
+          <div class="border-top pt-2 small">
+            <div class="d-flex justify-content-between">
+              <span>ទឹកប្រាក់រួម (Subtotal):</span>
+              <span id="recSubtotal" class="fw-bold">$0.00</span>
+            </div>
+            <div class="d-flex justify-content-between">
+              <span>បញ្ចុះតម្លៃ (Discount):</span>
+              <span id="recDiscount">$0.00</span>
+            </div>
+            <div class="d-flex justify-content-between">
+              <span>អាករ VAT (10%):</span>
+              <span id="recVat">$0.00</span>
+            </div>
+            <div class="d-flex justify-content-between fw-bold fs-6 border-top mt-2 pt-2">
+              <span>សរុបទាំងអស់ (Grand Total):</span>
+              <div class="text-end">
+                <span class="text-success" id="recGrandTotal">$0.00</span><br />
+                <span class="text-dark small" id="recGrandTotalRiel">0 រៀល</span>
+              </div>
+            </div>
+            <div class="d-flex justify-content-between text-muted mt-1">
+              <span>ប្រាក់ទទួលបាន (Received):</span>
+              <span id="recReceived" class="fw-bold">$0.00</span>
+            </div>
+            <div class="d-flex justify-content-between text-success fw-bold">
+              <span>ប្រាក់អាប់សងវិញ (Change):</span>
+              <span id="recChange">$0.00</span>
+            </div>
+          </div>
+          <div class="text-center mt-3 text-muted small">
+            <p class="mb-0">🙏 សូមអរគុណ! Thank you for your business.</p>
+          </div>
+        </div>
+        <div class="modal-footer no-print">
+          <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">បិទ</button>
+          <button type="button" class="btn btn-primary fw-bold px-4" onclick="window.print()">
+            <i class="fa-solid fa-print me-1"></i> បោះពុម្ព (Print)
+          </button>
         </div>
       </div>
     </div>
   </div>
 
-  <div id="invoiceModal" class="invoice-modal hidden" onclick="if(event.target===this) closeInvoice()">
-    <div class="invoice-sheet" id="invoiceSheet"></div>
-  </div>
-
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     const API = window.location.origin;
     let currentUser = null;
+    let cart = [];
+    let ordersCache = [];
+    let activeGroupFilter = 'All';
     let selectedImageBase64 = null;
-    let cachedOrders = [];
-    let categoriesList = [
-      'អាវយឺត (T-Shirt)',
-      'អាវសាច់ក្រណាត់ / អាវធំ (Shirt & Jacket)',
-      'ខោជើងវែង (Long Pants)',
-      'ខោខូវប៊យ (Jeans)',
-      'ខោខ្លី (Shorts)',
-      'កម្រាលពូក / ភួយ (Bed Sheet & Blanket)',
-      'សំពត់ / ឈុត (Skirt & Suit)',
-      'ផ្សេងៗ (Others)'
-    ];
+    let finalCalculatedTotal = 0;
+    let receiptModalObj = null;
 
-    const SERVICE_OPTIONS = [
-      'បោក និងបត់ (Wash & Fold)',
-      'បោក និងអ៊ុត (Wash & Iron)',
-      'អ៊ុតសុទ្ធ (Iron Only)',
-      'បោកស្ងួត (Dry Clean)'
+    const LAUNDRY_CATALOG = [
+      { id: 1, name: 'អាវយឺត (T-Shirt)', group: 'អាវ (Shirts)', price: 1.00, icon: 'fa-shirt', color: 'text-primary' },
+      { id: 2, name: 'អាវសាច់ក្រណាត់ (Shirt)', group: 'អាវ (Shirts)', price: 1.50, icon: 'fa-user-tie', color: 'text-info' },
+      { id: 3, name: 'អាវធំ / អាវក្រៅ (Jacket)', group: 'អាវ (Shirts)', price: 2.50, icon: 'fa-vest', color: 'text-dark' },
+      { id: 4, name: 'ខោជើងវែង (Long Pants)', group: 'ខោ (Pants)', price: 1.50, icon: 'fa-person', color: 'text-success' },
+      { id: 5, name: 'ខោខូវប៊យ (Jeans)', group: 'ខោ (Pants)', price: 2.00, icon: 'fa-socks', color: 'text-primary' },
+      { id: 6, name: 'ខោខ្លី (Shorts)', group: 'ខោ (Pants)', price: 1.00, icon: 'fa-person-running', color: 'text-warning' },
+      { id: 7, name: 'កម្រាលពូក (Bed Sheet)', group: 'កម្រាលពូក & ភួយ', price: 3.50, icon: 'fa-bed', color: 'text-danger' },
+      { id: 8, name: 'ភួយ / ផួយក្រាស់ (Blanket)', group: 'កម្រាលពូក & ភួយ', price: 4.50, icon: 'fa-mattress-pillow', color: 'text-secondary' },
+      { id: 9, name: 'សំពត់ / ឈុត (Skirt & Suit)', group: 'ផ្សេងៗ (Others)', price: 3.00, icon: 'fa-person-dress', color: 'text-purple' },
+      { id: 10, name: 'ទំនិញផ្សេងៗ (Other Item)', group: 'ផ្សេងៗ (Others)', price: 1.50, icon: 'fa-box-open', color: 'text-muted' }
     ];
-
-    const STATUS_CLASS_MAP = {
-      'Pending': 'st-Pending',
-      'Washing': 'st-Washing',
-      'Ready': 'st-Ready',
-      'Picked Up': 'st-PickedUp'
-    };
 
     function escapeHtml(str) {
       return String(str || '')
@@ -674,96 +504,19 @@
         .replace(/"/g, '"');
     }
 
-    function addItemRow(defaults) {
-      const d = defaults || {};
-      const container = document.getElementById('itemsContainer');
-      const index = container.children.length + 1;
-      const box = document.createElement('div');
-      box.className = 'item-box';
-
-      const catOptions = categoriesList.map(function (c) {
-        const sel = (d.category || categoriesList[0]) === c ? ' selected' : '';
-        return '<option value="' + escapeHtml(c) + '"' + sel + '>' + escapeHtml(c) + '</option>';
-      }).join('');
-
-      const srvOptions = SERVICE_OPTIONS.map(function (s) {
-        const sel = (d.service_type || SERVICE_OPTIONS[0]) === s ? ' selected' : '';
-        return '<option value="' + escapeHtml(s) + '"' + sel + '>' + escapeHtml(s) + '</option>';
-      }).join('');
-
-      box.innerHTML =
-        '<div class="item-box-head">' +
-          '<span class="item-title">មុខទំនិញ #' + index + '</span>' +
-          '<button type="button" class="btn-remove-item" onclick="removeItemRow(this)">លុបមុខនេះ</button>' +
-        '</div>' +
-        '<div class="form-row">' +
-          '<div class="form-group">' +
-            '<label>ប្រភេទ (អាវ/ខោ/កម្រាលពូក)</label>' +
-            '<select class="item-category">' + catOptions + '</select>' +
-          '</div>' +
-          '<div class="form-group">' +
-            '<label>សេវាកម្ម</label>' +
-            '<select class="item-service">' + srvOptions + '</select>' +
-          '</div>' +
-        '</div>' +
-        '<div class="form-row-3">' +
-          '<div class="form-group" style="margin-bottom:0;">' +
-            '<label>ចំនួន (PCS)</label>' +
-            '<input type="number" min="1" class="item-count" value="' + (d.item_count || 1) + '" oninput="recalcTotal()" required />' +
-          '</div>' +
-          '<div class="form-group" style="margin-bottom:0;">' +
-            '<label>ទម្ងន់ (Kg)</label>' +
-            '<input type="number" step="0.1" min="0" class="item-weight" value="' + (d.weight_kg !== undefined ? d.weight_kg : 1) + '" required />' +
-          '</div>' +
-          '<div class="form-group" style="margin-bottom:0;">' +
-            '<label>តម្លៃ ($)</label>' +
-            '<input type="number" step="0.01" min="0" class="item-price" value="' + (d.price !== undefined ? d.price : 2) + '" oninput="recalcTotal()" required />' +
-          '</div>' +
-        '</div>';
-
-      container.appendChild(box);
-      refreshItemNumbers();
-      recalcTotal();
-    }
-
-    function removeItemRow(btn) {
-      const container = document.getElementById('itemsContainer');
-      if (container.children.length <= 1) {
-        alert('វិក្កយបត្រត្រូវមានយ៉ាងហោចណាស់ ១ មុខទំនិញ');
-        return;
-      }
-      btn.closest('.item-box').remove();
-      refreshItemNumbers();
-      recalcTotal();
-    }
-
-    function refreshItemNumbers() {
-      const boxes = document.querySelectorAll('#itemsContainer .item-box');
-      boxes.forEach(function (box, idx) {
-        const title = box.querySelector('.item-title');
-        if (title) title.textContent = 'មុខទំនិញ #' + (idx + 1);
-      });
-    }
-
-    function recalcTotal() {
-      let sum = 0;
-      document.querySelectorAll('#itemsContainer .item-price').forEach(function (inp) {
-        sum += Number(inp.value || 0);
-      });
-      document.getElementById('formTotalPrice').textContent = '$' + sum.toFixed(2);
-    }
-
-    function resetItemsForm() {
-      document.getElementById('itemsContainer').innerHTML = '';
-      addItemRow({ category: categoriesList[0], item_count: 1, weight_kg: 1, price: 2 });
-    }
+    document.addEventListener('DOMContentLoaded', async () => {
+      receiptModalObj = new bootstrap.Modal(document.getElementById('receiptModal'));
+      renderGroupButtons();
+      renderCatalogCards();
+      await checkSession();
+    });
 
     async function checkSession() {
       const res = await fetch(API + '/api/auth/me');
       const data = await res.json();
       if (data.user) {
         currentUser = data.user;
-        showApp();
+        enterApp();
       } else {
         showLogin();
       }
@@ -774,34 +527,39 @@
       document.getElementById('appView').classList.add('hidden');
     }
 
-    function showApp() {
+    function enterApp() {
       document.getElementById('loginView').classList.add('hidden');
       document.getElementById('appView').classList.remove('hidden');
-      document.getElementById('currentUserInfo').textContent =
-        currentUser.full_name + ' (' + currentUser.role + ')';
+      document.getElementById('cashierDisplay').textContent = `${currentUser.full_name} (${currentUser.role})`;
 
       if (currentUser.role === 'admin') {
-        document.getElementById('tabUsers').classList.remove('hidden');
+        document.getElementById('navUsersBtn').classList.remove('hidden');
+        loadUsers();
       } else {
-        document.getElementById('tabUsers').classList.add('hidden');
-        switchMenu('orders');
+        document.getElementById('navUsersBtn').classList.add('hidden');
       }
 
       checkHealth();
-      loadMetaAndInitItems();
+      populateFilterCategories();
       loadOrders();
-      if (currentUser.role === 'admin') loadUsers();
     }
 
-    function switchMenu(menu) {
-      const isOrders = menu === 'orders';
-      document.getElementById('sectionOrders').classList.toggle('hidden', !isOrders);
-      document.getElementById('sectionUsers').classList.toggle('hidden', isOrders);
-      document.getElementById('tabOrders').classList.toggle('active', isOrders);
-      document.getElementById('tabUsers').classList.toggle('active', !isOrders);
+    function switchView(viewName) {
+      document.getElementById('viewPos').classList.toggle('hidden', viewName !== 'pos');
+      document.getElementById('viewCards').classList.toggle('hidden', viewName !== 'cards');
+      document.getElementById('viewUsers').classList.toggle('hidden', viewName !== 'users');
+
+      document.getElementById('navPosBtn').className = viewName === 'pos' ? 'btn btn-primary btn-sm fw-bold' : 'btn btn-outline-light btn-sm fw-bold';
+      document.getElementById('navCardsBtn').className = viewName === 'cards' ? 'btn btn-primary btn-sm fw-bold' : 'btn btn-outline-light btn-sm fw-bold';
+      if (currentUser && currentUser.role === 'admin') {
+        document.getElementById('navUsersBtn').className = viewName === 'users' ? 'btn btn-warning btn-sm fw-bold' : 'btn btn-outline-warning btn-sm fw-bold';
+      }
+
+      if (viewName === 'cards') loadOrders();
+      if (viewName === 'users') loadUsers();
     }
 
-    document.getElementById('loginForm').addEventListener('submit', async function (e) {
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       document.getElementById('loginError').textContent = '';
       const res = await fetch(API + '/api/auth/login', {
@@ -815,7 +573,7 @@
       const data = await res.json();
       if (data.success) {
         currentUser = data.user;
-        showApp();
+        enterApp();
       } else {
         document.getElementById('loginError').textContent = data.error || 'Login បរាជ័យ';
       }
@@ -828,305 +586,454 @@
     }
 
     async function checkHealth() {
-      const badge = document.getElementById('dbBadge');
+      const badge = document.getElementById('dbStatusBadge');
       try {
         const res = await fetch(API + '/api/health');
         const data = await res.json();
-        badge.textContent = data.success
-          ? '🟢 PostgreSQL Connected (DATABASE_URL • Multi-Item Invoice)'
-          : '🔴 Database Error';
-      } catch (err) {
-        badge.textContent = '🔴 Offline';
+        badge.className = data.success ? 'badge bg-success' : 'badge bg-danger';
+        badge.textContent = data.success ? 'DB Connected (DATABASE_URL)' : 'DB Error';
+      } catch {
+        badge.className = 'badge bg-danger';
+        badge.textContent = 'Offline';
       }
     }
 
-    async function loadMetaAndInitItems() {
-      const res = await fetch(API + '/api/meta');
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data.categories) && data.categories.length > 0) {
-          categoriesList = data.categories;
-        }
-      }
-
-      const filterCat = document.getElementById('filterCategory');
-      filterCat.innerHTML = '<option value="ALL">Category ទាំងអស់</option>' +
-        categoriesList.map(function (c) {
-          return '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>';
-        }).join('');
-
-      resetItemsForm();
+    function renderGroupButtons() {
+      const groups = ['All', 'អាវ (Shirts)', 'ខោ (Pants)', 'កម្រាលពូក & ភួយ', 'ផ្សេងៗ (Others)'];
+      const bar = document.getElementById('categoryFilterBar');
+      bar.innerHTML = groups.map(g => {
+        const active = activeGroupFilter === g ? 'btn-dark' : 'btn-outline-dark';
+        return `<button type="button" class="btn ${active} category-btn shadow-sm" onclick="selectGroupFilter('${g}')">${g === 'All' ? 'ទាំងអស់ / All' : g}</button>`;
+      }).join('');
     }
 
-    document.getElementById('imageFile').addEventListener('change', function (e) {
-      const file = e.target.files[0];
-      const box = document.getElementById('imagePreviewBox');
-      const img = document.getElementById('imagePreviewImg');
-      selectedImageBase64 = null;
+    function selectGroupFilter(groupName) {
+      activeGroupFilter = groupName;
+      renderGroupButtons();
+      renderCatalogCards();
+    }
 
-      if (!file) {
-        box.classList.add('hidden');
+    function renderCatalogCards() {
+      const grid = document.getElementById('laundryTypesGrid');
+      const items = activeGroupFilter === 'All'
+        ? LAUNDRY_CATALOG
+        : LAUNDRY_CATALOG.filter(x => x.group === activeGroupFilter);
+
+      grid.innerHTML = items.map(item => `
+        <div class="col-6 col-sm-4 col-lg-3">
+          <div class="laundry-type-card" onclick="addLaundryItem(${item.id})">
+            <i class="fa-solid ${item.icon} fs-3 mb-2 ${item.color}"></i>
+            <div class="fw-bold small text-dark">${escapeHtml(item.name)}</div>
+            <div class="badge bg-primary-subtle text-primary mt-1">$${item.price.toFixed(2)}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function addLaundryItem(itemId) {
+      const item = LAUNDRY_CATALOG.find(x => x.id === itemId);
+      if (!item) return;
+      const serviceType = document.getElementById('defaultServiceSelect').value;
+      const existing = cart.find(c => c.category === item.name && c.service_type === serviceType);
+      if (existing) {
+        existing.item_count += 1;
+      } else {
+        cart.push({
+          category: item.name,
+          service_type: serviceType,
+          item_count: 1,
+          weight_kg: 1,
+          price: item.price
+        });
+      }
+      renderCart();
+    }
+
+    function applyServiceToAllItems() {
+      const serviceType = document.getElementById('defaultServiceSelect').value;
+      cart.forEach(c => { c.service_type = serviceType; });
+      renderCart();
+    }
+
+    function updateCartQty(idx, delta) {
+      cart[idx].item_count += delta;
+      if (cart[idx].item_count <= 0) {
+        cart.splice(idx, 1);
+      }
+      renderCart();
+    }
+
+    function removeCartItem(idx) {
+      cart.splice(idx, 1);
+      renderCart();
+    }
+
+    function renderCart() {
+      const tbody = document.getElementById('cartTableBody');
+      if (cart.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3 small">មិនទាន់មានមុខទំនិញ</td></tr>`;
+        document.getElementById('subTotalDisplay').textContent = '$0.00';
+        document.getElementById('grandTotalUSD').textContent = '$0.00';
+        document.getElementById('grandTotalRiel').textContent = '0 រៀល';
+        finalCalculatedTotal = 0;
+        calculateChange();
         return;
       }
 
+      let subTotal = 0;
+      tbody.innerHTML = cart.map((item, idx) => {
+        const lineTotal = Number(item.price) * Number(item.item_count);
+        subTotal += lineTotal;
+        return `
+          <tr>
+            <td class="small fw-bold">${escapeHtml(item.category)}</td>
+            <td class="text-center" style="white-space: nowrap;">
+              <button type="button" class="btn btn-sm btn-danger py-0 px-2 fw-bold text-white" onclick="updateCartQty(${idx}, -1)">-</button>
+              <span class="mx-1 fw-bold small">${item.item_count}</span>
+              <button type="button" class="btn btn-sm btn-success py-0 px-2 fw-bold text-white" onclick="updateCartQty(${idx}, 1)">+</button>
+            </td>
+            <td class="text-end small">$${Number(item.price).toFixed(2)}</td>
+            <td class="text-end small fw-bold">$${lineTotal.toFixed(2)}</td>
+            <td class="text-end">
+              <button type="button" class="btn btn-sm text-danger p-0" onclick="removeCartItem(${idx})"><i class="fa-solid fa-trash"></i></button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      const discPct = parseFloat(document.getElementById('discountPercent').value) || 0;
+      const discAmt = (subTotal * discPct) / 100;
+      const afterDisc = subTotal - discAmt;
+      const vatAmt = document.getElementById('vatToggle').checked ? afterDisc * 0.10 : 0;
+      finalCalculatedTotal = afterDisc + vatAmt;
+
+      const rate = parseFloat(document.getElementById('exchangeRate').value) || 4100;
+      const totalRiel = Math.round(finalCalculatedTotal * rate);
+
+      document.getElementById('subTotalDisplay').textContent = `$${subTotal.toFixed(2)}`;
+      document.getElementById('grandTotalUSD').textContent = `$${finalCalculatedTotal.toFixed(2)}`;
+      document.getElementById('grandTotalRiel').textContent = `${totalRiel.toLocaleString()} រៀល`;
+      calculateChange();
+    }
+
+    function calculateChange() {
+      const received = parseFloat(document.getElementById('amountReceived').value) || 0;
+      const rate = parseFloat(document.getElementById('exchangeRate').value) || 4100;
+      const changeUsd = received - finalCalculatedTotal;
+      if (received > 0 && changeUsd >= 0) {
+        document.getElementById('changeUSD').textContent = `$${changeUsd.toFixed(2)}`;
+        document.getElementById('changeRiel').textContent = `(${Math.round(changeUsd * rate).toLocaleString()} រៀល)`;
+      } else {
+        document.getElementById('changeUSD').textContent = '$0.00';
+        document.getElementById('changeRiel').textContent = '(0 រៀល)';
+      }
+    }
+
+    document.getElementById('orderImageInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      selectedImageBase64 = null;
+      const wrap = document.getElementById('orderImagePreviewWrap');
+      if (!file) {
+        wrap.classList.add('hidden');
+        return;
+      }
       const reader = new FileReader();
-      reader.onload = function () {
-        const tempImg = new Image();
-        tempImg.onload = function () {
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
           const canvas = document.createElement('canvas');
           const maxW = 640;
-          const scale = tempImg.width > maxW ? maxW / tempImg.width : 1;
-          canvas.width = Math.round(tempImg.width * scale);
-          canvas.height = Math.round(tempImg.height * scale);
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(tempImg, 0, 0, canvas.width, canvas.height);
+          const scale = img.width > maxW ? maxW / img.width : 1;
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
           selectedImageBase64 = canvas.toDataURL('image/jpeg', 0.78);
-          img.src = selectedImageBase64;
-          box.classList.remove('hidden');
+          document.getElementById('orderImagePreview').src = selectedImageBase64;
+          wrap.classList.remove('hidden');
         };
-        tempImg.src = reader.result;
+        img.src = reader.result;
       };
       reader.readAsDataURL(file);
     });
 
-    function getOrderItemsArray(order) {
-      if (Array.isArray(order.items_json) && order.items_json.length > 0) {
-        return order.items_json;
-      }
-      return [{
-        category: order.category,
-        service_type: order.service_type,
-        item_count: order.item_count || 1,
-        weight_kg: order.weight_kg || 0,
-        price: order.price || 0
-      }];
+    function buildInvoicePayloadItems() {
+      return cart.map(item => ({
+        category: item.category,
+        service_type: item.service_type,
+        item_count: item.item_count,
+        weight_kg: item.weight_kg,
+        price: Number(item.price) * Number(item.item_count)
+      }));
     }
 
-    async function loadOrders() {
-      const search = document.getElementById('searchInput').value;
-      const category = document.getElementById('filterCategory').value;
-      const status = document.getElementById('filterStatus').value;
-      const params = new URLSearchParams({ search: search, category: category, status: status });
+    function fillAndShowReceiptModal(orderCode, dateStr, customerName, phone, paymentMethod, itemsList, receivedVal) {
+      const rate = parseFloat(document.getElementById('exchangeRate').value) || 4100;
+      const discPct = parseFloat(document.getElementById('discountPercent').value) || 0;
+      const vatOn = document.getElementById('vatToggle').checked;
 
-      const grid = document.getElementById('ordersCardsGrid');
-      const res = await fetch(API + '/api/orders?' + params.toString());
-      if (res.status === 401) return showLogin();
+      let subTotal = 0;
+      document.getElementById('recItemsBody').innerHTML = itemsList.map(it => {
+        const lineAmt = Number(it.price || 0);
+        subTotal += lineAmt;
+        const qty = Number(it.item_count || 1);
+        const unitPrice = qty > 0 ? lineAmt / qty : lineAmt;
+        return `
+          <tr>
+            <td class="small"><strong>${escapeHtml(it.category)}</strong><br/><span class="text-muted">${escapeHtml(it.service_type || '')}</span></td>
+            <td class="text-center small">${qty}</td>
+            <td class="text-end small">$${unitPrice.toFixed(2)}</td>
+            <td class="text-end small fw-bold">$${lineAmt.toFixed(2)}</td>
+          </tr>
+        `;
+      }).join('');
 
-      const json = await res.json();
-      const rows = json.data || [];
-      cachedOrders = rows;
+      const discAmt = (subTotal * discPct) / 100;
+      const afterDisc = subTotal - discAmt;
+      const vatAmt = vatOn ? afterDisc * 0.10 : 0;
+      const grandTotal = afterDisc + vatAmt;
+      const recAmt = parseFloat(receivedVal) || grandTotal;
+      const changeAmt = Math.max(0, recAmt - grandTotal);
 
-      document.getElementById('statTotal').textContent = rows.length;
-      const activeCount = rows.filter(function (r) {
-        return r.status === 'Pending' || r.status === 'Washing';
-      }).length;
-      const readyCount = rows.filter(function (r) {
-        return r.status === 'Ready';
-      }).length;
-      const revenue = rows.reduce(function (sum, r) {
-        return sum + Number(r.price || 0);
-      }, 0);
+      document.getElementById('receiptCodeBadge').textContent = orderCode;
+      document.getElementById('recCustomer').textContent = customerName || 'អតិថិជន';
+      document.getElementById('recPhone').textContent = phone || '-';
+      document.getElementById('recDate').textContent = dateStr || new Date().toLocaleString();
+      document.getElementById('recPayment').textContent = paymentMethod;
 
-      document.getElementById('statActive').textContent = activeCount;
-      document.getElementById('statReady').textContent = readyCount;
-      document.getElementById('statRevenue').textContent = '$' + revenue.toFixed(2);
+      document.getElementById('recSubtotal').textContent = `$${subTotal.toFixed(2)}`;
+      document.getElementById('recDiscount').textContent = `-$${discAmt.toFixed(2)} (${discPct}%)`;
+      document.getElementById('recVat').textContent = `$${vatAmt.toFixed(2)}`;
+      document.getElementById('recGrandTotal').textContent = `$${grandTotal.toFixed(2)}`;
+      document.getElementById('recGrandTotalRiel').textContent = `${Math.round(grandTotal * rate).toLocaleString()} រៀល`;
+      document.getElementById('recReceived').textContent = `$${recAmt.toFixed(2)}`;
+      document.getElementById('recChange').textContent = `$${changeAmt.toFixed(2)}`;
 
-      if (rows.length === 0) {
-        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#64748b;padding:24px;">មិនមានវិក្កយបត្រទេ</div>';
+      receiptModalObj.show();
+    }
+
+    function previewCurrentCartInvoice() {
+      if (cart.length === 0) {
+        alert('សូមជ្រើសរើសមុខទំនិញយ៉ាងហោចណាស់ ១ មុខ!');
+        return;
+      }
+      fillAndShowReceiptModal(
+        'PREVIEW',
+        new Date().toLocaleString(),
+        document.getElementById('customerNameInput').value.trim(),
+        document.getElementById('customerPhoneInput').value.trim(),
+        document.getElementById('paymentMethod').value,
+        buildInvoicePayloadItems(),
+        document.getElementById('amountReceived').value
+      );
+    }
+
+    async function saveOrderAndPrint() {
+      const fb = document.getElementById('posFeedback');
+      fb.textContent = '';
+
+      const customerName = document.getElementById('customerNameInput').value.trim();
+      const phone = document.getElementById('customerPhoneInput').value.trim();
+      if (!customerName || !phone || cart.length === 0) {
+        fb.className = 'small fw-bold mt-2 text-center text-danger';
+        fb.textContent = 'សូមបំពេញ ឈ្មោះ លេខទូរស័ព្ទ និងមុខទំនិញ!';
         return;
       }
 
-      grid.innerHTML = rows.map(function (o) {
-        const statusCls = STATUS_CLASS_MAP[o.status] || 'st-Pending';
-        const imgHtml = o.image_data
-          ? '<img src="' + o.image_data + '" alt="' + escapeHtml(o.order_code) + '" />'
-          : '<div class="order-img-placeholder">👕 មិនមានរូបភាព<br/><span>' + escapeHtml(o.category) + '</span></div>';
-
-        const list = getOrderItemsArray(o);
-        const linesHtml = list.map(function (it) {
-          return (
-            '<div class="item-line-row">' +
-              '<span>' + escapeHtml(it.category) + ' (' + Number(it.item_count || 1) + ' pcs)</span>' +
-              '<strong>$' + Number(it.price || 0).toFixed(2) + '</strong>' +
-            '</div>'
-          );
-        }).join('');
-
-        const notesHtml = o.notes
-          ? '<div><strong>កំណត់សម្គាល់៖</strong> ' + escapeHtml(o.notes) + '</div>'
-          : '';
-
-        return (
-          '<div class="order-card">' +
-            '<div>' +
-              '<div class="order-img-wrap">' + imgHtml + '</div>' +
-              '<div class="order-body">' +
-                '<div class="order-top">' +
-                  '<span class="order-code">' + escapeHtml(o.order_code) + '</span>' +
-                  '<span class="badge ' + statusCls + '">' + escapeHtml(o.status) + '</span>' +
-                '</div>' +
-                '<div class="order-meta">' +
-                  '<div><strong>អតិថិជន៖</strong> ' + escapeHtml(o.customer_name) + ' (' + escapeHtml(o.phone) + ')</div>' +
-                '</div>' +
-                '<div class="item-lines-list">' + linesHtml + '</div>' +
-                '<div class="order-meta">' +
-                  '<div><strong>សរុបចំនួន / ទម្ងន់៖</strong> ' + Number(o.item_count || 1) + ' pcs • ' + Number(o.weight_kg) + ' kg</div>' +
-                  '<div><strong>តម្លៃសរុប៖</strong> <strong style="color:#1d4ed8;">$' + Number(o.price).toFixed(2) + '</strong></div>' +
-                  notesHtml +
-                  '<div style="font-size:11px;color:#94a3b8;margin-top:4px;">' + escapeHtml(o.created_at_kh || '') + '</div>' +
-                '</div>' +
-              '</div>' +
-            '</div>' +
-            '<div class="order-footer">' +
-              '<select onchange="updateOrderStatus(' + o.id + ', this.value)" style="width:auto;padding:5px 8px;font-size:12px;">' +
-                '<option value="Pending"' + (o.status === 'Pending' ? ' selected' : '') + '>Pending</option>' +
-                '<option value="Washing"' + (o.status === 'Washing' ? ' selected' : '') + '>Washing</option>' +
-                '<option value="Ready"' + (o.status === 'Ready' ? ' selected' : '') + '>Ready</option>' +
-                '<option value="Picked Up"' + (o.status === 'Picked Up' ? ' selected' : '') + '>Picked Up</option>' +
-              '</select>' +
-              '<div class="footer-actions">' +
-                '<button class="btn btn-print" onclick="openInvoice(' + o.id + ')">🖨️ Print</button>' +
-                '<button class="btn btn-danger" onclick="deleteOrder(' + o.id + ')">លុប</button>' +
-              '</div>' +
-            '</div>' +
-          '</div>'
-        );
-      }).join('');
-    }
-
-    function openInvoice(orderId) {
-      const order = cachedOrders.find(function (item) {
-        return Number(item.id) === Number(orderId);
-      });
-      if (!order) return;
-
-      const list = getOrderItemsArray(order);
-      const tableRows = list.map(function (it, idx) {
-        return (
-          '<tr>' +
-            '<td>' + (idx + 1) + '</td>' +
-            '<td><strong>' + escapeHtml(it.category) + '</strong><br/><span style="color:#64748b;font-size:11px;">' + escapeHtml(it.service_type || '') + '</span></td>' +
-            '<td>' + Number(it.item_count || 1) + '</td>' +
-            '<td>' + Number(it.weight_kg || 0) + ' kg</td>' +
-            '<td style="text-align:right;"><strong>$' + Number(it.price || 0).toFixed(2) + '</strong></td>' +
-          '</tr>'
-        );
-      }).join('');
-
-      const notesRow = order.notes
-        ? '<div class="invoice-row"><span>កំណត់សម្គាល់៖</span><span>' + escapeHtml(order.notes) + '</span></div>'
-        : '';
-
-      const sheet = document.getElementById('invoiceSheet');
-      sheet.innerHTML =
-        '<div class="invoice-header">' +
-          '<h3>🧺 វិក្កយបត្របោកអ៊ុត (LAUNDRY INVOICE)</h3>' +
-          '<p>លេខកូដ៖ <strong>' + escapeHtml(order.order_code) + '</strong> • ' + escapeHtml(order.created_at_kh || '') + '</p>' +
-        '</div>' +
-        '<div class="invoice-row"><span>អតិថិជន៖</span><strong>' + escapeHtml(order.customer_name) + '</strong></div>' +
-        '<div class="invoice-row"><span>លេខទូរស័ព្ទ៖</span><span>' + escapeHtml(order.phone) + '</span></div>' +
-        '<div class="invoice-row"><span>ស្ថានភាព៖</span><span>' + escapeHtml(order.status) + '</span></div>' +
-        '<table class="invoice-items-table">' +
-          '<thead><tr><th>#</th><th>មុខទំនិញ</th><th>ចំនួន</th><th>ទម្ងន់</th><th style="text-align:right;">តម្លៃ</th></tr></thead>' +
-          '<tbody>' + tableRows + '</tbody>' +
-        '</table>' +
-        notesRow +
-        '<div class="invoice-total"><span>តម្លៃសរុប (Total)</span><span>$' + Number(order.price).toFixed(2) + '</span></div>' +
-        '<div class="invoice-btns">' +
-          '<button class="btn btn-secondary" onclick="closeInvoice()">បិទ</button>' +
-          '<button class="btn btn-do-print" onclick="window.print()">🖨️ ព្រីនវិក្កយបត្រ</button>' +
-        '</div>';
-
-      document.getElementById('invoiceModal').classList.remove('hidden');
-    }
-
-    function closeInvoice() {
-      document.getElementById('invoiceModal').classList.add('hidden');
-    }
-
-    document.getElementById('orderForm').addEventListener('submit', async function (e) {
-      e.preventDefault();
-      document.getElementById('orderMsg').textContent = '';
-      document.getElementById('orderErr').textContent = '';
-
-      const items = [];
-      document.querySelectorAll('#itemsContainer .item-box').forEach(function (box) {
-        items.push({
-          category: box.querySelector('.item-category').value,
-          service_type: box.querySelector('.item-service').value,
-          item_count: box.querySelector('.item-count').value,
-          weight_kg: box.querySelector('.item-weight').value,
-          price: box.querySelector('.item-price').value
-        });
-      });
-
-      const payload = {
-        customer_name: document.getElementById('customer_name').value,
-        phone: document.getElementById('phone').value,
-        items: items,
-        image_data: selectedImageBase64,
-        notes: document.getElementById('notes').value
-      };
+      const itemsToSave = buildInvoicePayloadItems();
+      const paymentMethod = document.getElementById('paymentMethod').value;
+      const notesVal = document.getElementById('orderNotesInput').value.trim();
+      const extraNote = `Pay: ${paymentMethod}${notesVal ? ' • ' + notesVal : ''}`;
 
       const res = await fetch(API + '/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          customer_name: customerName,
+          phone: phone,
+          items: itemsToSave,
+          image_data: selectedImageBase64,
+          notes: extraNote
+        })
       });
       const data = await res.json();
 
       if (data.success) {
-        e.target.reset();
-        resetItemsForm();
+        const created = data.data;
+        fb.className = 'small fw-bold mt-2 text-center text-success';
+        fb.textContent = `✅ រក្សាទុក ${created.order_code} រួចរាល់!`;
+
+        fillAndShowReceiptModal(
+          created.order_code,
+          created.created_at_kh,
+          created.customer_name,
+          created.phone,
+          paymentMethod,
+          itemsToSave,
+          document.getElementById('amountReceived').value
+        );
+
+        cart = [];
         selectedImageBase64 = null;
-        document.getElementById('imagePreviewBox').classList.add('hidden');
-        document.getElementById('orderMsg').textContent = '✅ រក្សាទុកវិក្កយបត្រច្រើនមុខទំនិញរួចរាល់!';
+        document.getElementById('orderImageInput').value = '';
+        document.getElementById('orderImagePreviewWrap').classList.add('hidden');
+        document.getElementById('amountReceived').value = '';
+        document.getElementById('discountPercent').value = '0';
+        document.getElementById('vatToggle').checked = false;
+        renderCart();
         loadOrders();
       } else {
-        document.getElementById('orderErr').textContent = data.error || 'មិនអាចរក្សាទុកបានទេ';
+        fb.className = 'small fw-bold mt-2 text-center text-danger';
+        fb.textContent = data.error || 'មិនអាចរក្សាទុកបានទេ';
       }
-    });
+    }
+
+    function populateFilterCategories() {
+      const sel = document.getElementById('filterCategorySelect');
+      sel.innerHTML = '<option value="ALL">Category អាវ/ខោ/កម្រាលពូក ទាំងអស់</option>' +
+        LAUNDRY_CATALOG.map(x => `<option value="${escapeHtml(x.name)}">${escapeHtml(x.name)}</option>`).join('');
+    }
+
+    async function loadOrders() {
+      const search = document.getElementById('searchOrdersInput').value;
+      const category = document.getElementById('filterCategorySelect').value;
+      const status = document.getElementById('filterStatusSelect').value;
+      const params = new URLSearchParams({ search, category, status });
+
+      const res = await fetch(API + '/api/orders?' + params.toString());
+      if (res.status === 401) return showLogin();
+      const json = await res.json();
+      ordersCache = json.data || [];
+
+      const grid = document.getElementById('orderCardsGrid');
+      if (ordersCache.length === 0) {
+        grid.innerHTML = '<div class="col-12 text-center text-muted py-5">មិនមានទិន្នន័យវិក្កយបត្រទេ</div>';
+        return;
+      }
+
+      grid.innerHTML = ordersCache.map(o => {
+        const items = Array.isArray(o.items_json) && o.items_json.length > 0
+          ? o.items_json
+          : [{ category: o.category, item_count: o.item_count, price: o.price }];
+
+        const imgHtml = o.image_data
+          ? `<img src="${o.image_data}" alt="${escapeHtml(o.order_code)}" />`
+          : `<div class="text-muted small text-center p-2"><i class="fa-solid fa-shirt fs-3 d-block mb-1"></i>${escapeHtml(o.category)}</div>`;
+
+        const linesHtml = items.map(it => `
+          <div class="d-flex justify-content-between small border-bottom py-1">
+            <span>${escapeHtml(it.category)} (${Number(it.item_count || 1)})</span>
+            <strong>$${Number(it.price || 0).toFixed(2)}</strong>
+          </div>
+        `).join('');
+
+        return `
+          <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+            <div class="order-photo-card">
+              <div>
+                <div class="order-photo-box">${imgHtml}</div>
+                <div class="p-3">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="fw-bold text-primary small">${escapeHtml(o.order_code)}</span>
+                    <span class="badge bg-info-subtle text-dark">${escapeHtml(o.status)}</span>
+                  </div>
+                  <div class="small fw-bold">${escapeHtml(o.customer_name)} (${escapeHtml(o.phone)})</div>
+                  <div class="my-2 bg-light rounded p-2">${linesHtml}</div>
+                  <div class="d-flex justify-content-between fw-bold small">
+                    <span>សរុប:</span>
+                    <span class="text-success">$${Number(o.price).toFixed(2)}</span>
+                  </div>
+                  <div class="text-muted" style="font-size: 0.72rem;">${escapeHtml(o.created_at_kh || '')}</div>
+                </div>
+              </div>
+              <div class="p-2 bg-light border-top d-flex gap-1 align-items-center justify-content-between">
+                <select class="form-select form-select-sm" style="width: auto;" onchange="updateOrderStatus(${o.id}, this.value)">
+                  <option value="Pending" ${o.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                  <option value="Washing" ${o.status === 'Washing' ? 'selected' : ''}>Washing</option>
+                  <option value="Ready" ${o.status === 'Ready' ? 'selected' : ''}>Ready</option>
+                  <option value="Picked Up" ${o.status === 'Picked Up' ? 'selected' : ''}>Picked Up</option>
+                </select>
+                <div class="d-flex gap-1">
+                  <button class="btn btn-sm btn-outline-primary" onclick="openSavedOrderInvoice(${o.id})"><i class="fa-solid fa-print"></i></button>
+                  <button class="btn btn-sm btn-outline-danger" onclick="deleteOrder(${o.id})"><i class="fa-solid fa-trash"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openSavedOrderInvoice(orderId) {
+      const o = ordersCache.find(x => Number(x.id) === Number(orderId));
+      if (!o) return;
+      const items = Array.isArray(o.items_json) && o.items_json.length > 0
+        ? o.items_json
+        : [{ category: o.category, service_type: o.service_type, item_count: o.item_count, price: o.price }];
+
+      document.getElementById('recItemsBody').innerHTML = items.map(it => {
+        const lineAmt = Number(it.price || 0);
+        const qty = Number(it.item_count || 1);
+        const unitPrice = qty > 0 ? lineAmt / qty : lineAmt;
+        return `
+          <tr>
+            <td class="small"><strong>${escapeHtml(it.category)}</strong></td>
+            <td class="text-center small">${qty}</td>
+            <td class="text-end small">$${unitPrice.toFixed(2)}</td>
+            <td class="text-end small fw-bold">$${lineAmt.toFixed(2)}</td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('receiptCodeBadge').textContent = o.order_code;
+      document.getElementById('recCustomer').textContent = o.customer_name;
+      document.getElementById('recPhone').textContent = o.phone;
+      document.getElementById('recDate').textContent = o.created_at_kh || '';
+      document.getElementById('recPayment').textContent = o.status;
+      document.getElementById('recSubtotal').textContent = `$${Number(o.price).toFixed(2)}`;
+      document.getElementById('recDiscount').textContent = '$0.00 (0%)';
+      document.getElementById('recVat').textContent = '$0.00';
+      document.getElementById('recGrandTotal').textContent = `$${Number(o.price).toFixed(2)}`;
+      const rate = parseFloat(document.getElementById('exchangeRate').value) || 4100;
+      document.getElementById('recGrandTotalRiel').textContent = `${Math.round(Number(o.price) * rate).toLocaleString()} រៀល`;
+      document.getElementById('recReceived').textContent = `$${Number(o.price).toFixed(2)}`;
+      document.getElementById('recChange').textContent = '$0.00';
+      receiptModalObj.show();
+    }
 
     async function updateOrderStatus(id, status) {
-      const res = await fetch(API + '/api/orders/' + id + '/status', {
+      await fetch(API + `/api/orders/${id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: status })
+        body: JSON.stringify({ status })
       });
-      const data = await res.json();
-      if (data.success) loadOrders();
+      loadOrders();
     }
 
     async function deleteOrder(id) {
-      if (!confirm('តើអ្នកចង់លុបវិក្កយបត្រនេះមែនទេ?')) return;
-      const res = await fetch(API + '/api/orders/' + id, { method: 'DELETE' });
-      const data = await res.json();
-      if (data.success) loadOrders();
+      if (!confirm('លុបវិក្កយបត្រនេះមែនទេ?')) return;
+      await fetch(API + `/api/orders/${id}`, { method: 'DELETE' });
+      loadOrders();
     }
 
     async function loadUsers() {
       const res = await fetch(API + '/api/users');
       if (!res.ok) return;
       const data = await res.json();
-      const tbody = document.getElementById('usersTableBody');
-      tbody.innerHTML = (data.data || []).map(function (u) {
-        return (
-          '<tr>' +
-            '<td>' + u.id + '</td>' +
-            '<td><strong>' + escapeHtml(u.username) + '</strong></td>' +
-            '<td>' + escapeHtml(u.full_name) + '</td>' +
-            '<td>' + escapeHtml(u.role) + '</td>' +
-            '<td>' + escapeHtml(u.created_at_kh || '') + '</td>' +
-          '</tr>'
-        );
-      }).join('');
+      document.getElementById('usersTableBody').innerHTML = (data.data || []).map(u => `
+        <tr>
+          <td>${u.id}</td>
+          <td><strong>${escapeHtml(u.username)}</strong></td>
+          <td>${escapeHtml(u.full_name)}</td>
+          <td>${escapeHtml(u.role)}</td>
+          <td>${escapeHtml(u.created_at_kh || '')}</td>
+        </tr>
+      `).join('');
     }
 
-    document.getElementById('createUserForm').addEventListener('submit', async function (e) {
+    document.getElementById('createUserForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      document.getElementById('userMsg').textContent = '';
-      document.getElementById('userErr').textContent = '';
-
+      const msg = document.getElementById('userFormMsg');
+      msg.textContent = '';
       const res = await fetch(API + '/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1140,18 +1047,14 @@
       const data = await res.json();
       if (data.success) {
         e.target.reset();
-        document.getElementById('userMsg').textContent = '✅ បង្កើត User ថ្មីបានជោគជ័យ!';
+        msg.className = 'small fw-bold mt-2 text-success';
+        msg.textContent = '✅ បង្កើត User រួចរាល់!';
         loadUsers();
       } else {
-        document.getElementById('userErr').textContent = data.error || 'បង្កើត User បរាជ័យ';
+        msg.className = 'small fw-bold mt-2 text-danger';
+        msg.textContent = data.error || 'បរាជ័យ';
       }
     });
-
-    document.getElementById('searchInput').addEventListener('input', loadOrders);
-    document.getElementById('filterCategory').addEventListener('change', loadOrders);
-    document.getElementById('filterStatus').addEventListener('change', loadOrders);
-
-    checkSession();
   </script>
 </body>
 </html>
