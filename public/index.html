@@ -242,6 +242,9 @@
               <button type="button" class="btn btn-outline-primary btn-sm fw-bold shadow-sm" onclick="openEditCatalogModal(null)">
                 <i class="fa-solid fa-plus me-1"></i> បន្ថែមមុខទំនិញថ្មី
               </button>
+              <button type="button" class="btn btn-outline-danger btn-sm fw-bold shadow-sm" onclick="resetCatalogToDefault()" title="កំណត់កាត និងក្រុមមកដើមវិញ">
+                <i class="fa-solid fa-rotate-left me-1"></i> Reset ដើម
+              </button>
               <div class="bg-white px-3 py-1 rounded-3 shadow-sm border small">
                 <span class="fw-bold text-secondary">Rate:</span>
                 <span class="text-primary fw-bold">1$ =
@@ -653,6 +656,21 @@
       } catch {}
     }
 
+    function resetCatalogToDefault() {
+      if (!confirm('កំណត់បញ្ជីមុខទំនិញ និងក្រុមមកដើមវិញមែនទេ?')) return;
+      try {
+        sessionStorage.removeItem(CATALOG_SESSION_KEY);
+        sessionStorage.removeItem(GROUPS_SESSION_KEY);
+      } catch {}
+      LAUNDRY_GROUPS = [...DEFAULT_GROUPS];
+      LAUNDRY_CATALOG = DEFAULT_LAUNDRY_CATALOG.map(x => ({ ...x }));
+      activeGroupFilter = 'All';
+      renderGroupButtons();
+      renderCategorySelectOptions();
+      renderCatalogCards();
+      populateFilterCategories();
+    }
+
     function escapeHtml(str) {
       return String(str || '')
         .replace(/&/g, '&')
@@ -812,9 +830,9 @@
 
       grid.innerHTML = items.map(item => `
         <div class="col-6 col-sm-4 col-md-3 col-lg-3">
-          <div class="product-card position-relative" onclick="addLaundryItem(${item.id})">
+          <div class="product-card position-relative" onclick="addLaundryItem(${Number(item.id)})">
             <button type="button" class="btn btn-light btn-sm edit-catalog-btn border" title="កែតម្លៃ និងប្តូររូប"
-              onclick="event.stopPropagation(); openEditCatalogModal(${item.id})">
+              onclick="event.stopPropagation(); openEditCatalogModal(${Number(item.id)})">
               <i class="fa-solid fa-pen text-primary" style="font-size: 0.72rem;"></i>
             </button>
             <div class="product-img-wrapper">
@@ -933,7 +951,8 @@
     });
 
     function addLaundryItem(itemId) {
-      const item = LAUNDRY_CATALOG.find(x => x.id === itemId);
+      const numericId = Number(itemId);
+      const item = LAUNDRY_CATALOG.find(x => Number(x.id) === numericId);
       if (!item) return;
       const serviceType = document.getElementById('defaultServiceSelect').value;
       const existing = cart.find(c => c.category === item.name && c.service_type === serviceType);
@@ -945,7 +964,7 @@
           service_type: serviceType,
           item_count: 1,
           weight_kg: 1,
-          price: item.price
+          price: Number(item.price)
         });
       }
       renderCart();
