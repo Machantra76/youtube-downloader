@@ -32,7 +32,6 @@
       box-shadow: 0 20px 45px rgba(15, 23, 42, 0.28);
     }
 
-    /* 🟢 គំរូ Main Menu Dashboard ដូចក្នុងរូបភាព */
     .main-menu-wrapper {
       min-height: calc(100vh - 56px);
       background-color: #f1f4f8;
@@ -127,12 +126,18 @@
       justify-content: center;
       padding: 0px !important;
       height: 190px;
+      user-select: none;
     }
 
     .product-card:hover {
       transform: translateY(-5px) scale(1.02);
       border-color: #0d6efd !important;
       box-shadow: 0 0 20px rgba(13, 110, 253, 0.4), 0 10px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .product-card.is-selected {
+      border-color: #198754 !important;
+      box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.22);
     }
 
     .product-img-wrapper {
@@ -163,15 +168,25 @@
       bottom: 0;
       left: 0;
       right: 0;
-      background: rgba(15, 23, 42, 0.82);
+      background: rgba(15, 23, 42, 0.85);
       backdrop-filter: blur(3px);
       padding: 6px 10px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 6px;
       border-bottom-left-radius: 18px;
       border-bottom-right-radius: 18px;
       z-index: 4;
+    }
+
+    .add-item-badge-btn {
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 0.72rem;
+      line-height: 1.2;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .edit-catalog-btn {
@@ -285,33 +300,33 @@
         </span>
         <div class="d-flex align-items-center gap-2 flex-wrap">
           <span id="dbStatusBadge" class="badge bg-success">DB Connected</span>
-          <button class="btn btn-light btn-sm fw-bold text-dark" id="navDashboardBtn" onclick="switchView('dashboard')">
+          <button type="button" class="btn btn-light btn-sm fw-bold text-dark" id="navDashboardBtn" onclick="switchView('dashboard')">
             <i class="fa-solid fa-grip me-1"></i> Main Menu
           </button>
-          <button class="btn btn-outline-light btn-sm fw-bold" id="navPosBtn" onclick="switchView('pos')">
+          <button type="button" class="btn btn-outline-light btn-sm fw-bold" id="navPosBtn" onclick="switchView('pos')">
             <i class="fa-solid fa-cash-register me-1"></i> វិក្កយបត្រ & កន្រ្តក
           </button>
-          <button class="btn btn-outline-light btn-sm fw-bold" id="navCardsBtn" onclick="switchView('cards')">
+          <button type="button" class="btn btn-outline-light btn-sm fw-bold" id="navCardsBtn" onclick="switchView('cards')">
             <i class="fa-solid fa-images me-1"></i> កាតរូបភាពទំនិញ
           </button>
-          <button class="btn btn-outline-info btn-sm fw-bold" id="navReportBtn" onclick="switchView('report')">
+          <button type="button" class="btn btn-outline-info btn-sm fw-bold" id="navReportBtn" onclick="switchView('report')">
             <i class="fa-solid fa-chart-line me-1"></i> ចំណូល ថ្ងៃ/ខែ/ឆ្នាំ
           </button>
-          <button class="btn btn-outline-success btn-sm fw-bold" id="navStockBtn" onclick="switchView('stock')">
+          <button type="button" class="btn btn-outline-success btn-sm fw-bold" id="navStockBtn" onclick="switchView('stock')">
             <i class="fa-solid fa-boxes-stacked me-1"></i> ស្តុកចាស់
           </button>
-          <button class="btn btn-outline-warning btn-sm fw-bold hidden" id="navUsersBtn" onclick="switchView('users')">
+          <button type="button" class="btn btn-outline-warning btn-sm fw-bold hidden" id="navUsersBtn" onclick="switchView('users')">
             <i class="fa-solid fa-users-gear me-1"></i> បង្កើត User
           </button>
           <span id="cashierDisplay" class="text-white small fw-bold bg-secondary px-3 py-1 rounded-pill"></span>
-          <button class="btn btn-danger btn-sm fw-bold" onclick="logout()">
+          <button type="button" class="btn btn-danger btn-sm fw-bold" onclick="logout()">
             <i class="fa-solid fa-right-from-bracket"></i> ចាកចេញ
           </button>
         </div>
       </div>
     </nav>
 
-    <!-- 🟢 VIEW 0: MAIN MENU DASHBOARD (តាមគំរូរូបភាព) -->
+    <!-- VIEW 0: MAIN MENU DASHBOARD -->
     <div id="viewDashboard" class="main-menu-wrapper">
       <div class="dashboard-header-box">
         <h1 class="dashboard-main-title">ផ្ទាំងម៉ឺនុយមេ | Main Menu Dashboard</h1>
@@ -320,7 +335,6 @@
 
       <div class="menu-grid-container">
         <div class="row g-4 justify-content-center">
-          <!-- Card 1: ទំព័រលក់ (POS) -->
           <div class="col-12 col-sm-6 col-lg-4">
             <div class="menu-tile-card" onclick="switchView('pos')">
               <div class="menu-tile-icon text-primary">
@@ -332,7 +346,6 @@
             </div>
           </div>
 
-          <!-- Card 2: ត្រួតពិនិត្យការលក់ & ចំណូល -->
           <div class="col-12 col-sm-6 col-lg-4">
             <div class="menu-tile-card" onclick="switchView('report')">
               <div class="menu-tile-icon text-success">
@@ -344,7 +357,6 @@
             </div>
           </div>
 
-          <!-- Card 3: កាតរូបភាពទំនិញ -->
           <div class="col-12 col-sm-6 col-lg-4">
             <div class="menu-tile-card" onclick="switchView('cards')">
               <div class="menu-tile-icon" style="color: #059669;">
@@ -356,7 +368,6 @@
             </div>
           </div>
 
-          <!-- Card 4: ស្តុកចាស់ (Old Stock) -->
           <div class="col-12 col-sm-6 col-lg-4">
             <div class="menu-tile-card" onclick="switchView('stock')">
               <div class="menu-tile-icon text-info">
@@ -368,7 +379,6 @@
             </div>
           </div>
 
-          <!-- Card 5: គ្រប់គ្រងមុខទំនិញ & តម្លៃ -->
           <div class="col-12 col-sm-6 col-lg-4">
             <div class="menu-tile-card" onclick="switchView('pos'); setTimeout(() => openEditCatalogModal(null), 120);">
               <div class="menu-tile-icon text-warning">
@@ -380,7 +390,6 @@
             </div>
           </div>
 
-          <!-- Card 6: ប្រវត្តិវិក្កយបត្រ -->
           <div class="col-12 col-sm-6 col-lg-4">
             <div class="menu-tile-card" onclick="switchView('cards')">
               <div class="menu-tile-icon" style="color: #7c3aed;">
@@ -392,7 +401,6 @@
             </div>
           </div>
 
-          <!-- Card 7: គ្រប់គ្រងគណនី -->
           <div class="col-12 col-sm-6 col-lg-4" id="dashboardUsersCard">
             <div class="menu-tile-card" onclick="switchView('users')">
               <div class="menu-tile-icon text-danger">
@@ -417,7 +425,7 @@
               <h4 class="fw-bold text-dark fs-5 mb-0">
                 <i class="fa-solid fa-shirt me-2 text-primary"></i> ប្រភេទអាវ / ខោ / កម្រាលពូក / ផ្សេងៗ
               </h4>
-              <p class="text-muted small mb-0">ចុចលើប្រភេទដើម្បីបន្ថែមចូលវិក្កយបត្រ ឬចុចប៊ូតុង <i class="fa-solid fa-pen"></i> ដើម្បីកំណត់តម្លៃ និងប្តូររូប</p>
+              <p class="text-muted small mb-0">ចុចលើកាតដើម្បីជ្រើស ឬចុច <i class="fa-solid fa-plus"></i> ដើម្បីបន្ថែមចូលវិក្កយបត្រ និង <i class="fa-solid fa-pen"></i> ដើម្បីកែតម្លៃ/ប្តូររូប</p>
             </div>
             <div class="d-flex align-items-center gap-2 flex-wrap">
               <button type="button" class="btn btn-outline-secondary btn-sm fw-bold shadow-sm" onclick="addNewCategoryGroup()">
@@ -555,7 +563,7 @@
                 </div>
               </div>
 
-              <button class="btn btn-success w-100 py-2 fw-bold shadow-sm rounded-3" onclick="saveOrderAndPrint()">
+              <button type="button" class="btn btn-success w-100 py-2 fw-bold shadow-sm rounded-3" onclick="saveOrderAndPrint()">
                 <i class="fa-solid fa-check-circle me-1"></i> រក្សាទុកវិក្កយបត្រ & Print
               </button>
               <div id="posFeedback" class="small fw-bold mt-2 text-center"></div>
@@ -887,7 +895,6 @@
               </div>
             </div>
 
-            <!-- 🟢 ប្រអប់បញ្ចូលប្រាក់ទទួលពេល Print / ពេលភ្ញៀវមកយកអាវ (មិនបង្ហាញពេល Print) -->
             <div class="bg-light border rounded-3 p-2 mt-2 no-print">
               <div class="row g-2 align-items-center">
                 <div class="col-6">
@@ -940,6 +947,7 @@
     let ordersCache = [];
     let oldStockList = loadSavedOldStock();
     let activeGroupFilter = 'All';
+    let selectedCatalogId = null;
     let selectedImageBase64 = null;
     let finalCalculatedTotal = 0;
     let activeModalOrderId = null;
@@ -1029,6 +1037,7 @@
       LAUNDRY_GROUPS = [...DEFAULT_GROUPS];
       LAUNDRY_CATALOG = DEFAULT_LAUNDRY_CATALOG.map(x => ({ ...x }));
       activeGroupFilter = 'All';
+      selectedCatalogId = null;
       renderGroupButtons();
       renderCategorySelectOptions();
       renderStockCategoryOptions();
@@ -1229,7 +1238,13 @@
       renderCatalogCards();
     }
 
-    // 🟢 កូដបង្ហាញកាតរូបភាព Render លទ្ធផលរូបភាពទំនិញ + ប៊ូតុងកែតម្លៃ/ប្តូររូប (រាងការ៉េ 190px)
+    // 🟢 កូដបង្ហាញកាតរូបភាព៖ ចុចលើកាតដើម្បី Select ជាមុន ហើយចុច "+ ថែម" ទើបបន្ថែមចូលវិក្កយបត្រ (ការពារមិនឱ្យចាប់យកអាវយឺតដោយចៃដន្យ)
+    function selectCatalogCard(event, itemId) {
+      if (event) event.stopPropagation();
+      selectedCatalogId = Number(itemId);
+      renderCatalogCards();
+    }
+
     function renderCatalogCards() {
       const grid = document.getElementById('laundryTypesGrid');
       const items = activeGroupFilter === 'All'
@@ -1241,23 +1256,33 @@
         return;
       }
 
-      grid.innerHTML = items.map(item => `
-        <div class="col-6 col-sm-4 col-md-4 col-lg-3">
-          <div class="product-card position-relative" onclick="addLaundryItem(${Number(item.id)})">
-            <button type="button" class="btn btn-light btn-sm edit-catalog-btn border" title="កែតម្លៃ និងប្តូររូប"
-              onclick="event.stopPropagation(); openEditCatalogModal(${Number(item.id)})">
-              <i class="fa-solid fa-pen text-primary" style="font-size: 0.72rem;"></i>
-            </button>
-            <div class="product-img-wrapper">
-              <img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.name)}" onerror="this.src='https://via.placeholder.com/300x200?text=Laundry+Item'">
-            </div>
-            <div class="product-overlay-info">
-              <span class="text-white fw-bold text-truncate" style="font-size: 0.8rem; max-width: 68%;" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</span>
-              <span class="text-warning fw-bold" style="font-size: 0.8rem;">$${Number(item.price).toFixed(2)}</span>
+      grid.innerHTML = items.map(item => {
+        const idNum = Number(item.id);
+        const isSel = Number(selectedCatalogId) === idNum;
+        return `
+          <div class="col-6 col-sm-4 col-md-4 col-lg-3">
+            <div class="product-card position-relative ${isSel ? 'is-selected' : ''}" onclick="selectCatalogCard(event, ${idNum})">
+              <button type="button" class="btn btn-light btn-sm edit-catalog-btn border" title="កែតម្លៃ និងប្តូររូប"
+                onclick="event.stopPropagation(); openEditCatalogModal(${idNum})">
+                <i class="fa-solid fa-pen text-primary" style="font-size: 0.72rem;"></i>
+              </button>
+              <div class="product-img-wrapper">
+                <img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.name)}" onerror="this.src='https://via.placeholder.com/300x200?text=Laundry+Item'">
+              </div>
+              <div class="product-overlay-info">
+                <div class="text-truncate" style="max-width: 65%;">
+                  <span class="text-white fw-bold d-block text-truncate" style="font-size: 0.78rem;" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</span>
+                  <span class="text-warning fw-bold" style="font-size: 0.76rem;">$${Number(item.price).toFixed(2)}</span>
+                </div>
+                <button type="button" class="btn btn-success btn-sm fw-bold add-item-badge-btn" title="បន្ថែមចូលវិក្កយបត្រ"
+                  onclick="event.stopPropagation(); selectedCatalogId = ${idNum}; addLaundryItem(${idNum}); renderCatalogCards();">
+                  <i class="fa-solid fa-plus"></i> ថែម
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     function openEditCatalogModal(itemId) {
@@ -1804,8 +1829,8 @@
                   <option value="Picked Up" ${o.status === 'Picked Up' ? 'selected' : ''}>Picked Up</option>
                 </select>
                 <div class="d-flex gap-1">
-                  <button class="btn btn-sm btn-outline-primary" onclick="openSavedOrderInvoice(${o.id})"><i class="fa-solid fa-print"></i></button>
-                  <button class="btn btn-sm btn-outline-danger" onclick="deleteOrder(${o.id})"><i class="fa-solid fa-trash"></i></button>
+                  <button type="button" class="btn btn-sm btn-outline-primary" onclick="openSavedOrderInvoice(${o.id})"><i class="fa-solid fa-print"></i></button>
+                  <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteOrder(${o.id})"><i class="fa-solid fa-trash"></i></button>
                 </div>
               </div>
             </div>
