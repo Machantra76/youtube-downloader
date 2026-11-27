@@ -306,7 +306,7 @@
           <i class="fa-solid fa-jug-detergent me-2 text-primary"></i> Laundry POS & Invoice
         </span>
         <div class="d-flex align-items-center gap-2 flex-wrap">
-          <span id="dbStatusBadge" class="badge bg-success">DB Connected</span>
+          <span id="dbStatusBadge" class="badge bg-success hidden">DB Connected</span>
           <button type="button" class="btn btn-light btn-sm fw-bold text-dark" id="navDashboardBtn" onclick="switchView('dashboard')">
             <i class="fa-solid fa-grip me-1"></i> Main Menu
           </button>
@@ -1296,13 +1296,15 @@
 
     async function checkHealth() {
       const badge = document.getElementById('dbStatusBadge');
+      if (!badge) return;
+      badge.classList.add('hidden');
       try {
         const res = await fetch(API + '/api/health');
         const data = await res.json();
-        badge.className = data.success ? 'badge bg-success' : 'badge bg-danger';
+        badge.className = data.success ? 'badge bg-success hidden' : 'badge bg-danger hidden';
         badge.textContent = data.success ? 'DB Connected (DATABASE_URL)' : 'DB Error';
       } catch {
-        badge.className = 'badge bg-danger';
+        badge.className = 'badge bg-danger hidden';
         badge.textContent = 'Offline';
       }
     }
