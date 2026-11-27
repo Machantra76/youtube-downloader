@@ -194,19 +194,20 @@
       box-shadow: 0 2px 8px rgba(15, 23, 42, 0.25);
     }
 
+    /* 🟢 កាតរូបភាពទំនិញ (Order Photo Card) បង្រួមបណ្តោយឲ្យខ្លីជាងមុន */
     .order-photo-card {
       border: 1px solid #e2e8f0;
-      border-radius: 14px;
+      border-radius: 12px;
       background: #fff;
       overflow: hidden;
-      box-shadow: 0 3px 12px rgba(15, 23, 42, 0.05);
+      box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05);
       height: 100%;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
     }
     .order-photo-box {
-      height: 140px;
+      height: 95px;
       background: #e2e8f0;
       display: flex;
       align-items: center;
@@ -217,6 +218,18 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
+    }
+    .order-card-body {
+      padding: 10px 12px !important;
+    }
+    .order-card-lines {
+      margin: 6px 0 !important;
+      padding: 6px 8px !important;
+      max-height: 82px;
+      overflow-y: auto;
+    }
+    .order-card-footer {
+      padding: 6px 10px !important;
     }
 
     .stat-card {
@@ -586,7 +599,7 @@
             </div>
           </div>
         </div>
-        <div class="row g-3" id="orderCardsGrid"></div>
+        <div class="row g-2" id="orderCardsGrid"></div>
       </div>
 
       <!-- VIEW 4: DAILY / MONTHLY / YEARLY REVENUE REPORT -->
@@ -787,6 +800,62 @@
     </div>
   </div>
 
+  <!-- EDIT ORDER CARD MODAL -->
+  <div class="modal fade" id="editOrderModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow rounded-4">
+        <div class="modal-header bg-warning text-dark">
+          <h5 class="modal-title fw-bold">
+            <i class="fa-solid fa-pen-to-square me-1"></i> កែសម្រួលកាតទំនិញ & វិក្កយបត្រ (<span id="editOrderCodeLabel"></span>)
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form id="editOrderForm" class="modal-body">
+          <input type="hidden" id="editOrderId" />
+          <div class="row g-2 mb-2">
+            <div class="col-6">
+              <label class="form-label small fw-bold">ឈ្មោះអតិថិជន *</label>
+              <input type="text" id="editOrderCustomer" class="form-control form-control-sm fw-bold" required />
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-bold">លេខទូរស័ព្ទ *</label>
+              <input type="text" id="editOrderPhone" class="form-control form-control-sm fw-bold" required />
+            </div>
+          </div>
+          <div class="row g-2 mb-2">
+            <div class="col-6">
+              <label class="form-label small fw-bold">ស្ថានភាព (Status)</label>
+              <select id="editOrderStatus" class="form-select form-select-sm">
+                <option value="Pending">Pending</option>
+                <option value="Washing">Washing</option>
+                <option value="Ready">Ready</option>
+                <option value="Picked Up">Picked Up</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-bold">តម្លៃសរុប ($ USD)</label>
+              <input type="number" step="0.01" min="0" id="editOrderPrice" class="form-control form-control-sm fw-bold text-success" required />
+            </div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small fw-bold">កំណត់សម្គាល់ (Notes)</label>
+            <input type="text" id="editOrderNotes" class="form-control form-control-sm" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold">ប្តូររូបភាពទំនិញ (ស្រេចចិត្ត)</label>
+            <input type="file" id="editOrderImageFile" class="form-control form-control-sm" accept="image/*" />
+          </div>
+          <div class="d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-secondary btn-sm fw-bold" data-bs-dismiss="modal">បោះបង់</button>
+            <button type="submit" class="btn btn-warning btn-sm fw-bold px-3 text-dark">
+              <i class="fa-solid fa-check me-1"></i> រក្សាទុកការកែសម្រួល
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- EDIT / ADD CATALOG ITEM MODAL -->
   <div class="modal fade" id="editCatalogModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -939,10 +1008,12 @@
     let activeGroupFilter = 'All';
     let selectedCatalogId = null;
     let selectedImageBase64 = null;
+    let editOrderImageBase64 = null;
     let finalCalculatedTotal = 0;
     let activeModalOrderId = null;
     let receiptModalObj = null;
     let editCatalogModalObj = null;
+    let editOrderModalObj = null;
 
     const DEFAULT_GROUPS = [
       'អាវ (Shirts)',
@@ -1061,6 +1132,7 @@
     document.addEventListener('DOMContentLoaded', async () => {
       receiptModalObj = new bootstrap.Modal(document.getElementById('receiptModal'));
       editCatalogModalObj = new bootstrap.Modal(document.getElementById('editCatalogModal'));
+      editOrderModalObj = new bootstrap.Modal(document.getElementById('editOrderModal'));
       initReportFilterDefaults();
       renderGroupButtons();
       renderCategorySelectOptions();
@@ -1511,6 +1583,27 @@
       reader.readAsDataURL(file);
     });
 
+    document.getElementById('editOrderImageFile').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      editOrderImageBase64 = null;
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const maxW = 640;
+          const scale = img.width > maxW ? maxW / img.width : 1;
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          editOrderImageBase64 = canvas.toDataURL('image/jpeg', 0.78);
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
     function buildInvoicePayloadItems() {
       return cart.map(item => ({
         category: item.category,
@@ -1764,18 +1857,7 @@
       }
     }
 
-    async function loadOrders() {
-      const search = document.getElementById('searchOrdersInput').value;
-      const category = document.getElementById('filterCategorySelect').value;
-      const status = document.getElementById('filterStatusSelect').value;
-      const params = new URLSearchParams({ search, category, status });
-
-      const res = await fetch(API + '/api/orders?' + params.toString());
-      if (res.status === 401) return showLogin();
-      const json = await res.json();
-      ordersCache = json.data || [];
-      renderRevenueReport();
-
+    function renderOrderCardsFromCache() {
       const grid = document.getElementById('orderCardsGrid');
       if (ordersCache.length === 0) {
         grid.innerHTML = '<div class="col-12 text-center text-muted py-5">មិនមានទិន្នន័យវិក្កយបត្រទេ</div>';
@@ -1789,11 +1871,11 @@
 
         const imgHtml = o.image_data
           ? `<img src="${o.image_data}" alt="${escapeHtml(o.order_code)}" />`
-          : `<div class="text-muted small text-center p-2"><i class="fa-solid fa-shirt fs-3 d-block mb-1"></i>${escapeHtml(o.category)}</div>`;
+          : `<div class="text-muted small text-center p-1"><i class="fa-solid fa-shirt fs-5 d-block"></i>${escapeHtml(o.category)}</div>`;
 
         const linesHtml = items.map(it => `
-          <div class="d-flex justify-content-between small border-bottom py-1">
-            <span>${escapeHtml(it.category)} (${Number(it.item_count || 1)})</span>
+          <div class="d-flex justify-content-between small border-bottom py-0" style="font-size: 0.78rem;">
+            <span class="text-truncate pe-1">${escapeHtml(it.category)} (${Number(it.item_count || 1)})</span>
             <strong>$${Number(it.price || 0).toFixed(2)}</strong>
           </div>
         `).join('');
@@ -1803,30 +1885,31 @@
             <div class="order-photo-card">
               <div>
                 <div class="order-photo-box">${imgHtml}</div>
-                <div class="p-3">
+                <div class="order-card-body">
                   <div class="d-flex justify-content-between align-items-center mb-1">
                     <span class="fw-bold text-primary small">${escapeHtml(o.order_code)}</span>
-                    <span class="badge bg-info-subtle text-dark">${escapeHtml(o.status)}</span>
+                    <span class="badge bg-info-subtle text-dark" style="font-size: 0.72rem;">${escapeHtml(o.status)}</span>
                   </div>
-                  <div class="small fw-bold">${escapeHtml(o.customer_name)} (${escapeHtml(o.phone)})</div>
-                  <div class="my-2 bg-light rounded p-2">${linesHtml}</div>
+                  <div class="small fw-bold text-truncate">${escapeHtml(o.customer_name)} (${escapeHtml(o.phone)})</div>
+                  <div class="bg-light rounded order-card-lines">${linesHtml}</div>
                   <div class="d-flex justify-content-between fw-bold small">
                     <span>សរុប:</span>
                     <span class="text-success">$${Number(o.price).toFixed(2)}</span>
                   </div>
-                  <div class="text-muted" style="font-size: 0.72rem;">${escapeHtml(o.created_at_kh || '')}</div>
+                  <div class="text-muted" style="font-size: 0.7rem;">${escapeHtml(o.created_at_kh || '')}</div>
                 </div>
               </div>
-              <div class="p-2 bg-light border-top d-flex gap-1 align-items-center justify-content-between">
-                <select class="form-select form-select-sm" style="width: auto;" onchange="updateOrderStatus(${o.id}, this.value)">
+              <div class="bg-light border-top d-flex gap-1 align-items-center justify-content-between order-card-footer">
+                <select class="form-select form-select-sm py-0" style="width: auto; font-size: 0.78rem;" onchange="updateOrderStatus(${o.id}, this.value)">
                   <option value="Pending" ${o.status === 'Pending' ? 'selected' : ''}>Pending</option>
                   <option value="Washing" ${o.status === 'Washing' ? 'selected' : ''}>Washing</option>
                   <option value="Ready" ${o.status === 'Ready' ? 'selected' : ''}>Ready</option>
                   <option value="Picked Up" ${o.status === 'Picked Up' ? 'selected' : ''}>Picked Up</option>
                 </select>
                 <div class="d-flex gap-1">
-                  <button type="button" class="btn btn-sm btn-outline-primary" onclick="openSavedOrderInvoice(${o.id})"><i class="fa-solid fa-print"></i></button>
-                  <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteOrder(${o.id})"><i class="fa-solid fa-trash"></i></button>
+                  <button type="button" class="btn btn-sm btn-outline-warning text-dark py-0 px-2" title="កែសម្រួល" onclick="openEditOrderModal(${o.id})"><i class="fa-solid fa-pen"></i></button>
+                  <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" title="បោះពុម្ព" onclick="openSavedOrderInvoice(${o.id})"><i class="fa-solid fa-print"></i></button>
+                  <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" title="លុប" onclick="deleteOrder(${o.id})"><i class="fa-solid fa-trash"></i></button>
                 </div>
               </div>
             </div>
@@ -1834,6 +1917,74 @@
         `;
       }).join('');
     }
+
+    async function loadOrders() {
+      const search = document.getElementById('searchOrdersInput').value;
+      const category = document.getElementById('filterCategorySelect').value;
+      const status = document.getElementById('filterStatusSelect').value;
+      const params = new URLSearchParams({ search, category, status });
+
+      const res = await fetch(API + '/api/orders?' + params.toString());
+      if (res.status === 401) return showLogin();
+      const json = await res.json();
+      ordersCache = json.data || [];
+      renderRevenueReport();
+      renderOrderCardsFromCache();
+    }
+
+    function openEditOrderModal(orderId) {
+      const o = ordersCache.find(x => Number(x.id) === Number(orderId));
+      if (!o) return;
+      editOrderImageBase64 = null;
+      document.getElementById('editOrderImageFile').value = '';
+      document.getElementById('editOrderId').value = o.id;
+      document.getElementById('editOrderCodeLabel').textContent = o.order_code || `#${o.id}`;
+      document.getElementById('editOrderCustomer').value = o.customer_name || '';
+      document.getElementById('editOrderPhone').value = o.phone || '';
+      document.getElementById('editOrderStatus').value = o.status || 'Pending';
+      document.getElementById('editOrderPrice').value = Number(o.price || 0).toFixed(2);
+      document.getElementById('editOrderNotes').value = o.notes || '';
+      editOrderModalObj.show();
+    }
+
+    document.getElementById('editOrderForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const orderId = Number(document.getElementById('editOrderId').value);
+      const target = ordersCache.find(x => Number(x.id) === orderId);
+      if (!target) return;
+
+      const updatedFields = {
+        customer_name: document.getElementById('editOrderCustomer').value.trim(),
+        phone: document.getElementById('editOrderPhone').value.trim(),
+        status: document.getElementById('editOrderStatus').value,
+        price: parseFloat(document.getElementById('editOrderPrice').value) || 0,
+        notes: document.getElementById('editOrderNotes').value.trim()
+      };
+      if (editOrderImageBase64) {
+        updatedFields.image_data = editOrderImageBase64;
+      }
+
+      Object.assign(target, updatedFields);
+      renderRevenueReport();
+      renderOrderCardsFromCache();
+      editOrderModalObj.hide();
+
+      try {
+        const res = await fetch(API + `/api/orders/${orderId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedFields)
+        });
+        if (!res.ok && updatedFields.status) {
+          await fetch(API + `/api/orders/${orderId}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: updatedFields.status })
+          });
+        }
+        await loadOrders();
+      } catch {}
+    });
 
     function openSavedOrderInvoice(orderId) {
       const o = ordersCache.find(x => Number(x.id) === Number(orderId));
