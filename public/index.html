@@ -194,20 +194,21 @@
       box-shadow: 0 2px 8px rgba(15, 23, 42, 0.25);
     }
 
-    /* 🟢 កាតរូបភាពទំនិញ (Order Photo Card) បង្ហាញរូបភាពពេញស្អាតមិនដាច់ និងបង្រួមកាតឱ្យខ្លីជាងមុន */
+    /* 🟢 កាតរូបភាពទំនិញ (Order Photo Card) បន្ថយឱ្យតូចជាងមុន ស្អាតមិនដាច់រូប */
     .order-photo-card {
       border: 1px solid #e2e8f0;
-      border-radius: 12px;
+      border-radius: 10px;
       background: #fff;
       overflow: hidden;
-      box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05);
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
       height: 100%;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      font-size: 0.78rem;
     }
     .order-photo-box {
-      height: 145px;
+      height: 95px;
       background: #f8fafc;
       display: flex;
       align-items: center;
@@ -220,19 +221,19 @@
       width: 100%;
       height: 100%;
       object-fit: contain;
-      padding: 4px;
+      padding: 3px;
       background: #f8fafc;
     }
     .order-card-edit-btn {
       position: absolute;
-      top: 6px;
-      right: 6px;
+      top: 4px;
+      right: 4px;
       z-index: 4;
       border-radius: 999px;
-      padding: 2px 8px;
-      font-size: 0.72rem;
+      padding: 1px 6px;
+      font-size: 0.65rem;
       font-weight: 700;
-      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);
+      box-shadow: 0 2px 5px rgba(15, 23, 42, 0.25);
     }
 
     .stat-card {
@@ -1247,11 +1248,11 @@
 
       document.getElementById('navDashboardBtn').className = viewName === 'dashboard' ? 'btn btn-light btn-sm fw-bold text-dark' : 'btn btn-outline-light btn-sm fw-bold';
       document.getElementById('navPosBtn').className = viewName === 'pos' ? 'btn btn-primary btn-sm fw-bold' : 'btn btn-outline-light btn-sm fw-bold';
-      document.getElementById('navCardsBtn').className = viewName === 'cards' ? 'btn btn-primary btn-sm fw-bold' : 'btn-outline-light btn-sm fw-bold';
-      document.getElementById('navReportBtn').className = viewName === 'report' ? 'btn btn-info btn-sm fw-bold text-dark' : 'btn-outline-info btn-sm fw-bold';
-      document.getElementById('navStockBtn').className = viewName === 'stock' ? 'btn btn-success btn-sm fw-bold' : 'btn-outline-success btn-sm fw-bold';
+      document.getElementById('navCardsBtn').className = viewName === 'cards' ? 'btn btn-primary btn-sm fw-bold' : 'btn btn-outline-light btn-sm fw-bold';
+      document.getElementById('navReportBtn').className = viewName === 'report' ? 'btn btn-info btn-sm fw-bold text-dark' : 'btn btn-outline-info btn-sm fw-bold';
+      document.getElementById('navStockBtn').className = viewName === 'stock' ? 'btn btn-success btn-sm fw-bold' : 'btn btn-outline-success btn-sm fw-bold';
       if (currentUser && currentUser.role === 'admin') {
-        document.getElementById('navUsersBtn').className = viewName === 'users' ? 'btn btn-warning btn-sm fw-bold' : 'btn-outline-warning btn-sm fw-bold';
+        document.getElementById('navUsersBtn').className = viewName === 'users' ? 'btn btn-warning btn-sm fw-bold' : 'btn btn-outline-warning btn-sm fw-bold';
       }
 
       if (viewName === 'cards') loadOrders();
@@ -2013,51 +2014,51 @@
 
         const imgHtml = o.image_data
           ? `<img src="${o.image_data}" alt="${escapeHtml(o.order_code)}" />`
-          : `<div class="text-muted small text-center p-1"><i class="fa-solid fa-shirt fs-5 d-block"></i>${escapeHtml(o.category)}</div>`;
+          : `<div class="text-muted text-center p-1" style="font-size: 0.7rem;"><i class="fa-solid fa-shirt fs-6 d-block"></i>${escapeHtml(o.category)}</div>`;
 
         const linesHtml = items.map(it => `
-          <div class="d-flex justify-content-between small border-bottom py-1">
+          <div class="d-flex justify-content-between border-bottom py-0" style="font-size: 0.7rem;">
             <span class="text-truncate" style="max-width: 72%;">${escapeHtml(it.category)} (${Number(it.item_count || 1)})</span>
             <strong>$${Number(it.price || 0).toFixed(2)}</strong>
           </div>
         `).join('');
 
         return `
-          <div class="col-6 col-sm-6 col-md-4 col-lg-3">
+          <div class="col-6 col-sm-4 col-md-3 col-lg-2">
             <div class="order-photo-card">
               <div>
                 <div class="order-photo-box">
                   ${imgHtml}
                   <button type="button" class="btn btn-light btn-sm order-card-edit-btn border text-primary"
                     title="កែប្រែកាត" onclick="event.stopPropagation(); openEditOrderCardModal(${o.id})">
-                    <i class="fa-solid fa-pen" style="font-size: 0.68rem;"></i> Edit
+                    <i class="fa-solid fa-pen" style="font-size: 0.6rem;"></i> Edit
                   </button>
                 </div>
-                <div class="p-2">
-                  <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span class="fw-bold text-primary small">${escapeHtml(o.order_code)}</span>
-                    <span class="badge bg-info-subtle text-dark">${escapeHtml(o.status)}</span>
+                <div class="p-1.5" style="padding: 6px;">
+                  <div class="d-flex justify-content-between align-items-center mb-0.5" style="margin-bottom: 2px;">
+                    <span class="fw-bold text-primary" style="font-size: 0.72rem;">${escapeHtml(o.order_code)}</span>
+                    <span class="badge bg-info-subtle text-dark" style="font-size: 0.62rem;">${escapeHtml(o.status)}</span>
                   </div>
-                  <div class="small fw-bold text-truncate">${escapeHtml(o.customer_name)} (${escapeHtml(o.phone)})</div>
-                  <div class="my-1 bg-light rounded px-2 py-1">${linesHtml}</div>
-                  <div class="d-flex justify-content-between fw-bold small">
+                  <div class="fw-bold text-truncate" style="font-size: 0.72rem;">${escapeHtml(o.customer_name)} (${escapeHtml(o.phone)})</div>
+                  <div class="my-1 bg-light rounded px-1 py-0.5">${linesHtml}</div>
+                  <div class="d-flex justify-content-between fw-bold" style="font-size: 0.74rem;">
                     <span>សរុប:</span>
                     <span class="text-success">$${Number(o.price).toFixed(2)}</span>
                   </div>
-                  <div class="text-muted" style="font-size: 0.7rem;">${escapeHtml(o.created_at_kh || '')}</div>
+                  <div class="text-muted" style="font-size: 0.64rem;">${escapeHtml(o.created_at_kh || '')}</div>
                 </div>
               </div>
-              <div class="p-2 bg-light border-top d-flex gap-1 align-items-center justify-content-between">
-                <select class="form-select form-select-sm" style="width: auto;" onchange="updateOrderStatus(${o.id}, this.value)">
+              <div class="p-1 bg-light border-top d-flex gap-1 align-items-center justify-content-between">
+                <select class="form-select form-select-sm py-0 px-1" style="width: auto; font-size: 0.68rem;" onchange="updateOrderStatus(${o.id}, this.value)">
                   <option value="Pending" ${o.status === 'Pending' ? 'selected' : ''}>Pending</option>
                   <option value="Washing" ${o.status === 'Washing' ? 'selected' : ''}>Washing</option>
                   <option value="Ready" ${o.status === 'Ready' ? 'selected' : ''}>Ready</option>
                   <option value="Picked Up" ${o.status === 'Picked Up' ? 'selected' : ''}>Picked Up</option>
                 </select>
                 <div class="d-flex gap-1">
-                  <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit" onclick="openEditOrderCardModal(${o.id})"><i class="fa-solid fa-pen"></i></button>
-                  <button type="button" class="btn btn-sm btn-outline-primary" title="Print" onclick="openSavedOrderInvoice(${o.id})"><i class="fa-solid fa-print"></i></button>
-                  <button type="button" class="btn btn-sm btn-outline-danger" title="Delete" onclick="deleteOrder(${o.id})"><i class="fa-solid fa-trash"></i></button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" style="font-size: 0.68rem;" title="Edit" onclick="openEditOrderCardModal(${o.id})"><i class="fa-solid fa-pen"></i></button>
+                  <button type="button" class="btn btn-sm btn-outline-primary py-0 px-1" style="font-size: 0.68rem;" title="Print" onclick="openSavedOrderInvoice(${o.id})"><i class="fa-solid fa-print"></i></button>
+                  <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1" style="font-size: 0.68rem;" title="Delete" onclick="deleteOrder(${o.id})"><i class="fa-solid fa-trash"></i></button>
                 </div>
               </div>
             </div>
