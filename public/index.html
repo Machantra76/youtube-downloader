@@ -168,7 +168,7 @@
       bottom: 0;
       left: 0;
       right: 0;
-      background: rgba(15, 23, 42, 0.82);
+      background: rgba(15, 23, 42, 0.84);
       backdrop-filter: blur(3px);
       padding: 6px 10px;
       display: flex;
@@ -179,18 +179,33 @@
       z-index: 4;
     }
 
+    .product-top-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      z-index: 5;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.78);
+      color: #ffffff;
+    }
+
     .edit-catalog-btn {
       position: absolute;
       top: 8px;
       right: 8px;
       z-index: 6;
       border-radius: 999px;
-      width: 30px;
       height: 30px;
-      padding: 0;
+      padding: 0 10px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      gap: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
       box-shadow: 0 2px 8px rgba(15, 23, 42, 0.25);
     }
 
@@ -562,31 +577,47 @@
         </div>
       </div>
 
-      <!-- VIEW 2: IMAGE CARDS & ORDERS LIST -->
+      <!-- VIEW 2: IMAGE CARDS (MATCHING POS CATALOG CARDS + EDIT BUTTON) -->
       <div id="viewCards" class="hidden">
+        <div class="mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h4 class="fw-bold text-dark fs-5 mb-0">
+              <i class="fa-solid fa-images me-2 text-primary"></i> កាតរូបភាពទំនិញ
+            </h4>
+            <p class="text-muted small mb-0">ចុចលើកាតដើម្បីជ្រើស និងបន្ថែមចូលវិក្កយបត្រភ្លាមៗ ឬចុច <strong>Edit</strong> ដើម្បីកែតម្លៃ/ប្តូររូប</p>
+          </div>
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <button type="button" class="btn btn-outline-primary btn-sm fw-bold shadow-sm" onclick="openEditCatalogModal(null)">
+              <i class="fa-solid fa-plus me-1"></i> បន្ថែមមុខទំនិញថ្មី
+            </button>
+            <button type="button" class="btn btn-success btn-sm fw-bold shadow-sm" onclick="switchView('pos')">
+              <i class="fa-solid fa-receipt me-1"></i> មើលវិក្កយបត្រ & កន្រ្តក (<span id="cardsCartCountBadge">0</span>)
+            </button>
+          </div>
+        </div>
+
         <div class="card border-0 shadow-sm rounded-4 p-3 mb-3">
           <div class="row g-2 align-items-center">
             <div class="col-12 col-md-4">
               <input type="text" id="searchOrdersInput" class="form-control form-control-sm"
-                placeholder="ស្វែងរកលេខកូដ, ឈ្មោះ, លេខទូរស័ព្ទ..." oninput="loadOrders()" />
+                placeholder="ស្វែងរកឈ្មោះមុខទំនិញ ឬក្រុម..." oninput="renderImageCardsView()" />
             </div>
             <div class="col-6 col-md-4">
-              <select id="filterCategorySelect" class="form-select form-select-sm" onchange="loadOrders()">
+              <select id="filterCategorySelect" class="form-select form-select-sm" onchange="renderImageCardsView()">
                 <option value="ALL">Category អាវ/ខោ/កម្រាលពូក ទាំងអស់</option>
               </select>
             </div>
             <div class="col-6 col-md-4">
-              <select id="filterStatusSelect" class="form-select form-select-sm" onchange="loadOrders()">
-                <option value="ALL">ស្ថានភាពទាំងអស់</option>
-                <option value="Pending">Pending</option>
-                <option value="Washing">Washing</option>
-                <option value="Ready">Ready</option>
-                <option value="Picked Up">Picked Up</option>
+              <select id="filterStatusSelect" class="form-select form-select-sm" onchange="renderImageCardsView()">
+                <option value="ALL">តម្រៀប / ស្ថានភាពទាំងអស់</option>
+                <option value="SELECTED">កាតដែលបាន Select</option>
               </select>
             </div>
           </div>
         </div>
-        <div class="row g-3" id="orderCardsGrid"></div>
+
+        <div id="cardsQuickFeedback" class="small fw-bold text-success mb-2"></div>
+        <div class="row g-2" id="orderCardsGrid"></div>
       </div>
 
       <!-- VIEW 4: DAILY / MONTHLY / YEARLY REVENUE REPORT -->
@@ -1032,6 +1063,7 @@
       renderCategorySelectOptions();
       renderStockCategoryOptions();
       renderCatalogCards();
+      renderImageCardsView();
       populateFilterCategories();
     }
 
@@ -1066,6 +1098,7 @@
       renderCategorySelectOptions();
       renderStockCategoryOptions();
       renderCatalogCards();
+      renderImageCardsView();
       renderOldStockTable();
       await checkSession();
     });
@@ -1103,6 +1136,7 @@
       switchView('dashboard');
       checkHealth();
       populateFilterCategories();
+      renderImageCardsView();
       renderStockCategoryOptions();
       renderOldStockTable();
       loadOrders();
@@ -1125,7 +1159,10 @@
         document.getElementById('navUsersBtn').className = viewName === 'users' ? 'btn btn-warning btn-sm fw-bold' : 'btn btn-outline-warning btn-sm fw-bold';
       }
 
-      if (viewName === 'cards') loadOrders();
+      if (viewName === 'cards') {
+        populateFilterCategories();
+        renderImageCardsView();
+      }
       if (viewName === 'report') {
         initReportFilterDefaults();
         renderRevenueReport();
@@ -1220,6 +1257,7 @@
       renderCategorySelectOptions(groupName);
       renderStockCategoryOptions(groupName);
       renderCatalogCards();
+      renderImageCardsView();
     }
 
     function selectGroupFilter(groupName) {
@@ -1229,21 +1267,54 @@
     }
 
     function highlightSelectedCardDom(itemId) {
-      const allCards = document.querySelectorAll('#laundryTypesGrid .product-card');
+      const allCards = document.querySelectorAll('.product-card');
       allCards.forEach(cardEl => {
         const cardItemId = Number(cardEl.getAttribute('data-item-id'));
         cardEl.classList.toggle('is-selected', cardItemId === Number(itemId));
       });
     }
 
-    // 🟢 ចុចលើកាតរូបភាព៖ Select កាតដែលចុចពិតប្រាកដ ហើយបន្ថែមតែមុខទំនិញនោះចូលវិក្កយបត្រ
-    function handleCatalogCardClick(event, itemId) {
+    // 🟢 ចុចលើកាតរូបភាព៖ Select កាតដែលចុចពិតប្រាកដ ហើយបន្ថែមតែមុខទំនិញនោះចូល «មុខទំនិញក្នុងវិក្កយបត្រ / Invoice Items»
+    function handleCatalogCardClick(event, itemId, fromCardsTab = false) {
       if (event) event.stopPropagation();
       const numericId = Number(itemId);
       if (!Number.isFinite(numericId) || numericId <= 0) return;
+      const found = LAUNDRY_CATALOG.find(x => Number(x.id) === numericId);
+      if (!found) return;
+
       selectedCatalogId = numericId;
       highlightSelectedCardDom(numericId);
       addLaundryItem(numericId);
+
+      if (fromCardsTab) {
+        const fb = document.getElementById('cardsQuickFeedback');
+        if (fb) {
+          fb.textContent = `✅ បានជ្រើស និងបន្ថែម «${found.name}» ចូលវិក្កយបត្ររួចរាល់!`;
+        }
+      }
+    }
+
+    function buildCatalogCardHtml(item, fromCardsTab = false) {
+      const idNum = Number(item.id);
+      const isSel = Number(selectedCatalogId) === idNum;
+      return `
+        <div class="col-6 col-sm-4 col-md-4 col-lg-3">
+          <div class="product-card position-relative ${isSel ? 'is-selected' : ''}" data-item-id="${idNum}" onclick="handleCatalogCardClick(event, ${idNum}, ${fromCardsTab})">
+            <span class="product-top-badge">${escapeHtml(item.group || '')}</span>
+            <button type="button" class="btn btn-light edit-catalog-btn border text-primary" title="កែតម្លៃ និងប្តូររូប"
+              onclick="event.stopPropagation(); openEditCatalogModal(${idNum})">
+              <i class="fa-solid fa-pen" style="font-size: 0.72rem;"></i> Edit
+            </button>
+            <div class="product-img-wrapper">
+              <img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.name)}" onerror="this.src='https://via.placeholder.com/300x200?text=Laundry+Item'">
+            </div>
+            <div class="product-overlay-info">
+              <span class="text-white fw-bold text-truncate" style="font-size: 0.8rem; max-width: 68%;" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</span>
+              <span class="text-warning fw-bold" style="font-size: 0.8rem;">$${Number(item.price).toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+      `;
     }
 
     function renderCatalogCards() {
@@ -1257,27 +1328,37 @@
         return;
       }
 
-      grid.innerHTML = items.map(item => {
-        const idNum = Number(item.id);
-        const isSel = Number(selectedCatalogId) === idNum;
-        return `
-          <div class="col-6 col-sm-4 col-md-4 col-lg-3">
-            <div class="product-card position-relative ${isSel ? 'is-selected' : ''}" data-item-id="${idNum}" onclick="handleCatalogCardClick(event, ${idNum})">
-              <button type="button" class="btn btn-light btn-sm edit-catalog-btn border" title="កែតម្លៃ និងប្តូររូប"
-                onclick="event.stopPropagation(); openEditCatalogModal(${idNum})">
-                <i class="fa-solid fa-pen text-primary" style="font-size: 0.72rem;"></i>
-              </button>
-              <div class="product-img-wrapper">
-                <img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.name)}" onerror="this.src='https://via.placeholder.com/300x200?text=Laundry+Item'">
-              </div>
-              <div class="product-overlay-info">
-                <span class="text-white fw-bold text-truncate" style="font-size: 0.8rem; max-width: 68%;" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</span>
-                <span class="text-warning fw-bold" style="font-size: 0.8rem;">$${Number(item.price).toFixed(2)}</span>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
+      grid.innerHTML = items.map(item => buildCatalogCardHtml(item, false)).join('');
+    }
+
+    // 🟢 កាតនៅក្នុង «កាតរូបភាពទំនិញ» ដូចកាតក្នុង «ប្រភេទអាវ / ខោ / កម្រាលពូក / ផ្សេងៗ» + ប៊ូតុង Edit
+    function renderImageCardsView() {
+      const grid = document.getElementById('orderCardsGrid');
+      if (!grid) return;
+
+      const searchVal = (document.getElementById('searchOrdersInput')?.value || '').trim().toLowerCase();
+      const catVal = document.getElementById('filterCategorySelect')?.value || 'ALL';
+      const statusVal = document.getElementById('filterStatusSelect')?.value || 'ALL';
+
+      const totalQtyInCart = cart.reduce((sum, c) => sum + Number(c.item_count || 0), 0);
+      const badgeEl = document.getElementById('cardsCartCountBadge');
+      if (badgeEl) badgeEl.textContent = String(totalQtyInCart);
+
+      const filtered = LAUNDRY_CATALOG.filter(item => {
+        const matchSearch = !searchVal
+          || String(item.name).toLowerCase().includes(searchVal)
+          || String(item.group).toLowerCase().includes(searchVal);
+        const matchCat = catVal === 'ALL' || item.group === catVal;
+        const matchStatus = statusVal !== 'SELECTED' || Number(selectedCatalogId) === Number(item.id);
+        return matchSearch && matchCat && matchStatus;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '<div class="col-12 text-center text-muted py-5">មិនមានកាតរូបភាពទំនិញត្រូវនឹងលក្ខខណ្ឌស្វែងរកទេ</div>';
+        return;
+      }
+
+      grid.innerHTML = filtered.map(item => buildCatalogCardHtml(item, true)).join('');
     }
 
     function openEditCatalogModal(itemId) {
@@ -1363,6 +1444,7 @@
 
       persistCatalog();
       renderCatalogCards();
+      renderImageCardsView();
       populateFilterCategories();
       editCatalogModalObj.hide();
 
@@ -1424,6 +1506,10 @@
     }
 
     function renderCart() {
+      const totalQtyInCart = cart.reduce((sum, c) => sum + Number(c.item_count || 0), 0);
+      const badgeEl = document.getElementById('cardsCartCountBadge');
+      if (badgeEl) badgeEl.textContent = String(totalQtyInCart);
+
       const tbody = document.getElementById('cartTableBody');
       if (cart.length === 0) {
         tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3 small">មិនទាន់មានមុខទំនិញ</td></tr>`;
@@ -1663,8 +1749,10 @@
 
     function populateFilterCategories() {
       const sel = document.getElementById('filterCategorySelect');
+      if (!sel) return;
+      const currentVal = sel.value || 'ALL';
       sel.innerHTML = '<option value="ALL">Category អាវ/ខោ/កម្រាលពូក ទាំងអស់</option>' +
-        LAUNDRY_CATALOG.map(x => `<option value="${escapeHtml(x.name)}">${escapeHtml(x.name)}</option>`).join('');
+        LAUNDRY_GROUPS.map(g => `<option value="${escapeHtml(g)}" ${g === currentVal ? 'selected' : ''}>${escapeHtml(g)}</option>`).join('');
     }
 
     function parseOrderDateKey(order) {
@@ -1765,94 +1853,11 @@
     }
 
     async function loadOrders() {
-      const search = document.getElementById('searchOrdersInput').value;
-      const category = document.getElementById('filterCategorySelect').value;
-      const status = document.getElementById('filterStatusSelect').value;
-      const params = new URLSearchParams({ search, category, status });
-
-      const res = await fetch(API + '/api/orders?' + params.toString());
+      const res = await fetch(API + '/api/orders');
       if (res.status === 401) return showLogin();
       const json = await res.json();
       ordersCache = json.data || [];
       renderRevenueReport();
-
-      const grid = document.getElementById('orderCardsGrid');
-      if (ordersCache.length === 0) {
-        grid.innerHTML = '<div class="col-12 text-center text-muted py-5">មិនមានទិន្នន័យវិក្កយបត្រទេ</div>';
-        return;
-      }
-
-      grid.innerHTML = ordersCache.map(o => {
-        const items = Array.isArray(o.items_json) && o.items_json.length > 0
-          ? o.items_json
-          : [{ category: o.category, item_count: o.item_count, price: o.price }];
-
-        const imgHtml = o.image_data
-          ? `<img src="${o.image_data}" alt="${escapeHtml(o.order_code)}" />`
-          : `<div class="text-muted small text-center p-2"><i class="fa-solid fa-shirt fs-3 d-block mb-1"></i>${escapeHtml(o.category)}</div>`;
-
-        const linesHtml = items.map(it => `
-          <div class="d-flex justify-content-between small border-bottom py-1">
-            <span>${escapeHtml(it.category)} (${Number(it.item_count || 1)})</span>
-            <strong>$${Number(it.price || 0).toFixed(2)}</strong>
-          </div>
-        `).join('');
-
-        return `
-          <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-            <div class="order-photo-card">
-              <div>
-                <div class="order-photo-box">${imgHtml}</div>
-                <div class="p-3">
-                  <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span class="fw-bold text-primary small">${escapeHtml(o.order_code)}</span>
-                    <span class="badge bg-info-subtle text-dark">${escapeHtml(o.status)}</span>
-                  </div>
-                  <div class="small fw-bold">${escapeHtml(o.customer_name)} (${escapeHtml(o.phone)})</div>
-                  <div class="my-2 bg-light rounded p-2">${linesHtml}</div>
-                  <div class="d-flex justify-content-between fw-bold small">
-                    <span>សរុប:</span>
-                    <span class="text-success">$${Number(o.price).toFixed(2)}</span>
-                  </div>
-                  <div class="text-muted" style="font-size: 0.72rem;">${escapeHtml(o.created_at_kh || '')}</div>
-                </div>
-              </div>
-              <div class="p-2 bg-light border-top d-flex gap-1 align-items-center justify-content-between">
-                <select class="form-select form-select-sm" style="width: auto;" onchange="updateOrderStatus(${o.id}, this.value)">
-                  <option value="Pending" ${o.status === 'Pending' ? 'selected' : ''}>Pending</option>
-                  <option value="Washing" ${o.status === 'Washing' ? 'selected' : ''}>Washing</option>
-                  <option value="Ready" ${o.status === 'Ready' ? 'selected' : ''}>Ready</option>
-                  <option value="Picked Up" ${o.status === 'Picked Up' ? 'selected' : ''}>Picked Up</option>
-                </select>
-                <div class="d-flex gap-1">
-                  <button type="button" class="btn btn-sm btn-outline-primary" onclick="openSavedOrderInvoice(${o.id})"><i class="fa-solid fa-print"></i></button>
-                  <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteOrder(${o.id})"><i class="fa-solid fa-trash"></i></button>
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function openSavedOrderInvoice(orderId) {
-      const o = ordersCache.find(x => Number(x.id) === Number(orderId));
-      if (!o) return;
-      const items = Array.isArray(o.items_json) && o.items_json.length > 0
-        ? o.items_json
-        : [{ category: o.category, service_type: o.service_type, item_count: o.item_count, price: o.price }];
-
-      fillAndShowReceiptModal(
-        o.order_code,
-        o.created_at_kh || '',
-        o.customer_name,
-        o.phone,
-        o.status,
-        items,
-        '',
-        o.id,
-        o.status
-      );
     }
 
     async function updateOrderStatus(id, status) {
@@ -1861,12 +1866,6 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
       });
-      loadOrders();
-    }
-
-    async function deleteOrder(id) {
-      if (!confirm('លុបវិក្កយបត្រនេះមែនទេ?')) return;
-      await fetch(API + `/api/orders/${id}`, { method: 'DELETE' });
       loadOrders();
     }
 
