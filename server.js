@@ -22,8 +22,8 @@ const pool = new Pool({
 
 app.set('trust proxy', 1);
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 
 app.use(
   session({
@@ -419,7 +419,6 @@ app.get('/api/orders', requireAuth, async (req, res) => {
   }
 });
 
-// 🟢 រក្សាទុកឈ្មោះមុខទំនិញពិតប្រាកដដែលអ្នកជ្រើស (មិន force ប្តូរទៅជា អាវយឺត ទៀតទេ)
 app.post('/api/orders', requireAuth, async (req, res) => {
   const client = await pool.connect();
   try {
@@ -502,6 +501,97 @@ app.post('/api/orders', requireAuth, async (req, res) => {
     res.status(500).json({ success: false, error: 'Failed to create laundry order' });
   } finally {
     client.release();
+  }
+});
+
+// 🟢 Update រូបភាពកាត និងទិន្នន័យវិក្កយបត្រក្នុង PostgreSQL
+app.put('/api/orders/:id', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const existingRes = await pool.query('SELECT * FROM laundry_orders WHERE id = $1', [id]);
+    if (existingRes.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Order not found' });
+    }
+
+    const current = existingRes.rows[0];
+    const customerName = req.body.customer_name !== undefined
+      ? String(req.body.customer_name).trim()
+      : current.customer_name;
+    const phone = req.body.phone !== undefined
+      ? String(req.body.phone).trim()
+      : current.phone;
+    const category = req.body.category !== undefined
+      ? String(req.body.category).trim()
+      : current.category;
+    const itemCount = req.body.item_count !== undefined && Number(req.body.item_count) > 0
+      ? parseInt(req.body.item_count, 10)
+      : Number(current.item_count || 1);
+    const price = req.body.price !== undefined && Number(req.body.price) >= 0
+      ? Number(req.body.price)
+      : Number(current.price || 0);
+    const status = req.body.status !== undefined && ALLOWED_STATUSES.includes(req.body.status)
+      ? req.body.status
+      : current.status;
+    const notes = req.body.notes !== undefined
+      ? (String(req.body.notes).trim() || null)
+      : current.notes;
+
+    let nextImage = current.image_data;
+    if (req.body.image_data === null || req.body.image_data === '') {
+      nextImage = null;
+    } else if (typeof req.body.image_data === 'string' && req.body.image_data.startsWith('data:image/')) {
+      nextImage = req.body.image_data;
+    }
+
+    let nextItemsJson = Array.isArray(current.items_json) ? current.items_json : [];
+    if (nextItemsJson.length <= 1) {
+      const baseItem = nextItemsJson[0] || {};
+      nextItemsJson = [
+        {
+          ...baseItem,
+          category,
+          service_type: baseItem.service_type || current.service_type || 'បោក និងបត់ (Wash & Fold)',
+          item_count: itemCount,
+          weight_kg: baseItem.weight_kg ?? current.weight_kg ?? 1,
+          price
+        }
+      ];
+    }
+
+    const updatedRes = await pool.query(
+      `
+      UPDATE laundry_orders
+      SET customer_name = $1,
+          phone = $2,
+          category = $3,
+          item_count = $4,
+          price = $5,
+          status = $6,
+          notes = $7,
+          image_data = $8,
+          items_json = $9::jsonb,
+          updated_at = NOW()
+      WHERE id = $10
+      RETURNING *, to_char(created_at AT TIME ZONE 'Asia/Phnom_Penh', 'DD/MM/YYYY HH24:MI') AS created_at_kh
+      `,
+      [
+        customerName,
+        phone,
+        category,
+        itemCount,
+        price,
+        status,
+        notes,
+        nextImage,
+        JSON.stringify(nextItemsJson),
+        id
+      ]
+    );
+
+    res.json({ success: true, data: updatedRes.rows[0] });
+  } catch (err) {
+    console.error('PUT /api/orders/:id error:', err);
+    res.status(500).json({ success: false, error: 'Failed to update laundry order' });
   }
 });
 
