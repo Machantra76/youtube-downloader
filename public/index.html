@@ -32,7 +32,6 @@
       box-shadow: 0 20px 45px rgba(15, 23, 42, 0.28);
     }
 
-    /* 🟢 គំរូ Main Menu Dashboard ដូចក្នុងរូបភាព */
     .main-menu-wrapper {
       min-height: calc(100vh - 56px);
       background-color: #f1f4f8;
@@ -127,12 +126,18 @@
       justify-content: center;
       padding: 0px !important;
       height: 190px;
+      user-select: none;
     }
 
     .product-card:hover {
       transform: translateY(-5px) scale(1.02);
       border-color: #0d6efd !important;
       box-shadow: 0 0 20px rgba(13, 110, 253, 0.4), 0 10px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .product-card.is-selected {
+      border-color: #198754 !important;
+      box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.25);
     }
 
     .product-img-wrapper {
@@ -285,33 +290,33 @@
         </span>
         <div class="d-flex align-items-center gap-2 flex-wrap">
           <span id="dbStatusBadge" class="badge bg-success">DB Connected</span>
-          <button class="btn btn-light btn-sm fw-bold text-dark" id="navDashboardBtn" onclick="switchView('dashboard')">
+          <button type="button" class="btn btn-light btn-sm fw-bold text-dark" id="navDashboardBtn" onclick="switchView('dashboard')">
             <i class="fa-solid fa-grip me-1"></i> Main Menu
           </button>
-          <button class="btn btn-outline-light btn-sm fw-bold" id="navPosBtn" onclick="switchView('pos')">
+          <button type="button" class="btn btn-outline-light btn-sm fw-bold" id="navPosBtn" onclick="switchView('pos')">
             <i class="fa-solid fa-cash-register me-1"></i> វិក្កយបត្រ & កន្រ្តក
           </button>
-          <button class="btn btn-outline-light btn-sm fw-bold" id="navCardsBtn" onclick="switchView('cards')">
+          <button type="button" class="btn btn-outline-light btn-sm fw-bold" id="navCardsBtn" onclick="switchView('cards')">
             <i class="fa-solid fa-images me-1"></i> កាតរូបភាពទំនិញ
           </button>
-          <button class="btn btn-outline-info btn-sm fw-bold" id="navReportBtn" onclick="switchView('report')">
+          <button type="button" class="btn btn-outline-info btn-sm fw-bold" id="navReportBtn" onclick="switchView('report')">
             <i class="fa-solid fa-chart-line me-1"></i> ចំណូល ថ្ងៃ/ខែ/ឆ្នាំ
           </button>
-          <button class="btn btn-outline-success btn-sm fw-bold" id="navStockBtn" onclick="switchView('stock')">
+          <button type="button" class="btn btn-outline-success btn-sm fw-bold" id="navStockBtn" onclick="switchView('stock')">
             <i class="fa-solid fa-boxes-stacked me-1"></i> ស្តុកចាស់
           </button>
-          <button class="btn btn-outline-warning btn-sm fw-bold hidden" id="navUsersBtn" onclick="switchView('users')">
+          <button type="button" class="btn btn-outline-warning btn-sm fw-bold hidden" id="navUsersBtn" onclick="switchView('users')">
             <i class="fa-solid fa-users-gear me-1"></i> បង្កើត User
           </button>
           <span id="cashierDisplay" class="text-white small fw-bold bg-secondary px-3 py-1 rounded-pill"></span>
-          <button class="btn btn-danger btn-sm fw-bold" onclick="logout()">
+          <button type="button" class="btn btn-danger btn-sm fw-bold" onclick="logout()">
             <i class="fa-solid fa-right-from-bracket"></i> ចាកចេញ
           </button>
         </div>
       </div>
     </nav>
 
-    <!-- 🟢 VIEW 0: MAIN MENU DASHBOARD (តាមគំរូរូបភាព) -->
+    <!-- VIEW 0: MAIN MENU DASHBOARD -->
     <div id="viewDashboard" class="main-menu-wrapper">
       <div class="dashboard-header-box">
         <h1 class="dashboard-main-title">ផ្ទាំងម៉ឺនុយមេ | Main Menu Dashboard</h1>
@@ -320,7 +325,6 @@
 
       <div class="menu-grid-container">
         <div class="row g-4 justify-content-center">
-          <!-- Card 1: ទំព័រលក់ (POS) -->
           <div class="col-12 col-sm-6 col-lg-4">
             <div class="menu-tile-card" onclick="switchView('pos')">
               <div class="menu-tile-icon text-primary">
@@ -332,7 +336,6 @@
             </div>
           </div>
 
-          <!-- Card 2: ត្រួតពិនិត្យការលក់ & ចំណូល -->
           <div class="col-12 col-sm-6 col-lg-4">
             <div class="menu-tile-card" onclick="switchView('report')">
               <div class="menu-tile-icon text-success">
@@ -344,7 +347,6 @@
             </div>
           </div>
 
-          <!-- Card 3: កាតរូបភាពទំនិញ -->
           <div class="col-12 col-sm-6 col-lg-4">
             <div class="menu-tile-card" onclick="switchView('cards')">
               <div class="menu-tile-icon" style="color: #059669;">
@@ -356,7 +358,6 @@
             </div>
           </div>
 
-          <!-- Card 4: ស្តុកចាស់ (Old Stock) -->
           <div class="col-12 col-sm-6 col-lg-4">
             <div class="menu-tile-card" onclick="switchView('stock')">
               <div class="menu-tile-icon text-info">
@@ -368,7 +369,6 @@
             </div>
           </div>
 
-          <!-- Card 5: គ្រប់គ្រងមុខទំនិញ & តម្លៃ -->
           <div class="col-12 col-sm-6 col-lg-4">
             <div class="menu-tile-card" onclick="switchView('pos'); setTimeout(() => openEditCatalogModal(null), 120);">
               <div class="menu-tile-icon text-warning">
@@ -380,7 +380,6 @@
             </div>
           </div>
 
-          <!-- Card 6: ប្រវត្តិវិក្កយបត្រ -->
           <div class="col-12 col-sm-6 col-lg-4">
             <div class="menu-tile-card" onclick="switchView('cards')">
               <div class="menu-tile-icon" style="color: #7c3aed;">
@@ -392,7 +391,6 @@
             </div>
           </div>
 
-          <!-- Card 7: គ្រប់គ្រងគណនី -->
           <div class="col-12 col-sm-6 col-lg-4" id="dashboardUsersCard">
             <div class="menu-tile-card" onclick="switchView('users')">
               <div class="menu-tile-icon text-danger">
@@ -417,7 +415,7 @@
               <h4 class="fw-bold text-dark fs-5 mb-0">
                 <i class="fa-solid fa-shirt me-2 text-primary"></i> ប្រភេទអាវ / ខោ / កម្រាលពូក / ផ្សេងៗ
               </h4>
-              <p class="text-muted small mb-0">ចុចលើប្រភេទដើម្បីបន្ថែមចូលវិក្កយបត្រ ឬចុចប៊ូតុង <i class="fa-solid fa-pen"></i> ដើម្បីកំណត់តម្លៃ និងប្តូររូប</p>
+              <p class="text-muted small mb-0">ចុចលើកាតដើម្បីជ្រើស និងបន្ថែមចូលវិក្កយបត្រភ្លាមៗ ឬចុច <i class="fa-solid fa-pen"></i> ដើម្បីកែតម្លៃ/ប្តូររូប</p>
             </div>
             <div class="d-flex align-items-center gap-2 flex-wrap">
               <button type="button" class="btn btn-outline-secondary btn-sm fw-bold shadow-sm" onclick="addNewCategoryGroup()">
@@ -448,18 +446,18 @@
           <div class="card shadow-sm border-0 rounded-4 p-3 cart-container bg-white">
             <div class="row g-2 mb-2">
               <div class="col-6">
-                <label class="form-label small fw-bold text-secondary mb-1">ឈ្មោះអតិថិជន *</label>
+                <span class="form-label small fw-bold text-secondary mb-1 d-block">ឈ្មោះអតិថិជន *</span>
                 <input type="text" id="customerNameInput" class="form-control form-control-sm fw-bold" placeholder="ឧ. សុខា" />
               </div>
               <div class="col-6">
-                <label class="form-label small fw-bold text-secondary mb-1">លេខទូរស័ព្ទ *</label>
+                <span class="form-label small fw-bold text-secondary mb-1 d-block">លេខទូរស័ព្ទ *</span>
                 <input type="text" id="customerPhoneInput" class="form-control form-control-sm fw-bold" placeholder="012 345 678" />
               </div>
             </div>
 
             <div class="row g-2 mb-2">
               <div class="col-6">
-                <label class="form-label small fw-bold text-secondary mb-1">សេវាកម្មបោកអ៊ុត</label>
+                <span class="form-label small fw-bold text-secondary mb-1 d-block">សេវាកម្មបោកអ៊ុត</span>
                 <select id="defaultServiceSelect" class="form-select form-select-sm" onchange="applyServiceToAllItems()">
                   <option value="បោក និងបត់ (Wash & Fold)">បោក និងបត់ (Wash & Fold)</option>
                   <option value="បោក និងអ៊ុត (Wash & Iron)">បោក និងអ៊ុត (Wash & Iron)</option>
@@ -468,7 +466,7 @@
                 </select>
               </div>
               <div class="col-6">
-                <label class="form-label small fw-bold text-secondary mb-1">រូបភាពទំនិញ (កាត)</label>
+                <span class="form-label small fw-bold text-secondary mb-1 d-block">រូបភាពទំនិញ (កាត)</span>
                 <input type="file" id="orderImageInput" class="form-control form-control-sm" accept="image/*" />
               </div>
             </div>
@@ -533,7 +531,7 @@
 
               <div class="row g-2 mb-2">
                 <div class="col-6">
-                  <label class="form-label small fw-bold mb-1">ទម្រង់បង់ប្រាក់:</label>
+                  <span class="form-label small fw-bold mb-1 d-block">ទម្រង់បង់ប្រាក់:</span>
                   <select class="form-select form-select-sm" id="paymentMethod">
                     <option value="Cash">សាច់ប្រាក់ (Cash)</option>
                     <option value="KHQR">វីង/បាគង (KHQR)</option>
@@ -541,7 +539,7 @@
                   </select>
                 </div>
                 <div class="col-6">
-                  <label class="form-label small fw-bold mb-1">បានទទួលលុយ ($):</label>
+                  <span class="form-label small fw-bold mb-1 d-block">បានទទួលលុយ ($):</span>
                   <input type="number" id="amountReceived" class="form-control form-control-sm text-end fw-bold text-primary"
                     placeholder="0.00" oninput="calculateChange()" />
                 </div>
@@ -555,7 +553,7 @@
                 </div>
               </div>
 
-              <button class="btn btn-success w-100 py-2 fw-bold shadow-sm rounded-3" onclick="saveOrderAndPrint()">
+              <button type="button" class="btn btn-success w-100 py-2 fw-bold shadow-sm rounded-3" onclick="saveOrderAndPrint()">
                 <i class="fa-solid fa-check-circle me-1"></i> រក្សាទុកវិក្កយបត្រ & Print
               </button>
               <div id="posFeedback" class="small fw-bold mt-2 text-center"></div>
@@ -821,7 +819,7 @@
             <input type="file" id="editCatalogImageFile" class="form-control form-control-sm" accept="image/*" />
           </div>
           <div class="text-center border rounded-3 p-2 bg-light mb-3">
-            <img id="editCatalogImagePreview" src="" alt="Preview" style="max-height: 110px; border-radius: 10px; object-fit: cover;" onerror="this.onerror=null;this.src=DEFAULT_ITEM_PLACEHOLDER" />
+            <img id="editCatalogImagePreview" src="" alt="Preview" style="max-height: 110px; border-radius: 10px; object-fit: cover;" onerror="this.src='https://via.placeholder.com/300x200?text=Laundry+Item'" />
           </div>
           <div class="d-flex justify-content-end gap-2">
             <button type="button" class="btn btn-secondary btn-sm fw-bold" data-bs-dismiss="modal">បោះបង់</button>
@@ -887,11 +885,10 @@
               </div>
             </div>
 
-            <!-- 🟢 ប្រអប់បញ្ចូលប្រាក់ទទួលពេល Print / ពេលភ្ញៀវមកយកអាវ (មិនបង្ហាញពេល Print) -->
             <div class="bg-light border rounded-3 p-2 mt-2 no-print">
               <div class="row g-2 align-items-center">
                 <div class="col-6">
-                  <label class="form-label small fw-bold text-primary mb-0">បញ្ចូលប្រាក់ទទួល ($):</label>
+                  <span class="form-label small fw-bold text-primary mb-0 d-block">បញ្ចូលប្រាក់ទទួល ($):</span>
                 </div>
                 <div class="col-6">
                   <input type="number" id="recReceivedInput" step="0.01" min="0"
@@ -935,12 +932,12 @@
     const CATALOG_SESSION_KEY = 'laundry_pos_catalog_v1';
     const GROUPS_SESSION_KEY = 'laundry_pos_groups_v1';
     const OLD_STOCK_STORAGE_KEY = 'laundry_pos_old_stock_v1';
-    const DEFAULT_ITEM_PLACEHOLDER = "data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200"><rect width="300" height="200" fill="#e2e8f0"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#64748b" font-family="sans-serif" font-size="16">No Image</text></svg>');
     let currentUser = null;
     let cart = [];
     let ordersCache = [];
     let oldStockList = loadSavedOldStock();
     let activeGroupFilter = 'All';
+    let selectedCatalogId = null;
     let selectedImageBase64 = null;
     let finalCalculatedTotal = 0;
     let activeModalOrderId = null;
@@ -1030,6 +1027,7 @@
       LAUNDRY_GROUPS = [...DEFAULT_GROUPS];
       LAUNDRY_CATALOG = DEFAULT_LAUNDRY_CATALOG.map(x => ({ ...x }));
       activeGroupFilter = 'All';
+      selectedCatalogId = null;
       renderGroupButtons();
       renderCategorySelectOptions();
       renderStockCategoryOptions();
@@ -1039,10 +1037,10 @@
 
     function escapeHtml(str) {
       return String(str || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+        .replace(/&/g, '&')
+        .replace(/</g, '<')
+        .replace(/>/g, '>')
+        .replace(/"/g, '"');
     }
 
     function initReportFilterDefaults() {
@@ -1230,7 +1228,24 @@
       renderCatalogCards();
     }
 
-    // 🟢 កូដបង្ហាញកាតរូបភាព Render លទ្ធផលរូបភាពទំនិញ + ប៊ូតុងកែតម្លៃ/ប្តូររូប (រាងការ៉េ 190px)
+    function highlightSelectedCardDom(itemId) {
+      const allCards = document.querySelectorAll('#laundryTypesGrid .product-card');
+      allCards.forEach(cardEl => {
+        const cardItemId = Number(cardEl.getAttribute('data-item-id'));
+        cardEl.classList.toggle('is-selected', cardItemId === Number(itemId));
+      });
+    }
+
+    // 🟢 ចុចលើកាតរូបភាព៖ Select កាតដែលចុចពិតប្រាកដ ហើយបន្ថែមតែមុខទំនិញនោះចូលវិក្កយបត្រ
+    function handleCatalogCardClick(event, itemId) {
+      if (event) event.stopPropagation();
+      const numericId = Number(itemId);
+      if (!Number.isFinite(numericId) || numericId <= 0) return;
+      selectedCatalogId = numericId;
+      highlightSelectedCardDom(numericId);
+      addLaundryItem(numericId);
+    }
+
     function renderCatalogCards() {
       const grid = document.getElementById('laundryTypesGrid');
       const items = activeGroupFilter === 'All'
@@ -1242,23 +1257,27 @@
         return;
       }
 
-      grid.innerHTML = items.map(item => `
-        <div class="col-6 col-sm-4 col-md-4 col-lg-3">
-          <div class="product-card position-relative" onclick="addLaundryItem(${Number(item.id)})">
-            <button type="button" class="btn btn-light btn-sm edit-catalog-btn border" title="កែតម្លៃ និងប្តូររូប"
-              onclick="event.stopPropagation(); openEditCatalogModal(${Number(item.id)})">
-              <i class="fa-solid fa-pen text-primary" style="font-size: 0.72rem;"></i>
-            </button>
-            <div class="product-img-wrapper">
-              <img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.name)}" onerror="this.onerror=null;this.src=DEFAULT_ITEM_PLACEHOLDER">
-            </div>
-            <div class="product-overlay-info">
-              <span class="text-white fw-bold text-truncate" style="font-size: 0.8rem; max-width: 68%;" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</span>
-              <span class="text-warning fw-bold" style="font-size: 0.8rem;">$${Number(item.price).toFixed(2)}</span>
+      grid.innerHTML = items.map(item => {
+        const idNum = Number(item.id);
+        const isSel = Number(selectedCatalogId) === idNum;
+        return `
+          <div class="col-6 col-sm-4 col-md-4 col-lg-3">
+            <div class="product-card position-relative ${isSel ? 'is-selected' : ''}" data-item-id="${idNum}" onclick="handleCatalogCardClick(event, ${idNum})">
+              <button type="button" class="btn btn-light btn-sm edit-catalog-btn border" title="កែតម្លៃ និងប្តូររូប"
+                onclick="event.stopPropagation(); openEditCatalogModal(${idNum})">
+                <i class="fa-solid fa-pen text-primary" style="font-size: 0.72rem;"></i>
+              </button>
+              <div class="product-img-wrapper">
+                <img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.name)}" onerror="this.src='https://via.placeholder.com/300x200?text=Laundry+Item'">
+              </div>
+              <div class="product-overlay-info">
+                <span class="text-white fw-bold text-truncate" style="font-size: 0.8rem; max-width: 68%;" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</span>
+                <span class="text-warning fw-bold" style="font-size: 0.8rem;">$${Number(item.price).toFixed(2)}</span>
+              </div>
             </div>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     function openEditCatalogModal(itemId) {
@@ -1270,7 +1289,7 @@
         const defaultGrp = activeGroupFilter !== 'All' ? activeGroupFilter : (LAUNDRY_GROUPS[0] || '');
         renderCategorySelectOptions(defaultGrp);
         document.getElementById('editCatalogPrice').value = '1.50';
-        document.getElementById('editCatalogImageUrl').value = '';
+        document.getElementById('editCatalogImageUrl').value = 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=300&q=80';
       } else {
         const found = LAUNDRY_CATALOG.find(x => Number(x.id) === Number(itemId));
         if (!found) return;
@@ -1292,7 +1311,7 @@
 
     function updateCatalogImagePreview() {
       const urlVal = document.getElementById('editCatalogImageUrl').value.trim();
-      document.getElementById('editCatalogImagePreview').src = urlVal || DEFAULT_ITEM_PLACEHOLDER;
+      document.getElementById('editCatalogImagePreview').src = urlVal || 'https://via.placeholder.com/300x200?text=Laundry+Item';
     }
 
     document.getElementById('editCatalogImageFile').addEventListener('change', (e) => {
@@ -1323,7 +1342,7 @@
       const nameVal = document.getElementById('editCatalogName').value.trim();
       const groupVal = document.getElementById('editCatalogGroup').value;
       const priceVal = parseFloat(document.getElementById('editCatalogPrice').value) || 0;
-      const imageVal = document.getElementById('editCatalogImageUrl').value.trim() || DEFAULT_ITEM_PLACEHOLDER;
+      const imageVal = document.getElementById('editCatalogImageUrl').value.trim() || 'https://via.placeholder.com/300x200?text=Laundry+Item';
 
       if (!nameVal) return;
 
@@ -1366,6 +1385,7 @@
 
     function addLaundryItem(itemId) {
       const numericId = Number(itemId);
+      if (!Number.isFinite(numericId) || numericId <= 0) return;
       const item = LAUNDRY_CATALOG.find(x => Number(x.id) === numericId);
       if (!item) return;
       const serviceType = document.getElementById('defaultServiceSelect').value;
@@ -1767,10 +1787,9 @@
           ? o.items_json
           : [{ category: o.category, item_count: o.item_count, price: o.price }];
 
-        const itemLabels = items.map(it => it.category).filter(Boolean).join(', ') || o.category || 'មិនមានរូបភាព';
         const imgHtml = o.image_data
           ? `<img src="${o.image_data}" alt="${escapeHtml(o.order_code)}" />`
-          : `<div class="text-muted small text-center p-2"><i class="fa-solid fa-basket-shopping fs-3 d-block mb-1"></i>${escapeHtml(itemLabels)}</div>`;
+          : `<div class="text-muted small text-center p-2"><i class="fa-solid fa-shirt fs-3 d-block mb-1"></i>${escapeHtml(o.category)}</div>`;
 
         const linesHtml = items.map(it => `
           <div class="d-flex justify-content-between small border-bottom py-1">
@@ -1806,8 +1825,8 @@
                   <option value="Picked Up" ${o.status === 'Picked Up' ? 'selected' : ''}>Picked Up</option>
                 </select>
                 <div class="d-flex gap-1">
-                  <button class="btn btn-sm btn-outline-primary" onclick="openSavedOrderInvoice(${o.id})"><i class="fa-solid fa-print"></i></button>
-                  <button class="btn btn-sm btn-outline-danger" onclick="deleteOrder(${o.id})"><i class="fa-solid fa-trash"></i></button>
+                  <button type="button" class="btn btn-sm btn-outline-primary" onclick="openSavedOrderInvoice(${o.id})"><i class="fa-solid fa-print"></i></button>
+                  <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteOrder(${o.id})"><i class="fa-solid fa-trash"></i></button>
                 </div>
               </div>
             </div>
