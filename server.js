@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const session = require('express-session');
 const { Pool } = require('pg');
@@ -39,16 +40,24 @@ app.use(
   })
 );
 
-app.use(express.static(path.join(__dirname, 'public')));
+const publicDir = fs.existsSync(path.join(__dirname, 'public', 'index.html'))
+  ? path.join(__dirname, 'public')
+  : __dirname;
+app.use(express.static(publicDir));
 
 const STANDARD_CATEGORIES = [
   'អាវយឺត (T-Shirt)',
+  'អាវសាច់ក្រណាត់ (Shirt)',
+  'អាវធំ / អាវក្រៅ (Jacket)',
   'អាវសាច់ក្រណាត់ / អាវធំ (Shirt & Jacket)',
   'ខោជើងវែង (Long Pants)',
   'ខោខូវប៊យ (Jeans)',
   'ខោខ្លី (Shorts)',
+  'កម្រាលពូក (Bed Sheet)',
+  'ភួយ / ផួយក្រាស់ (Blanket)',
   'កម្រាលពូក / ភួយ (Bed Sheet & Blanket)',
   'សំពត់ / ឈុត (Skirt & Suit)',
+  'ទំនិញផ្សេងៗ (Other Item)',
   'ផ្សេងៗ (Others)'
 ];
 
@@ -105,6 +114,30 @@ async function initDatabase() {
     );
   `);
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS catalog_products (
+      id INTEGER PRIMARY KEY,
+      name VARCHAR(160) NOT NULL,
+      category VARCHAR(120) NOT NULL,
+      price NUMERIC(12, 2) NOT NULL DEFAULT 0,
+      image_url TEXT,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS old_stock_items (
+      id BIGINT PRIMARY KEY,
+      name VARCHAR(160) NOT NULL,
+      category VARCHAR(120) NOT NULL,
+      qty INTEGER NOT NULL DEFAULT 0,
+      price NUMERIC(12, 2) NOT NULL DEFAULT 0,
+      stock_date VARCHAR(30),
+      note TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
   await pool.query(`ALTER TABLE laundry_orders ADD COLUMN IF NOT EXISTS category VARCHAR(100) NOT NULL DEFAULT 'អាវយឺត (T-Shirt)';`);
   await pool.query(`ALTER TABLE laundry_orders ADD COLUMN IF NOT EXISTS item_count INTEGER NOT NULL DEFAULT 1;`);
   await pool.query(`ALTER TABLE laundry_orders ADD COLUMN IF NOT EXISTS items_json JSONB NOT NULL DEFAULT '[]'::jsonb;`);
@@ -134,7 +167,7 @@ async function initDatabase() {
     console.log(`✅ Admin password reset for "${defaultAdminUser}"`);
   }
 
-  console.log('✅ PostgreSQL tables (users, laundry_orders) are ready.');
+  console.log('✅ PostgreSQL tables (users, laundry_orders, catalog_products, old_stock_items) are ready.');
 }
 
 app.get('/api/health', async (req, res) => {
@@ -153,6 +186,79 @@ app.get('/api/meta', requireAuth, (req, res) => {
     categories: STANDARD_CATEGORIES,
     statuses: ALLOWED_STATUSES
   });
+});
+
+app.post('/api/products', requireAuth, async (req, res) => {
+  try {
+    const { id, name, category, price, image_url } = req.body;
+    const itemId = Number(id);
+    const cleanName = String(name || '').trim();
+    const cleanCat = String(category || 'ផ្សេងៗ (Others)').trim();
+    const cleanPrice = Number(price) >= 0 ? Number(price) : 0;
+    const cleanImg = typeof image_url === 'string' ? image_url.trim() : null;
+
+    if (!Number.isFinite(itemId) || itemId <= 0 || !cleanName) {
+      return res.status(400).json({ success: false, error: 'Invalid product data' });
+    }
+
+    await pool.query(
+      `
+      INSERT INTO catalog_products (id, name, category, price, image_url, updated_at)
+      VALUES ($1, $2, $3, $4, $5, NOW())
+      ON CONFLICT (id) DO UPDATE
+      SET name = EXCLUDED.name,
+          category = EXCLUDED.category,
+          price = EXCLUDED.price,
+          image_url = EXCLUDED.image_url,
+          updated_at = NOW()
+      `,
+      [itemId, cleanName, cleanCat, cleanPrice, cleanImg]
+    );
+
+    res.json({ success: true, data: { id: itemId, name: cleanName, category: cleanCat, price: cleanPrice, image_url: cleanImg } });
+  } catch (err) {
+    console.error('POST /api/products error:', err);
+    res.status(500).json({ success: false, error: 'Failed to save product' });
+  }
+});
+
+app.post('/api/stock/opening', requireAuth, async (req, res) => {
+  try {
+    const { id, name, category, qty, price, stock_date, note } = req.body;
+    const stockId = Number(id) || Date.now();
+    const cleanName = String(name || '').trim();
+    if (!cleanName) {
+      return res.status(400).json({ success: false, error: 'Stock item name is required' });
+    }
+
+    await pool.query(
+      `
+      INSERT INTO old_stock_items (id, name, category, qty, price, stock_date, note)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      ON CONFLICT (id) DO UPDATE
+      SET name = EXCLUDED.name,
+          category = EXCLUDED.category,
+          qty = EXCLUDED.qty,
+          price = EXCLUDED.price,
+          stock_date = EXCLUDED.stock_date,
+          note = EXCLUDED.note
+      `,
+      [
+        stockId,
+        cleanName,
+        String(category || 'ផ្សេងៗ (Others)').trim(),
+        Number.isFinite(Number(qty)) ? Number(qty) : 0,
+        Number.isFinite(Number(price)) ? Number(price) : 0,
+        stock_date ? String(stock_date).trim() : null,
+        note ? String(note).trim() : null
+      ]
+    );
+
+    res.status(201).json({ success: true });
+  } catch (err) {
+    console.error('POST /api/stock/opening error:', err);
+    res.status(500).json({ success: false, error: 'Failed to save old stock' });
+  }
 });
 
 app.post('/api/auth/login', async (req, res) => {
@@ -313,7 +419,7 @@ app.get('/api/orders', requireAuth, async (req, res) => {
   }
 });
 
-// Create order with MULTIPLE items (អាវ, ខោ, កម្រាលពូក, ផ្សេងៗ...) in ONE invoice
+// 🟢 រក្សាទុកឈ្មោះមុខទំនិញពិតប្រាកដដែលអ្នកជ្រើស (មិន force ប្តូរទៅជា អាវយឺត ទៀតទេ)
 app.post('/api/orders', requireAuth, async (req, res) => {
   const client = await pool.connect();
   try {
@@ -327,7 +433,8 @@ app.post('/api/orders', requireAuth, async (req, res) => {
     }
 
     const cleanItems = items.map((it) => {
-      const cat = STANDARD_CATEGORIES.includes(it.category) ? it.category : STANDARD_CATEGORIES[0];
+      const rawCat = String(it.category || '').trim();
+      const cat = rawCat || STANDARD_CATEGORIES[0];
       const srv = String(it.service_type || 'បោក និងបត់ (Wash & Fold)').trim();
       const cnt = Number.isInteger(Number(it.item_count)) && Number(it.item_count) > 0 ? Number(it.item_count) : 1;
       const wt = Number(it.weight_kg) >= 0 ? Number(it.weight_kg) : 0;
@@ -443,7 +550,10 @@ app.delete('/api/orders/:id', requireAuth, async (req, res) => {
 });
 
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  const indexPath = fs.existsSync(path.join(publicDir, 'index.html'))
+    ? path.join(publicDir, 'index.html')
+    : path.join(__dirname, 'index.html');
+  res.sendFile(indexPath);
 });
 
 initDatabase()
