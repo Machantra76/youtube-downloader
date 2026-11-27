@@ -137,7 +137,7 @@
 
     .product-card.is-selected {
       border-color: #198754 !important;
-      box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.22);
+      box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.25);
     }
 
     .product-img-wrapper {
@@ -168,25 +168,15 @@
       bottom: 0;
       left: 0;
       right: 0;
-      background: rgba(15, 23, 42, 0.85);
+      background: rgba(15, 23, 42, 0.82);
       backdrop-filter: blur(3px);
       padding: 6px 10px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 6px;
       border-bottom-left-radius: 18px;
       border-bottom-right-radius: 18px;
       z-index: 4;
-    }
-
-    .add-item-badge-btn {
-      border-radius: 999px;
-      padding: 2px 8px;
-      font-size: 0.72rem;
-      line-height: 1.2;
-      white-space: nowrap;
-      flex-shrink: 0;
     }
 
     .edit-catalog-btn {
@@ -425,7 +415,7 @@
               <h4 class="fw-bold text-dark fs-5 mb-0">
                 <i class="fa-solid fa-shirt me-2 text-primary"></i> ប្រភេទអាវ / ខោ / កម្រាលពូក / ផ្សេងៗ
               </h4>
-              <p class="text-muted small mb-0">ចុចលើកាតដើម្បីជ្រើស ឬចុច <i class="fa-solid fa-plus"></i> ដើម្បីបន្ថែមចូលវិក្កយបត្រ និង <i class="fa-solid fa-pen"></i> ដើម្បីកែតម្លៃ/ប្តូររូប</p>
+              <p class="text-muted small mb-0">ចុចលើកាតដើម្បីជ្រើស និងបន្ថែមចូលវិក្កយបត្រភ្លាមៗ ឬចុច <i class="fa-solid fa-pen"></i> ដើម្បីកែតម្លៃ/ប្តូររូប</p>
             </div>
             <div class="d-flex align-items-center gap-2 flex-wrap">
               <button type="button" class="btn btn-outline-secondary btn-sm fw-bold shadow-sm" onclick="addNewCategoryGroup()">
@@ -1238,10 +1228,12 @@
       renderCatalogCards();
     }
 
-    // 🟢 កូដបង្ហាញកាតរូបភាព៖ ចុចលើកាតដើម្បី Select ជាមុន ហើយចុច "+ ថែម" ទើបបន្ថែមចូលវិក្កយបត្រ (ការពារមិនឱ្យចាប់យកអាវយឺតដោយចៃដន្យ)
-    function selectCatalogCard(event, itemId) {
+    // 🟢 ចុចលើកាតរូបភាព៖ Select កាតផង និងបន្ថែមចូល «មុខទំនិញក្នុងវិក្កយបត្រ / Invoice Items» ភ្លាមៗ
+    function handleCatalogCardClick(event, itemId) {
       if (event) event.stopPropagation();
-      selectedCatalogId = Number(itemId);
+      const numericId = Number(itemId);
+      selectedCatalogId = numericId;
+      addLaundryItem(numericId);
       renderCatalogCards();
     }
 
@@ -1261,7 +1253,7 @@
         const isSel = Number(selectedCatalogId) === idNum;
         return `
           <div class="col-6 col-sm-4 col-md-4 col-lg-3">
-            <div class="product-card position-relative ${isSel ? 'is-selected' : ''}" onclick="selectCatalogCard(event, ${idNum})">
+            <div class="product-card position-relative ${isSel ? 'is-selected' : ''}" onclick="handleCatalogCardClick(event, ${idNum})">
               <button type="button" class="btn btn-light btn-sm edit-catalog-btn border" title="កែតម្លៃ និងប្តូររូប"
                 onclick="event.stopPropagation(); openEditCatalogModal(${idNum})">
                 <i class="fa-solid fa-pen text-primary" style="font-size: 0.72rem;"></i>
@@ -1270,14 +1262,8 @@
                 <img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.name)}" onerror="this.src='https://via.placeholder.com/300x200?text=Laundry+Item'">
               </div>
               <div class="product-overlay-info">
-                <div class="text-truncate" style="max-width: 65%;">
-                  <span class="text-white fw-bold d-block text-truncate" style="font-size: 0.78rem;" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</span>
-                  <span class="text-warning fw-bold" style="font-size: 0.76rem;">$${Number(item.price).toFixed(2)}</span>
-                </div>
-                <button type="button" class="btn btn-success btn-sm fw-bold add-item-badge-btn" title="បន្ថែមចូលវិក្កយបត្រ"
-                  onclick="event.stopPropagation(); selectedCatalogId = ${idNum}; addLaundryItem(${idNum}); renderCatalogCards();">
-                  <i class="fa-solid fa-plus"></i> ថែម
-                </button>
+                <span class="text-white fw-bold text-truncate" style="font-size: 0.8rem; max-width: 68%;" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</span>
+                <span class="text-warning fw-bold" style="font-size: 0.8rem;">$${Number(item.price).toFixed(2)}</span>
               </div>
             </div>
           </div>
