@@ -1,2279 +1,658 @@
-<!DOCTYPE html>
-<html lang="km">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Main Dashboard - ប្រព័ន្ធគ្រប់គ្រងហាងបោកអ៊ុត (Laundry POS & Invoice)</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;600;700&display=swap" rel="stylesheet" />
-  <style>
-    body {
-      font-family: 'Kantumruy Pro', sans-serif;
-      background-color: #f1f4f8;
-      color: #0f172a;
-    }
-    .hidden { display: none !important; }
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+const fs = require('fs');
+const bcrypt = require('bcryptjs');
+const session = require('express-session');
+const { Pool } = require('pg');
 
-    .login-wrap {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%);
-    }
-    .login-card {
-      width: 100%;
-      max-width: 410px;
-      background: #ffffff;
-      border-radius: 18px;
-      padding: 28px;
-      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.28);
-    }
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-    .main-menu-wrapper {
-      min-height: calc(100vh - 56px);
-      background-color: #f1f4f8;
-      padding: 40px 20px 56px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .dashboard-header-box {
-      text-align: center;
-      margin-bottom: 36px;
-    }
-    .dashboard-main-title {
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: #111827;
-      margin-bottom: 6px;
-    }
-    .dashboard-sub-title {
-      font-size: 0.92rem;
-      color: #6b7280;
-      margin: 0;
-    }
-    .menu-grid-container {
-      width: 100%;
-      max-width: 1180px;
-    }
-    .menu-tile-card {
-      background: #ffffff;
-      border: 1px solid #eef2f6;
-      border-radius: 14px;
-      padding: 30px 22px;
-      text-align: center;
-      cursor: pointer;
-      height: 100%;
-      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
-      transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    .menu-tile-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 14px 28px rgba(15, 23, 42, 0.09);
-      border-color: #dbeafe;
-    }
-    .menu-tile-icon {
-      font-size: 2.35rem;
-      margin-bottom: 14px;
-      line-height: 1;
-    }
-    .menu-tile-title {
-      font-size: 1.05rem;
-      font-weight: 700;
-      color: #111827;
-      margin-bottom: 6px;
-    }
-    .menu-tile-desc-km {
-      font-size: 0.84rem;
-      color: #6b7280;
-      margin-bottom: 4px;
-    }
-    .menu-tile-desc-en {
-      font-size: 0.78rem;
-      font-style: italic;
-      color: #9ca3af;
-      margin: 0;
-    }
+if (!process.env.DATABASE_URL) {
+  console.error('❌ Missing DATABASE_URL environment variable.');
+  process.exit(1);
+}
 
-    .category-btn {
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      padding: 6px 16px;
-      transition: all 0.2s ease;
-    }
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DB_SSL === 'false' ? false : { rejectUnauthorized: false }
+});
 
-    /* 🟢 កាតទំនិញ (Product Card) រាងការ៉េ ពង្រីកកម្ពស់ 190px */
-    .product-card {
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      border: 2px solid transparent !important;
-      border-radius: 18px;
-      background-color: #ffffff;
-      box-shadow: 0 4px 16px rgba(149, 157, 165, 0.08);
-      overflow: hidden;
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 0px !important;
-      height: 190px;
-      user-select: none;
-    }
+app.set('trust proxy', 1);
+app.use(cors());
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 
-    .product-card:hover {
-      transform: translateY(-5px) scale(1.02);
-      border-color: #0d6efd !important;
-      box-shadow: 0 0 20px rgba(13, 110, 253, 0.4), 0 10px 24px rgba(0, 0, 0, 0.12);
+app.use(
+  session({
+    name: 'laundry.sid',
+    secret: process.env.SESSION_SECRET || 'laundry-secret-key-change-in-prod',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: 'auto',
+      maxAge: 1000 * 60 * 60 * 24 * 7
     }
+  })
+);
 
-    .product-card.is-selected {
-      border-color: #198754 !important;
-      box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.25);
-    }
+const publicDir = fs.existsSync(path.join(__dirname, 'public', 'index.html'))
+  ? path.join(__dirname, 'public')
+  : __dirname;
+app.use(express.static(publicDir));
 
-    .product-img-wrapper {
-      width: 100% !important;
-      height: 100% !important;
-      background-color: #ffffff;
-      position: relative;
-      overflow: hidden;
-      border-radius: 18px !important;
-      margin: 0 !important;
-    }
+const STANDARD_CATEGORIES = [
+  'អាវយឺត (T-Shirt)',
+  'អាវសាច់ក្រណាត់ (Shirt)',
+  'អាវធំ / អាវក្រៅ (Jacket)',
+  'អាវសាច់ក្រណាត់ / អាវធំ (Shirt & Jacket)',
+  'ខោជើងវែង (Long Pants)',
+  'ខោខូវប៊យ (Jeans)',
+  'ខោខ្លី (Shorts)',
+  'កម្រាលពូក (Bed Sheet)',
+  'ភួយ / ផួយក្រាស់ (Blanket)',
+  'កម្រាលពូក / ភួយ (Bed Sheet & Blanket)',
+  'សំពត់ / ឈុត (Skirt & Suit)',
+  'ទំនិញផ្សេងៗ (Other Item)',
+  'ផ្សេងៗ (Others)'
+];
 
-    .product-img-wrapper img {
-      width: 100% !important;
-      height: 100% !important;
-      object-fit: cover !important;
-      display: block;
-      background-color: #ffffff;
-      transition: transform 0.3s ease;
-    }
+const ALLOWED_STATUSES = ['Pending', 'Washing', 'Ready', 'Picked Up'];
 
-    .product-card:hover .product-img-wrapper img {
-      transform: scale(1.08);
-    }
+function requireAuth(req, res, next) {
+  if (!req.session || !req.session.user) {
+    return res.status(401).json({ success: false, error: 'សូម Login ជាមុនសិន' });
+  }
+  next();
+}
 
-    .product-overlay-info {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: rgba(15, 23, 42, 0.82);
-      backdrop-filter: blur(3px);
-      padding: 6px 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom-left-radius: 18px;
-      border-bottom-right-radius: 18px;
-      z-index: 4;
-    }
+function requireAdmin(req, res, next) {
+  if (!req.session || !req.session.user) {
+    return res.status(401).json({ success: false, error: 'សូម Login ជាមុនសិន' });
+  }
+  if (req.session.user.role !== 'admin') {
+    return res.status(403).json({ success: false, error: 'មានតែ Admin ប៉ុណ្ណោះដែលមានសិទ្ធិ' });
+  }
+  next();
+}
 
-    .edit-catalog-btn {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      z-index: 6;
-      border-radius: 999px;
-      width: 30px;
-      height: 30px;
-      padding: 0;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.25);
-    }
+async function initDatabase() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      username VARCHAR(60) UNIQUE NOT NULL,
+      full_name VARCHAR(120) NOT NULL,
+      password_hash TEXT NOT NULL,
+      role VARCHAR(20) NOT NULL DEFAULT 'staff',
+      is_active BOOLEAN NOT NULL DEFAULT TRUE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
 
-    /* 🟢 កាតរូបភាពទំនិញ (Order Photo Card) បន្ថយឱ្យតូចជាងមុន ស្អាតមិនដាច់រូប */
-    .order-photo-card {
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      background: #fff;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      font-size: 0.78rem;
-    }
-    .order-photo-box {
-      height: 95px;
-      background: #f8fafc;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      position: relative;
-      border-bottom: 1px solid #e2e8f0;
-    }
-    .order-photo-box img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      padding: 3px;
-      background: #f8fafc;
-    }
-    .order-card-edit-btn {
-      position: absolute;
-      top: 4px;
-      right: 4px;
-      z-index: 4;
-      border-radius: 999px;
-      padding: 1px 6px;
-      font-size: 0.65rem;
-      font-weight: 700;
-      box-shadow: 0 2px 5px rgba(15, 23, 42, 0.25);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS laundry_orders (
+      id SERIAL PRIMARY KEY,
+      order_code VARCHAR(30) UNIQUE NOT NULL,
+      customer_name VARCHAR(120) NOT NULL,
+      phone VARCHAR(40) NOT NULL,
+      category VARCHAR(100) NOT NULL DEFAULT 'អាវយឺត (T-Shirt)',
+      service_type VARCHAR(80) NOT NULL,
+      item_count INTEGER NOT NULL DEFAULT 1,
+      weight_kg NUMERIC(10, 2) NOT NULL DEFAULT 1,
+      price NUMERIC(12, 2) NOT NULL DEFAULT 0,
+      items_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+      status VARCHAR(20) NOT NULL DEFAULT 'Pending',
+      image_data TEXT,
+      notes TEXT,
+      created_by VARCHAR(60),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS catalog_products (
+      id INTEGER PRIMARY KEY,
+      name VARCHAR(160) NOT NULL,
+      category VARCHAR(120) NOT NULL,
+      price NUMERIC(12, 2) NOT NULL DEFAULT 0,
+      image_url TEXT,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS old_stock_items (
+      id BIGINT PRIMARY KEY,
+      name VARCHAR(160) NOT NULL,
+      category VARCHAR(120) NOT NULL,
+      qty INTEGER NOT NULL DEFAULT 0,
+      price NUMERIC(12, 2) NOT NULL DEFAULT 0,
+      stock_date VARCHAR(30),
+      note TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await pool.query(`ALTER TABLE laundry_orders ADD COLUMN IF NOT EXISTS category VARCHAR(100) NOT NULL DEFAULT 'អាវយឺត (T-Shirt)';`);
+  await pool.query(`ALTER TABLE laundry_orders ADD COLUMN IF NOT EXISTS item_count INTEGER NOT NULL DEFAULT 1;`);
+  await pool.query(`ALTER TABLE laundry_orders ADD COLUMN IF NOT EXISTS items_json JSONB NOT NULL DEFAULT '[]'::jsonb;`);
+  await pool.query(`ALTER TABLE laundry_orders ADD COLUMN IF NOT EXISTS image_data TEXT;`);
+  await pool.query(`ALTER TABLE laundry_orders ADD COLUMN IF NOT EXISTS created_by VARCHAR(60);`);
+
+  const defaultAdminUser = String(process.env.DEFAULT_ADMIN_USER || 'admin').trim();
+  const defaultAdminPass = String(process.env.DEFAULT_ADMIN_PASS || 'Admin@123');
+  const hash = await bcrypt.hash(defaultAdminPass, 10);
+
+  const existingAdmin = await pool.query(
+    `SELECT id FROM users WHERE LOWER(username) = LOWER($1)`,
+    [defaultAdminUser]
+  );
+
+  if (existingAdmin.rows.length === 0) {
+    await pool.query(
+      `INSERT INTO users (username, full_name, password_hash, role) VALUES ($1, $2, $3, 'admin')`,
+      [defaultAdminUser, 'អ្នកគ្រប់គ្រងហាង (Admin)', hash]
+    );
+    console.log(`✅ Default admin created -> username: "${defaultAdminUser}"`);
+  } else if (process.env.FORCE_RESET_ADMIN === 'true') {
+    await pool.query(
+      `UPDATE users SET password_hash = $1, is_active = TRUE, role = 'admin' WHERE id = $2`,
+      [hash, existingAdmin.rows[0].id]
+    );
+    console.log(`✅ Admin password reset for "${defaultAdminUser}"`);
+  }
+
+  console.log('✅ PostgreSQL tables (users, laundry_orders, catalog_products, old_stock_items) are ready.');
+}
+
+app.get('/api/health', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.json({ success: true, status: 'ok', database: 'connected' });
+  } catch (err) {
+    console.error('Health check error:', err);
+    res.status(500).json({ success: false, error: 'Database connection failed' });
+  }
+});
+
+app.get('/api/meta', requireAuth, (req, res) => {
+  res.json({
+    success: true,
+    categories: STANDARD_CATEGORIES,
+    statuses: ALLOWED_STATUSES
+  });
+});
+
+app.post('/api/products', requireAuth, async (req, res) => {
+  try {
+    const { id, name, category, price, image_url } = req.body;
+    const itemId = Number(id);
+    const cleanName = String(name || '').trim();
+    const cleanCat = String(category || 'ផ្សេងៗ (Others)').trim();
+    const cleanPrice = Number(price) >= 0 ? Number(price) : 0;
+    const cleanImg = typeof image_url === 'string' ? image_url.trim() : null;
+
+    if (!Number.isFinite(itemId) || itemId <= 0 || !cleanName) {
+      return res.status(400).json({ success: false, error: 'Invalid product data' });
     }
 
-    .stat-card {
-      border: 1px solid #e2e8f0;
-      border-radius: 16px;
-      background: #ffffff;
-      padding: 16px;
-      box-shadow: 0 3px 12px rgba(15, 23, 42, 0.05);
+    await pool.query(
+      `
+      INSERT INTO catalog_products (id, name, category, price, image_url, updated_at)
+      VALUES ($1, $2, $3, $4, $5, NOW())
+      ON CONFLICT (id) DO UPDATE
+      SET name = EXCLUDED.name,
+          category = EXCLUDED.category,
+          price = EXCLUDED.price,
+          image_url = EXCLUDED.image_url,
+          updated_at = NOW()
+      `,
+      [itemId, cleanName, cleanCat, cleanPrice, cleanImg]
+    );
+
+    res.json({ success: true, data: { id: itemId, name: cleanName, category: cleanCat, price: cleanPrice, image_url: cleanImg } });
+  } catch (err) {
+    console.error('POST /api/products error:', err);
+    res.status(500).json({ success: false, error: 'Failed to save product' });
+  }
+});
+
+app.post('/api/stock/opening', requireAuth, async (req, res) => {
+  try {
+    const { id, name, category, qty, price, stock_date, note } = req.body;
+    const stockId = Number(id) || Date.now();
+    const cleanName = String(name || '').trim();
+    if (!cleanName) {
+      return res.status(400).json({ success: false, error: 'Stock item name is required' });
     }
 
-    @media (min-width: 992px) {
-      .cart-container {
-        position: sticky;
-        top: 16px;
+    await pool.query(
+      `
+      INSERT INTO old_stock_items (id, name, category, qty, price, stock_date, note)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      ON CONFLICT (id) DO UPDATE
+      SET name = EXCLUDED.name,
+          category = EXCLUDED.category,
+          qty = EXCLUDED.qty,
+          price = EXCLUDED.price,
+          stock_date = EXCLUDED.stock_date,
+          note = EXCLUDED.note
+      `,
+      [
+        stockId,
+        cleanName,
+        String(category || 'ផ្សេងៗ (Others)').trim(),
+        Number.isFinite(Number(qty)) ? Number(qty) : 0,
+        Number.isFinite(Number(price)) ? Number(price) : 0,
+        stock_date ? String(stock_date).trim() : null,
+        note ? String(note).trim() : null
+      ]
+    );
+
+    res.status(201).json({ success: true });
+  } catch (err) {
+    console.error('POST /api/stock/opening error:', err);
+    res.status(500).json({ success: false, error: 'Failed to save old stock' });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ success: false, error: 'សូមបញ្ចូល Username និង Password' });
+    }
+
+    const result = await pool.query(
+      `SELECT id, username, full_name, password_hash, role, is_active FROM users WHERE LOWER(username) = LOWER($1)`,
+      [String(username).trim()]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ success: false, error: 'ឈ្មោះគណនី ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវ' });
+    }
+
+    const user = result.rows[0];
+    if (!user.is_active) {
+      return res.status(403).json({ success: false, error: 'គណនីនេះត្រូវបានផ្អាកដំណើរការ' });
+    }
+
+    const valid = await bcrypt.compare(String(password), user.password_hash);
+    if (!valid) {
+      return res.status(401).json({ success: false, error: 'ឈ្មោះគណនី ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវ' });
+    }
+
+    req.session.user = {
+      id: user.id,
+      username: user.username,
+      full_name: user.full_name,
+      role: user.role
+    };
+
+    req.session.save((saveErr) => {
+      if (saveErr) {
+        console.error('Session save error:', saveErr);
+        return res.status(500).json({ success: false, error: 'មិនអាចរក្សា Session បានទេ' });
       }
-    }
-    .cart-items-box {
-      max-height: 230px;
-      overflow-y: auto;
-    }
-
-    @media print {
-      body * { visibility: hidden !important; }
-      #printableInvoice, #printableInvoice * { visibility: visible !important; }
-      #printableInvoice {
-        position: fixed !important;
-        left: 0 !important;
-        top: 0 !important;
-        width: 80mm !important;
-        max-width: 80mm !important;
-        margin: 0 !important;
-        padding: 4mm !important;
-        font-size: 12px !important;
-        background: #ffffff !important;
-      }
-      .modal-footer, .no-print { display: none !important; }
-      @page { size: auto; margin: 4mm; }
-    }
-  </style>
-</head>
-<body>
-
-  <!-- LOGIN VIEW -->
-  <div id="loginView" class="login-wrap">
-    <div class="login-card">
-      <h4 class="fw-bold mb-1"><i class="fa-solid fa-jug-detergent text-primary me-2"></i> Laundry POS Login</h4>
-      <p class="text-muted small mb-3">ចូលប្រព័ន្ធគ្រប់គ្រងហាងបោកអ៊ុត (PostgreSQL Cloud API)</p>
-      <form id="loginForm">
-        <div class="mb-3">
-          <label class="form-label small fw-bold">Username</label>
-          <input type="text" id="loginUsername" class="form-control" required placeholder="admin" />
-        </div>
-        <div class="mb-3">
-          <label class="form-label small fw-bold">Password</label>
-          <input type="password" id="loginPassword" class="form-control" required placeholder="••••••••" />
-        </div>
-        <button type="submit" class="btn btn-primary w-100 fw-bold py-2">
-          <i class="fa-solid fa-right-to-bracket me-1"></i> ចូលប្រើប្រាស់ (Login)
-        </button>
-        <div id="loginError" class="text-danger small mt-2 fw-bold"></div>
-      </form>
-    </div>
-  </div>
-
-  <!-- MAIN APP VIEW -->
-  <div id="appView" class="hidden">
-    <nav class="navbar navbar-dark bg-dark px-3 py-2 shadow-sm">
-      <div class="container-fluid d-flex flex-wrap justify-content-between align-items-center gap-2">
-        <span class="navbar-brand fw-bold fs-6 mb-0" style="cursor: pointer;" onclick="switchView('dashboard')">
-          <i class="fa-solid fa-jug-detergent me-2 text-primary"></i> Laundry POS & Invoice
-        </span>
-        <div class="d-flex align-items-center gap-2 flex-wrap">
-          <span id="dbStatusBadge" class="badge bg-success">DB Connected</span>
-          <button type="button" class="btn btn-light btn-sm fw-bold text-dark" id="navDashboardBtn" onclick="switchView('dashboard')">
-            <i class="fa-solid fa-grip me-1"></i> Main Menu
-          </button>
-          <button type="button" class="btn btn-outline-light btn-sm fw-bold" id="navPosBtn" onclick="switchView('pos')">
-            <i class="fa-solid fa-cash-register me-1"></i> វិក្កយបត្រ & កន្រ្តក
-          </button>
-          <button type="button" class="btn btn-outline-light btn-sm fw-bold" id="navCardsBtn" onclick="switchView('cards')">
-            <i class="fa-solid fa-images me-1"></i> កាតរូបភាពទំនិញ
-          </button>
-          <button type="button" class="btn btn-outline-info btn-sm fw-bold" id="navReportBtn" onclick="switchView('report')">
-            <i class="fa-solid fa-chart-line me-1"></i> ចំណូល ថ្ងៃ/ខែ/ឆ្នាំ
-          </button>
-          <button type="button" class="btn btn-outline-success btn-sm fw-bold" id="navStockBtn" onclick="switchView('stock')">
-            <i class="fa-solid fa-boxes-stacked me-1"></i> ស្តុកចាស់
-          </button>
-          <button type="button" class="btn btn-outline-warning btn-sm fw-bold hidden" id="navUsersBtn" onclick="switchView('users')">
-            <i class="fa-solid fa-users-gear me-1"></i> បង្កើត User
-          </button>
-          <span id="cashierDisplay" class="text-white small fw-bold bg-secondary px-3 py-1 rounded-pill"></span>
-          <button type="button" class="btn btn-danger btn-sm fw-bold" onclick="logout()">
-            <i class="fa-solid fa-right-from-bracket"></i> ចាកចេញ
-          </button>
-        </div>
-      </div>
-    </nav>
-
-    <!-- VIEW 0: MAIN MENU DASHBOARD -->
-    <div id="viewDashboard" class="main-menu-wrapper">
-      <div class="dashboard-header-box">
-        <h1 class="dashboard-main-title">ផ្ទាំងម៉ឺនុយមេ | Main Menu Dashboard</h1>
-        <p class="dashboard-sub-title">សូមជ្រើសរើសមុខងារដែលចង់ប្រើប្រាស់ | Please select a module to start working</p>
-      </div>
-
-      <div class="menu-grid-container">
-        <div class="row g-4 justify-content-center">
-          <div class="col-12 col-sm-6 col-lg-4">
-            <div class="menu-tile-card" onclick="switchView('pos')">
-              <div class="menu-tile-icon text-primary">
-                <i class="fa-solid fa-cart-shopping"></i>
-              </div>
-              <div class="menu-tile-title">ទំព័រលក់ (POS)</div>
-              <div class="menu-tile-desc-km">ចុះបញ្ជីការបោកអ៊ុត គិតលុយ និងចេញវិក្កយបត្រ</div>
-              <p class="menu-tile-desc-en">Process orders and billing</p>
-            </div>
-          </div>
-
-          <div class="col-12 col-sm-6 col-lg-4">
-            <div class="menu-tile-card" onclick="switchView('report')">
-              <div class="menu-tile-icon text-success">
-                <i class="fa-solid fa-chart-pie"></i>
-              </div>
-              <div class="menu-tile-title">ត្រួតពិនិត្យចំណូល ថ្ងៃ/ខែ/ឆ្នាំ</div>
-              <div class="menu-tile-desc-km">ពិនិត្យមើលទឹកប្រាក់ និងរបាយការណ៍វិក្កយបត្រ</div>
-              <p class="menu-tile-desc-en">Monitor daily, monthly & yearly revenue</p>
-            </div>
-          </div>
-
-          <div class="col-12 col-sm-6 col-lg-4">
-            <div class="menu-tile-card" onclick="switchView('cards')">
-              <div class="menu-tile-icon" style="color: #059669;">
-                <i class="fa-solid fa-cubes"></i>
-              </div>
-              <div class="menu-tile-title">កាតរូបភាពទំនិញ & វិក្កយបត្រ</div>
-              <div class="menu-tile-desc-km">មើលរូបភាពអាវ/ខោ ប្តូរស្ថានភាព និងបោះពុម្ព</div>
-              <p class="menu-tile-desc-en">Manage order cards and statuses</p>
-            </div>
-          </div>
-
-          <div class="col-12 col-sm-6 col-lg-4">
-            <div class="menu-tile-card" onclick="switchView('stock')">
-              <div class="menu-tile-icon text-info">
-                <i class="fa-solid fa-warehouse"></i>
-              </div>
-              <div class="menu-tile-title">ស្តុកចាស់ (Old Stock)</div>
-              <div class="menu-tile-desc-km">តាមដានកម្រិតស្តុកចាស់ និងបញ្ចូលស្តុកបន្ថែម</div>
-              <p class="menu-tile-desc-en">Track opening and old stock levels</p>
-            </div>
-          </div>
-
-          <div class="col-12 col-sm-6 col-lg-4">
-            <div class="menu-tile-card" onclick="switchView('pos'); setTimeout(() => openEditCatalogModal(null), 120);">
-              <div class="menu-tile-icon text-warning">
-                <i class="fa-solid fa-tags"></i>
-              </div>
-              <div class="menu-tile-title">បន្ថែមមុខទំនិញ & កំណត់តម្លៃ</div>
-              <div class="menu-tile-desc-km">បន្ថែម កែសម្រួលតម្លៃ ឬប្តូររូបភាពមុខទំនិញ</div>
-              <p class="menu-tile-desc-en">Add or edit laundry item pricing & images</p>
-            </div>
-          </div>
-
-          <div class="col-12 col-sm-6 col-lg-4">
-            <div class="menu-tile-card" onclick="switchView('cards')">
-              <div class="menu-tile-icon" style="color: #7c3aed;">
-                <i class="fa-solid fa-receipt"></i>
-              </div>
-              <div class="menu-tile-title">ប្រវត្តិការលក់ & វិក្កយបត្រ</div>
-              <div class="menu-tile-desc-km">ពិនិត្យមើលវិក្កយបត្រដែលបានចេញរួច</div>
-              <p class="menu-tile-desc-en">Review past transactions and invoices</p>
-            </div>
-          </div>
-
-          <div class="col-12 col-sm-6 col-lg-4" id="dashboardUsersCard">
-            <div class="menu-tile-card" onclick="switchView('users')">
-              <div class="menu-tile-icon text-danger">
-                <i class="fa-solid fa-users-gear"></i>
-              </div>
-              <div class="menu-tile-title">គ្រប់គ្រងគណនី (Users)</div>
-              <div class="menu-tile-desc-km">គ្រប់គ្រងបុគ្គលិក និងបង្កើតគណនីអ្នកប្រើប្រាស់</div>
-              <p class="menu-tile-desc-en">Manage staff and user accounts</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="container-fluid py-3 px-2 px-md-3">
-
-      <!-- VIEW 1: POS MENU + MULTI-ITEM CART INVOICE -->
-      <div id="viewPos" class="row g-3 hidden">
-        <div class="col-12 col-md-7 col-lg-8">
-          <div class="mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <div>
-              <h4 class="fw-bold text-dark fs-5 mb-0">
-                <i class="fa-solid fa-shirt me-2 text-primary"></i> ប្រភេទអាវ / ខោ / កម្រាលពូក / ផ្សេងៗ
-              </h4>
-              <p class="text-muted small mb-0">ចុចលើកាតដើម្បីជ្រើស និងបន្ថែមចូលវិក្កយបត្រភ្លាមៗ ឬចុច <i class="fa-solid fa-pen"></i> ដើម្បីកែតម្លៃ/ប្តូររូប</p>
-            </div>
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-              <button type="button" class="btn btn-outline-secondary btn-sm fw-bold shadow-sm" onclick="addNewCategoryGroup()">
-                <i class="fa-solid fa-folder-plus me-1"></i> + ក្រុមថ្មី
-              </button>
-              <button type="button" class="btn btn-outline-primary btn-sm fw-bold shadow-sm" onclick="openEditCatalogModal(null)">
-                <i class="fa-solid fa-plus me-1"></i> បន្ថែមមុខទំនិញថ្មី
-              </button>
-              <button type="button" class="btn btn-outline-danger btn-sm fw-bold shadow-sm" onclick="resetCatalogToDefault()" title="កំណត់កាត និងក្រុមមកដើមវិញ">
-                <i class="fa-solid fa-rotate-left me-1"></i> Reset ដើម
-              </button>
-              <div class="bg-white px-3 py-1 rounded-3 shadow-sm border small">
-                <span class="fw-bold text-secondary">Rate:</span>
-                <span class="text-primary fw-bold">1$ =
-                  <input type="number" id="exchangeRate" value="4100"
-                    class="form-control form-control-sm d-inline-block text-center fw-bold text-primary p-0 border-0 bg-transparent"
-                    style="width: 60px;" onchange="renderCart(); updateModalReceivedAndChange(); renderRevenueReport();" /> Riel
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div class="d-flex flex-wrap gap-2 mb-3" id="categoryFilterBar"></div>
-          <div class="row g-2" id="laundryTypesGrid"></div>
-        </div>
-
-        <div class="col-12 col-md-5 col-lg-4">
-          <div class="card shadow-sm border-0 rounded-4 p-3 cart-container bg-white">
-            <div class="row g-2 mb-2">
-              <div class="col-6">
-                <span class="form-label small fw-bold text-secondary mb-1 d-block">ឈ្មោះអតិថិជន *</span>
-                <input type="text" id="customerNameInput" class="form-control form-control-sm fw-bold" placeholder="ឧ. សុខា" />
-              </div>
-              <div class="col-6">
-                <span class="form-label small fw-bold text-secondary mb-1 d-block">លេខទូរស័ព្ទ *</span>
-                <input type="text" id="customerPhoneInput" class="form-control form-control-sm fw-bold" placeholder="012 345 678" />
-              </div>
-            </div>
-
-            <div class="row g-2 mb-2">
-              <div class="col-6">
-                <span class="form-label small fw-bold text-secondary mb-1 d-block">សេវាកម្មបោកអ៊ុត</span>
-                <select id="defaultServiceSelect" class="form-select form-select-sm" onchange="applyServiceToAllItems()">
-                  <option value="បោក និងបត់ (Wash & Fold)">បោក និងបត់ (Wash & Fold)</option>
-                  <option value="បោក និងអ៊ុត (Wash & Iron)">បោក និងអ៊ុត (Wash & Iron)</option>
-                  <option value="អ៊ុតសុទ្ធ (Iron Only)">អ៊ុតសុទ្ធ (Iron Only)</option>
-                  <option value="បោកស្ងួត (Dry Clean)">បោកស្ងួត (Dry Clean)</option>
-                </select>
-              </div>
-              <div class="col-6">
-                <span class="form-label small fw-bold text-secondary mb-1 d-block">រូបភាពទំនិញ (កាត)</span>
-                <input type="file" id="orderImageInput" class="form-control form-control-sm" accept="image/*" />
-              </div>
-            </div>
-
-            <div id="orderImagePreviewWrap" class="mb-2 text-center border rounded-3 p-1 bg-light hidden">
-              <img id="orderImagePreview" style="max-height: 95px; border-radius: 8px;" alt="Preview" />
-            </div>
-
-            <h5 class="fw-bold text-dark mb-2 fs-6">
-              <i class="fa-solid fa-receipt me-2 text-primary"></i> មុខទំនិញក្នុងវិក្កយបត្រ / Invoice Items
-            </h5>
-
-            <div class="cart-items-box border rounded-3 p-1 mb-2 bg-light">
-              <table class="table table-sm align-middle mb-0" style="font-size: 0.85rem;">
-                <thead class="table-light">
-                  <tr>
-                    <th>ប្រភេទ</th>
-                    <th class="text-center">ចំនួន</th>
-                    <th class="text-end">តម្លៃ</th>
-                    <th class="text-end">សរុប</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody id="cartTableBody">
-                  <tr><td colspan="5" class="text-center text-muted py-3 small">មិនទាន់មានមុខទំនិញ</td></tr>
-                </tbody>
-              </table>
-            </div>
-
-            <div class="mb-2">
-              <input type="text" id="orderNotesInput" class="form-control form-control-sm" placeholder="កំណត់សម្គាល់ (ឧ. ខោអាវពណ៌ស បំបែកបោក...)" />
-            </div>
-
-            <div class="border-top pt-2">
-              <div class="d-flex justify-content-between small mb-1">
-                <span class="text-muted">ទឹកប្រាក់រួម / Subtotal:</span>
-                <span id="subTotalDisplay" class="fw-bold">$0.00</span>
-              </div>
-
-              <div class="d-flex justify-content-between align-items-center small mb-1">
-                <span class="text-muted">បញ្ចុះតម្លៃ / Discount (%):</span>
-                <input type="number" id="discountPercent" value="0" min="0" max="100"
-                  class="form-control form-control-sm text-end w-25" oninput="renderCart()" />
-              </div>
-
-              <div class="d-flex justify-content-between align-items-center small mb-1">
-                <span class="text-muted">អាករ VAT (10%):</span>
-                <div class="form-check form-switch m-0">
-                  <input class="form-check-input" type="checkbox" id="vatToggle" onchange="renderCart()" />
-                </div>
-              </div>
-
-              <div class="bg-light p-2 rounded-3 mb-2 border">
-                <div class="d-flex justify-content-between align-items-center">
-                  <span class="fw-bold text-dark small">ទឹកប្រាក់សរុប / Grand Total:</span>
-                  <div class="text-end">
-                    <span id="grandTotalUSD" class="fw-bold fs-5 text-success">$0.00</span><br />
-                    <span id="grandTotalRiel" class="text-muted small fw-bold">0 រៀល</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="row g-2 mb-2">
-                <div class="col-6">
-                  <span class="form-label small fw-bold mb-1 d-block">ទម្រង់បង់ប្រាក់:</span>
-                  <select class="form-select form-select-sm" id="paymentMethod">
-                    <option value="Cash">សាច់ប្រាក់ (Cash)</option>
-                    <option value="KHQR">វីង/បាគង (KHQR)</option>
-                    <option value="Credit Card">កាត (Card)</option>
-                  </select>
-                </div>
-                <div class="col-6">
-                  <span class="form-label small fw-bold mb-1 d-block">បានទទួលលុយ ($):</span>
-                  <input type="number" id="amountReceived" class="form-control form-control-sm text-end fw-bold text-primary"
-                    placeholder="0.00" oninput="calculateChange()" />
-                </div>
-              </div>
-
-              <div class="bg-success-subtle p-2 rounded-3 mb-2 d-flex justify-content-between align-items-center border border-success-subtle">
-                <span class="fw-bold text-success small">ប្រាក់អាប់សងវិញ / Change:</span>
-                <div class="text-end">
-                  <span id="changeUSD" class="fw-bold text-success">$0.00</span>
-                  <span id="changeRiel" class="text-success small fw-bold d-block">(0 រៀល)</span>
-                </div>
-              </div>
-
-              <button type="button" class="btn btn-success w-100 py-2 fw-bold shadow-sm rounded-3" onclick="saveOrderAndPrint()">
-                <i class="fa-solid fa-check-circle me-1"></i> រក្សាទុកវិក្កយបត្រ & Print
-              </button>
-              <div id="posFeedback" class="small fw-bold mt-2 text-center"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- VIEW 2: IMAGE CARDS & ORDERS LIST -->
-      <div id="viewCards" class="hidden">
-        <div class="card border-0 shadow-sm rounded-4 p-3 mb-3">
-          <div class="row g-2 align-items-center">
-            <div class="col-12 col-md-4">
-              <input type="text" id="searchOrdersInput" class="form-control form-control-sm"
-                placeholder="ស្វែងរកលេខកូដ, ឈ្មោះ, លេខទូរស័ព្ទ..." oninput="loadOrders()" />
-            </div>
-            <div class="col-6 col-md-4">
-              <select id="filterCategorySelect" class="form-select form-select-sm" onchange="loadOrders()">
-                <option value="ALL">Category អាវ/ខោ/កម្រាលពូក ទាំងអស់</option>
-              </select>
-            </div>
-            <div class="col-6 col-md-4">
-              <select id="filterStatusSelect" class="form-select form-select-sm" onchange="loadOrders()">
-                <option value="ALL">ស្ថានភាពទាំងអស់</option>
-                <option value="Pending">Pending</option>
-                <option value="Washing">Washing</option>
-                <option value="Ready">Ready</option>
-                <option value="Picked Up">Picked Up</option>
-              </select>
-            </div>
-          </div>
-        </div>
-        <div id="cardsSaveStatusMsg" class="small fw-bold text-success mb-2"></div>
-        <div class="row g-2" id="orderCardsGrid"></div>
-      </div>
-
-      <!-- VIEW 4: DAILY / MONTHLY / YEARLY REVENUE REPORT -->
-      <div id="viewReport" class="hidden">
-        <div class="card border-0 shadow-sm rounded-4 p-3 mb-3">
-          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-            <div>
-              <h5 class="fw-bold mb-0"><i class="fa-solid fa-chart-line text-info me-2"></i> របាយការណ៍ចំណូលទទួលបាន (ប្រចាំថ្ងៃ / ខែ / ឆ្នាំ)</h5>
-              <small class="text-muted">គណនាតាមកាលបរិច្ឆេទវិក្កយបត្រ និងអាចជ្រើសរើសរាប់តែ Picked Up ឬវិក្កយបត្រទាំងអស់</small>
-            </div>
-            <div class="d-flex flex-wrap gap-2 align-items-center">
-              <input type="date" id="reportDateInput" class="form-control form-control-sm" style="width: auto;" onchange="renderRevenueReport()" />
-              <input type="month" id="reportMonthInput" class="form-control form-control-sm" style="width: auto;" onchange="renderRevenueReport()" />
-              <input type="number" id="reportYearInput" min="2020" max="2099" class="form-control form-control-sm" style="width: 95px;" onchange="renderRevenueReport()" />
-              <select id="reportScopeSelect" class="form-select form-select-sm" style="width: auto;" onchange="renderRevenueReport()">
-                <option value="ALL">វិក្កយបត្រទាំងអស់</option>
-                <option value="PICKED_UP">យកអាវរួច (Picked Up)</option>
-              </select>
-              <button type="button" class="btn btn-outline-dark btn-sm fw-bold" onclick="window.print()">
-                <i class="fa-solid fa-print me-1"></i> Print
-              </button>
-            </div>
-          </div>
-
-          <div class="row g-3">
-            <div class="col-12 col-md-4">
-              <div class="stat-card border-start border-4 border-primary">
-                <div class="small text-muted fw-bold">ចំណូលប្រចាំថ្ងៃ (<span id="lblSelectedDay">-</span>)</div>
-                <div id="revDayUSD" class="fs-4 fw-bold text-primary mt-1">$0.00</div>
-                <div id="revDayRiel" class="small fw-bold text-secondary">0 រៀល</div>
-                <div id="revDayCount" class="small text-muted mt-1">0 វិក្កយបត្រ</div>
-              </div>
-            </div>
-            <div class="col-12 col-md-4">
-              <div class="stat-card border-start border-4 border-success">
-                <div class="small text-muted fw-bold">ចំណូលប្រចាំខែ (<span id="lblSelectedMonth">-</span>)</div>
-                <div id="revMonthUSD" class="fs-4 fw-bold text-success mt-1">$0.00</div>
-                <div id="revMonthRiel" class="small fw-bold text-secondary">0 រៀល</div>
-                <div id="revMonthCount" class="small text-muted mt-1">0 វិក្កយបត្រ</div>
-              </div>
-            </div>
-            <div class="col-12 col-md-4">
-              <div class="stat-card border-start border-4 border-warning">
-                <div class="small text-muted fw-bold">ចំណូលប្រចាំឆ្នាំ (<span id="lblSelectedYear">-</span>)</div>
-                <div id="revYearUSD" class="fs-4 fw-bold text-dark mt-1">$0.00</div>
-                <div id="revYearRiel" class="small fw-bold text-secondary">0 រៀល</div>
-                <div id="revYearCount" class="small text-muted mt-1">0 វិក្កយបត្រ</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card border-0 shadow-sm rounded-4 p-3">
-          <h6 class="fw-bold mb-2">បញ្ជីសង្ខេបចំណូលតាមថ្ងៃក្នុងខែដែលបានជ្រើសរើស</h6>
-          <div class="table-responsive">
-            <table class="table table-sm align-middle mb-0">
-              <thead class="table-light">
-                <tr>
-                  <th>កាលបរិច្ឆេទ (ថ្ងៃ)</th>
-                  <th class="text-center">ចំនួនវិក្កយបត្រ</th>
-                  <th class="text-end">ចំណូល ($ USD)</th>
-                  <th class="text-end">ចំណូល (រៀល)</th>
-                </tr>
-              </thead>
-              <tbody id="dailySummaryTableBody">
-                <tr><td colspan="4" class="text-center text-muted py-3 small">មិនទាន់មានទិន្នន័យ</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- VIEW 5: OLD STOCK / OPENING STOCK ENTRY -->
-      <div id="viewStock" class="hidden row g-3">
-        <div class="col-12 col-lg-4">
-          <div class="card border-0 shadow-sm rounded-4 p-3">
-            <h5 class="fw-bold text-success mb-2"><i class="fa-solid fa-boxes-stacked me-1"></i> បញ្ចូលស្តុកចាស់ (Old Stock)</h5>
-            <p class="text-muted small mb-3">កត់ត្រាស្តុកចាស់ដែលមានស្រាប់ ឬស្តុកដើមមុនប្រើប្រព័ន្ធ</p>
-            <form id="oldStockForm">
-              <div class="mb-2">
-                <label class="form-label small fw-bold">ឈ្មោះមុខទំនិញ / ស្តុក *</label>
-                <input type="text" id="stockItemName" class="form-control form-control-sm fw-bold" required placeholder="ឧ. សាប៊ូបោកខោអាវ / អាវយឺតស្តុកចាស់" />
-              </div>
-              <div class="row g-2 mb-2">
-                <div class="col-6">
-                  <label class="form-label small fw-bold">ក្រុម / Category</label>
-                  <select id="stockItemCategory" class="form-select form-select-sm"></select>
-                </div>
-                <div class="col-6">
-                  <label class="form-label small fw-bold">ចំនួនស្តុកចាស់ *</label>
-                  <input type="number" id="stockItemQty" min="0" step="1" class="form-control form-control-sm fw-bold text-primary" value="10" required />
-                </div>
-              </div>
-              <div class="row g-2 mb-2">
-                <div class="col-6">
-                  <label class="form-label small fw-bold">តម្លៃ ($ USD) *</label>
-                  <input type="number" id="stockItemPrice" min="0" step="0.01" class="form-control form-control-sm fw-bold text-success" value="1.00" required />
-                </div>
-                <div class="col-6">
-                  <label class="form-label small fw-bold">កាលបរិច្ឆេទស្តុកចាស់</label>
-                  <input type="date" id="stockItemDate" class="form-control form-control-sm" />
-                </div>
-              </div>
-              <div class="mb-3">
-                <label class="form-label small fw-bold">កំណត់សម្គាល់</label>
-                <input type="text" id="stockItemNote" class="form-control form-control-sm" placeholder="ឧ. ស្តុកនៅសល់ពីខែមុន..." />
-              </div>
-              <button type="submit" class="btn btn-success w-100 fw-bold">
-                <i class="fa-solid fa-plus-circle me-1"></i> រក្សាទុកស្តុកចាស់
-              </button>
-              <div id="stockFormMsg" class="small fw-bold mt-2 text-center"></div>
-            </form>
-          </div>
-        </div>
-
-        <div class="col-12 col-lg-8">
-          <div class="card border-0 shadow-sm rounded-4 p-3">
-            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-              <h5 class="fw-bold mb-0"><i class="fa-solid fa-list-check me-1"></i> បញ្ជីស្តុកចាស់ដែលបានបញ្ចូល</h5>
-              <div class="d-flex gap-2 align-items-center">
-                <span class="badge bg-success-subtle text-success border border-success-subtle" id="totalOldStockQtyBadge">សរុប: 0 ឯកតា</span>
-                <span class="badge bg-primary-subtle text-primary border border-primary-subtle" id="totalOldStockValueBadge">តម្លៃសរុប: $0.00</span>
-              </div>
-            </div>
-            <div class="table-responsive">
-              <table class="table table-sm align-middle mb-0">
-                <thead class="table-light">
-                  <tr>
-                    <th>មុខទំនិញ</th>
-                    <th>ក្រុម</th>
-                    <th class="text-center">ចំនួន</th>
-                    <th class="text-end">តម្លៃ</th>
-                    <th class="text-end">សរុប</th>
-                    <th>កាលបរិច្ឆេទ</th>
-                    <th class="text-end">សកម្មភាព</th>
-                  </tr>
-                </thead>
-                <tbody id="oldStockTableBody">
-                  <tr><td colspan="7" class="text-center text-muted py-4 small">មិនទាន់មានស្តុកចាស់</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- VIEW 3: CREATE USER (ADMIN) -->
-      <div id="viewUsers" class="hidden row g-3">
-        <div class="col-12 col-md-4">
-          <div class="card border-0 shadow-sm rounded-4 p-3">
-            <h5 class="fw-bold text-primary mb-3"><i class="fa-solid fa-user-plus me-1"></i> បង្កើតគណនី User ថ្មី</h5>
-            <form id="createUserForm">
-              <div class="mb-2">
-                <label class="form-label small fw-bold">Username *</label>
-                <input type="text" id="newUsername" class="form-control form-control-sm" required placeholder="staff01" />
-              </div>
-              <div class="mb-2">
-                <label class="form-label small fw-bold">ឈ្មោះពេញ *</label>
-                <input type="text" id="newFullName" class="form-control form-control-sm" required placeholder="បុគ្គលិកទទួលទំនិញ" />
-              </div>
-              <div class="mb-2">
-                <label class="form-label small fw-bold">Password (≥ 6 តួអក្សរ) *</label>
-                <input type="password" id="newPassword" class="form-control form-control-sm" minlength="6" required />
-              </div>
-              <div class="mb-3">
-                <label class="form-label small fw-bold">Role</label>
-                <select id="newRole" class="form-select form-select-sm">
-                  <option value="staff">Staff (បុគ្គលិក)</option>
-                  <option value="admin">Admin (អ្នកគ្រប់គ្រង)</option>
-                </select>
-              </div>
-              <button type="submit" class="btn btn-primary w-100 fw-bold">បង្កើត User</button>
-              <div id="userFormMsg" class="small fw-bold mt-2"></div>
-            </form>
-          </div>
-        </div>
-        <div class="col-12 col-md-8">
-          <div class="card border-0 shadow-sm rounded-4 p-3">
-            <h5 class="fw-bold mb-3"><i class="fa-solid fa-users me-1"></i> បញ្ជីអ្នកប្រើប្រាស់</h5>
-            <div class="table-responsive">
-              <table class="table table-sm align-middle">
-                <thead class="table-light">
-                  <tr>
-                    <th>ID</th>
-                    <th>Username</th>
-                    <th>ឈ្មោះពេញ</th>
-                    <th>Role</th>
-                    <th>កាលបរិច្ឆេទ</th>
-                  </tr>
-                </thead>
-                <tbody id="usersTableBody"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- EDIT ORDER CARD MODAL (កាតរូបភាពទំនិញ) -->
-  <div class="modal fade" id="editOrderCardModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow rounded-4">
-        <div class="modal-header bg-dark text-white">
-          <h5 class="modal-title fw-bold" id="editOrderCardModalTitle">
-            <i class="fa-solid fa-pen-to-square me-1"></i> កែប្រែកាតរូបភាពទំនិញ / វិក្កយបត្រ
-          </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-        </div>
-        <form id="editOrderCardForm" class="modal-body">
-          <input type="hidden" id="editOrderCardId" />
-          <div class="row g-2 mb-2">
-            <div class="col-6">
-              <label class="form-label small fw-bold">ឈ្មោះអតិថិជន *</label>
-              <input type="text" id="editOrderCustomerName" class="form-control form-control-sm fw-bold" required />
-            </div>
-            <div class="col-6">
-              <label class="form-label small fw-bold">លេខទូរស័ព្ទ *</label>
-              <input type="text" id="editOrderPhone" class="form-control form-control-sm fw-bold" required />
-            </div>
-          </div>
-          <div class="row g-2 mb-2">
-            <div class="col-6">
-              <label class="form-label small fw-bold">ប្រភេទ / មុខទំនិញ</label>
-              <input type="text" id="editOrderCategory" class="form-control form-control-sm fw-bold" required />
-            </div>
-            <div class="col-3">
-              <label class="form-label small fw-bold">ចំនួន</label>
-              <input type="number" id="editOrderItemCount" min="1" class="form-control form-control-sm text-center fw-bold" required />
-            </div>
-            <div class="col-3">
-              <label class="form-label small fw-bold">តម្លៃ ($)</label>
-              <input type="number" id="editOrderPrice" step="0.01" min="0" class="form-control form-control-sm text-end fw-bold text-success" required />
-            </div>
-          </div>
-          <div class="row g-2 mb-2">
-            <div class="col-6">
-              <label class="form-label small fw-bold">ស្ថានភាព</label>
-              <select id="editOrderStatus" class="form-select form-select-sm">
-                <option value="Pending">Pending</option>
-                <option value="Washing">Washing</option>
-                <option value="Ready">Ready</option>
-                <option value="Picked Up">Picked Up</option>
-              </select>
-            </div>
-            <div class="col-6">
-              <label class="form-label small fw-bold">ប្តូររូបភាពកាត</label>
-              <input type="file" id="editOrderCardImageFile" class="form-control form-control-sm" accept="image/*" />
-            </div>
-          </div>
-          <div class="mb-2">
-            <label class="form-label small fw-bold">កំណត់សម្គាល់</label>
-            <input type="text" id="editOrderNotes" class="form-control form-control-sm" />
-          </div>
-          <div class="text-center border rounded-3 p-2 bg-light mb-3">
-            <img id="editOrderCardImagePreview" src="" alt="Preview" style="max-height: 130px; max-width: 100%; border-radius: 8px; object-fit: contain;" />
-          </div>
-          <div class="d-flex justify-content-end gap-2">
-            <button type="button" class="btn btn-secondary btn-sm fw-bold" data-bs-dismiss="modal">បោះបង់</button>
-            <button type="submit" class="btn btn-primary btn-sm fw-bold px-3">
-              <i class="fa-solid fa-check me-1"></i> រក្សាទុក
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- EDIT / ADD CATALOG ITEM MODAL -->
-  <div class="modal fade" id="editCatalogModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow rounded-4">
-        <div class="modal-header bg-primary text-white">
-          <h5 class="modal-title fw-bold" id="catalogModalTitle">
-            <i class="fa-solid fa-pen-to-square me-1"></i> កំណត់តម្លៃ និងប្តូររូបភាពទំនិញ
-          </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-        </div>
-        <form id="catalogItemForm" class="modal-body">
-          <input type="hidden" id="editCatalogId" />
-          <div class="mb-2">
-            <label class="form-label small fw-bold">ឈ្មោះមុខទំនិញ *</label>
-            <input type="text" id="editCatalogName" class="form-control form-control-sm" required placeholder="ឧ. អាវយឺត (T-Shirt)" />
-          </div>
-          <div class="row g-2 mb-2">
-            <div class="col-6">
-              <label class="form-label small fw-bold">ក្រុម / Category</label>
-              <select id="editCatalogGroup" class="form-select form-select-sm"></select>
-            </div>
-            <div class="col-6">
-              <label class="form-label small fw-bold">តម្លៃ ($ USD) *</label>
-              <input type="number" id="editCatalogPrice" step="0.01" min="0" class="form-control form-control-sm fw-bold text-primary" required />
-            </div>
-          </div>
-          <div class="mb-2">
-            <label class="form-label small fw-bold">Link រូបភាព (URL) ឬជ្រើសរើសរូបភាពពីកុំព្យូទ័រ/ទូរស័ព្ទ</label>
-            <input type="text" id="editCatalogImageUrl" class="form-control form-control-sm mb-2" placeholder="https://... ឬ /images/item.jpg" oninput="updateCatalogImagePreview()" />
-            <input type="file" id="editCatalogImageFile" class="form-control form-control-sm" accept="image/*" />
-          </div>
-          <div class="text-center border rounded-3 p-2 bg-light mb-3">
-            <img id="editCatalogImagePreview" src="" alt="Preview" style="max-height: 110px; border-radius: 10px; object-fit: cover;" onerror="this.src='https://via.placeholder.com/300x200?text=Laundry+Item'" />
-          </div>
-          <div class="d-flex justify-content-end gap-2">
-            <button type="button" class="btn btn-secondary btn-sm fw-bold" data-bs-dismiss="modal">បោះបង់</button>
-            <button type="submit" class="btn btn-primary btn-sm fw-bold px-3">
-              <i class="fa-solid fa-check me-1"></i> រក្សាទុកការផ្លាស់ប្តូរ
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- PRINTABLE INVOICE MODAL -->
-  <div class="modal fade" id="receiptModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow rounded-4">
-        <div class="modal-body p-4" id="printableInvoice">
-          <div class="text-center mb-3">
-            <h4 class="fw-bold mb-1" style="font-size: 1.2rem;">🧺 LAUNDRY & IRON SHOP</h4>
-            <div class="text-muted small">វិក្កយបត្របោកអ៊ុត / LAUNDRY INVOICE</div>
-            <span id="receiptCodeBadge" class="badge bg-dark mt-1">LND-0001</span>
-            <hr class="my-2" />
-          </div>
-          <div class="d-flex justify-content-between small mb-1">
-            <span>អតិថិជន: <strong id="recCustomer"></strong></span>
-            <span id="recDate"></span>
-          </div>
-          <div class="d-flex justify-content-between small mb-2">
-            <span>ទូរស័ព្ទ: <strong id="recPhone"></strong></span>
-            <span>ស្ថានភាព: <strong id="recPayment"></strong></span>
-          </div>
-          <div class="table-responsive mb-2">
-            <table class="table table-sm align-middle mb-0">
-              <thead class="table-light">
-                <tr class="small">
-                  <th>មុខទំនិញ</th>
-                  <th class="text-center">ចំនួន</th>
-                  <th class="text-end">តម្លៃ</th>
-                  <th class="text-end">សរុប</th>
-                </tr>
-              </thead>
-              <tbody id="recItemsBody"></tbody>
-            </table>
-          </div>
-          <div class="border-top pt-2 small">
-            <div class="d-flex justify-content-between">
-              <span>ទឹកប្រាក់រួម (Subtotal):</span>
-              <span id="recSubtotal" class="fw-bold">$0.00</span>
-            </div>
-            <div class="d-flex justify-content-between">
-              <span>បញ្ចុះតម្លៃ (Discount):</span>
-              <span id="recDiscount">$0.00</span>
-            </div>
-            <div class="d-flex justify-content-between">
-              <span>អាករ VAT (10%):</span>
-              <span id="recVat">$0.00</span>
-            </div>
-            <div class="d-flex justify-content-between fw-bold fs-6 border-top mt-2 pt-2">
-              <span>សរុបទាំងអស់ (Grand Total):</span>
-              <div class="text-end">
-                <span class="text-success" id="recGrandTotal" data-amount="0">$0.00</span><br />
-                <span class="text-dark small" id="recGrandTotalRiel">0 រៀល</span>
-              </div>
-            </div>
-
-            <div class="bg-light border rounded-3 p-2 mt-2 no-print">
-              <div class="row g-2 align-items-center">
-                <div class="col-6">
-                  <span class="form-label small fw-bold text-primary mb-0 d-block">បញ្ចូលប្រាក់ទទួល ($):</span>
-                </div>
-                <div class="col-6">
-                  <input type="number" id="recReceivedInput" step="0.01" min="0"
-                    class="form-control form-control-sm text-end fw-bold text-primary"
-                    placeholder="0.00" oninput="updateModalReceivedAndChange()" />
-                </div>
-              </div>
-            </div>
-
-            <div class="d-flex justify-content-between text-muted mt-2">
-              <span>ប្រាក់ទទួលបាន (Received):</span>
-              <span id="recReceived" class="fw-bold">$0.00</span>
-            </div>
-            <div class="d-flex justify-content-between text-success fw-bold">
-              <span>ប្រាក់អាប់សងវិញ (Change):</span>
-              <span id="recChange">$0.00 (0 រៀល)</span>
-            </div>
-          </div>
-          <div class="text-center mt-3 text-muted small">
-            <p class="mb-0">🙏 សូមអរគុណ! Thank you for your business.</p>
-          </div>
-        </div>
-        <div class="modal-footer no-print d-flex justify-content-between">
-          <button type="button" id="markPickedUpBtn" class="btn btn-success fw-bold hidden" onclick="confirmPickupFromModal()">
-            <i class="fa-solid fa-box-open me-1"></i> បង់ប្រាក់ & យកអាវ (Picked Up)
-          </button>
-          <div class="d-flex gap-2 ms-auto">
-            <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">បិទ</button>
-            <button type="button" class="btn btn-primary fw-bold px-4" onclick="window.print()">
-              <i class="fa-solid fa-print me-1"></i> បោះពុម្ព (Print)
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    const API = window.location.origin;
-    const CATALOG_SESSION_KEY = 'laundry_pos_catalog_v1';
-    const GROUPS_SESSION_KEY = 'laundry_pos_groups_v1';
-    const OLD_STOCK_STORAGE_KEY = 'laundry_pos_old_stock_v1';
-    const ORDER_CARD_OVERRIDES_KEY = 'laundry_pos_order_card_overrides_v1';
-    let currentUser = null;
-    let cart = [];
-    let ordersCache = [];
-    let orderCardOverrides = loadSavedOrderCardOverrides();
-    let oldStockList = loadSavedOldStock();
-    let activeGroupFilter = 'All';
-    let selectedCatalogId = null;
-    let selectedImageBase64 = null;
-    let editOrderCardImageBase64 = null;
-    let finalCalculatedTotal = 0;
-    let activeModalOrderId = null;
-    let receiptModalObj = null;
-    let editCatalogModalObj = null;
-    let editOrderCardModalObj = null;
-
-    const DEFAULT_GROUPS = [
-      'អាវ (Shirts)',
-      'ខោ (Pants)',
-      'កម្រាលពូក & ភួយ',
-      'ផ្សេងៗ (Others)'
-    ];
-
-    const DEFAULT_LAUNDRY_CATALOG = [
-      { id: 1, name: 'អាវយឺត (T-Shirt)', group: 'អាវ (Shirts)', price: 1.00, image_url: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=300&q=80' },
-      { id: 2, name: 'អាវសាច់ក្រណាត់ (Shirt)', group: 'អាវ (Shirts)', price: 1.50, image_url: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=300&q=80' },
-      { id: 3, name: 'អាវធំ / អាវក្រៅ (Jacket)', group: 'អាវ (Shirts)', price: 2.50, image_url: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=300&q=80' },
-      { id: 4, name: 'ខោជើងវែង (Long Pants)', group: 'ខោ (Pants)', price: 1.50, image_url: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=300&q=80' },
-      { id: 5, name: 'ខោខូវប៊យ (Jeans)', group: 'ខោ (Pants)', price: 2.00, image_url: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=300&q=80' },
-      { id: 6, name: 'ខោខ្លី (Shorts)', group: 'ខោ (Pants)', price: 1.00, image_url: 'https://images.unsplash.com/photo-1591195853828-11db59a44f6b?w=300&q=80' },
-      { id: 7, name: 'កម្រាលពូក (Bed Sheet)', group: 'កម្រាលពូក & ភួយ', price: 3.50, image_url: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=300&q=80' },
-      { id: 8, name: 'ភួយ / ផួយក្រាស់ (Blanket)', group: 'កម្រាលពូក & ភួយ', price: 4.50, image_url: 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=300&q=80' },
-      { id: 9, name: 'សំពត់ / ឈុត (Skirt & Suit)', group: 'ផ្សេងៗ (Others)', price: 3.00, image_url: 'https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=300&q=80' },
-      { id: 10, name: 'ទំនិញផ្សេងៗ (Other Item)', group: 'ផ្សេងៗ (Others)', price: 1.50, image_url: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=300&q=80' }
-    ];
-
-    let LAUNDRY_GROUPS = loadSavedGroups();
-    let LAUNDRY_CATALOG = loadSavedCatalog();
-
-    function loadSavedOrderCardOverrides() {
-      try {
-        const raw = localStorage.getItem(ORDER_CARD_OVERRIDES_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (parsed && typeof parsed === 'object') return parsed;
-        }
-      } catch {}
-      return {};
-    }
-
-    function persistOrderCardOverrides() {
-      try {
-        localStorage.setItem(ORDER_CARD_OVERRIDES_KEY, JSON.stringify(orderCardOverrides));
-      } catch {}
-    }
-
-    function applyOrderCardOverridesToList(list) {
-      return (list || []).map(item => {
-        const ov = orderCardOverrides[String(item.id)];
-        if (!ov) return item;
-        const nextItems = Array.isArray(item.items_json) && item.items_json.length === 1
-          ? [{
-              ...item.items_json[0],
-              category: ov.category ?? item.items_json[0].category,
-              item_count: ov.item_count ?? item.items_json[0].item_count,
-              price: ov.price ?? item.items_json[0].price
-            }]
-          : item.items_json;
-        return {
-          ...item,
-          ...ov,
-          image_data: ov.image_data !== undefined ? ov.image_data : item.image_data,
-          items_json: nextItems
-        };
-      });
-    }
-
-    function loadSavedGroups() {
-      try {
-        const raw = sessionStorage.getItem(GROUPS_SESSION_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch {}
-      return [...DEFAULT_GROUPS];
-    }
-
-    function persistGroups() {
-      try {
-        sessionStorage.setItem(GROUPS_SESSION_KEY, JSON.stringify(LAUNDRY_GROUPS));
-      } catch {}
-    }
-
-    function loadSavedCatalog() {
-      try {
-        const raw = sessionStorage.getItem(CATALOG_SESSION_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch {}
-      return DEFAULT_LAUNDRY_CATALOG.map(x => ({ ...x }));
-    }
-
-    function persistCatalog() {
-      try {
-        sessionStorage.setItem(CATALOG_SESSION_KEY, JSON.stringify(LAUNDRY_CATALOG));
-      } catch {}
-    }
-
-    function loadSavedOldStock() {
-      try {
-        const raw = localStorage.getItem(OLD_STOCK_STORAGE_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed)) return parsed;
-        }
-      } catch {}
-      return [];
-    }
-
-    function persistOldStock() {
-      try {
-        localStorage.setItem(OLD_STOCK_STORAGE_KEY, JSON.stringify(oldStockList));
-      } catch {}
-    }
-
-    function resetCatalogToDefault() {
-      if (!confirm('កំណត់បញ្ជីមុខទំនិញ និងក្រុមមកដើមវិញមែនទេ?')) return;
-      try {
-        sessionStorage.removeItem(CATALOG_SESSION_KEY);
-        sessionStorage.removeItem(GROUPS_SESSION_KEY);
-      } catch {}
-      LAUNDRY_GROUPS = [...DEFAULT_GROUPS];
-      LAUNDRY_CATALOG = DEFAULT_LAUNDRY_CATALOG.map(x => ({ ...x }));
-      activeGroupFilter = 'All';
-      selectedCatalogId = null;
-      renderGroupButtons();
-      renderCategorySelectOptions();
-      renderStockCategoryOptions();
-      renderCatalogCards();
-      populateFilterCategories();
-    }
-
-    function escapeHtml(str) {
-      return String(str || '')
-        .replace(/&/g, '&')
-        .replace(/</g, '<')
-        .replace(/>/g, '>')
-        .replace(/"/g, '"');
-    }
-
-    function initReportFilterDefaults() {
-      const now = new Date();
-      const yyyy = now.getFullYear();
-      const mm = String(now.getMonth() + 1).padStart(2, '0');
-      const dd = String(now.getDate()).padStart(2, '0');
-      const dayEl = document.getElementById('reportDateInput');
-      const monthEl = document.getElementById('reportMonthInput');
-      const yearEl = document.getElementById('reportYearInput');
-      const stockDateEl = document.getElementById('stockItemDate');
-      if (dayEl && !dayEl.value) dayEl.value = `${yyyy}-${mm}-${dd}`;
-      if (monthEl && !monthEl.value) monthEl.value = `${yyyy}-${mm}`;
-      if (yearEl && !yearEl.value) yearEl.value = String(yyyy);
-      if (stockDateEl && !stockDateEl.value) stockDateEl.value = `${yyyy}-${mm}-${dd}`;
-    }
-
-    document.addEventListener('DOMContentLoaded', async () => {
-      receiptModalObj = new bootstrap.Modal(document.getElementById('receiptModal'));
-      editCatalogModalObj = new bootstrap.Modal(document.getElementById('editCatalogModal'));
-      editOrderCardModalObj = new bootstrap.Modal(document.getElementById('editOrderCardModal'));
-      initReportFilterDefaults();
-      renderGroupButtons();
-      renderCategorySelectOptions();
-      renderStockCategoryOptions();
-      renderCatalogCards();
-      renderOldStockTable();
-      await checkSession();
+      res.json({ success: true, user: req.session.user });
     });
+  } catch (err) {
+    console.error('POST /api/auth/login error:', err);
+    res.status(500).json({ success: false, error: 'មានបញ្ហាក្នុងការ Login' });
+  }
+});
 
-    async function checkSession() {
-      const res = await fetch(API + '/api/auth/me');
-      const data = await res.json();
-      if (data.user) {
-        currentUser = data.user;
-        enterApp();
-      } else {
-        showLogin();
-      }
-    }
+app.post('/api/auth/logout', (req, res) => {
+  req.session.destroy(() => {
+    res.clearCookie('laundry.sid');
+    res.json({ success: true });
+  });
+});
 
-    function showLogin() {
-      document.getElementById('loginView').classList.remove('hidden');
-      document.getElementById('appView').classList.add('hidden');
-    }
+app.get('/api/auth/me', (req, res) => {
+  if (!req.session || !req.session.user) {
+    return res.json({ success: true, user: null });
+  }
+  res.json({ success: true, user: req.session.user });
+});
 
-    function enterApp() {
-      document.getElementById('loginView').classList.add('hidden');
-      document.getElementById('appView').classList.remove('hidden');
-      document.getElementById('cashierDisplay').textContent = `${currentUser.full_name} (${currentUser.role})`;
+app.get('/api/users', requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        id,
+        username,
+        full_name,
+        role,
+        is_active,
+        to_char(created_at AT TIME ZONE 'Asia/Phnom_Penh', 'DD/MM/YYYY HH24:MI') AS created_at_kh
+      FROM users
+      ORDER BY id ASC
+    `);
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    console.error('GET /api/users error:', err);
+    res.status(500).json({ success: false, error: 'មិនអាចទាញបញ្ជីអ្នកប្រើប្រាស់បានទេ' });
+  }
+});
 
-      if (currentUser.role === 'admin') {
-        document.getElementById('navUsersBtn').classList.remove('hidden');
-        document.getElementById('dashboardUsersCard').classList.remove('hidden');
-        loadUsers();
-      } else {
-        document.getElementById('navUsersBtn').classList.add('hidden');
-        document.getElementById('dashboardUsersCard').classList.add('hidden');
-      }
+app.post('/api/users', requireAdmin, async (req, res) => {
+  try {
+    const { username, full_name, password, role } = req.body;
+    const cleanUser = String(username || '').trim();
+    const cleanName = String(full_name || '').trim();
+    const cleanPass = String(password || '');
+    const cleanRole = role === 'admin' ? 'admin' : 'staff';
 
-      switchView('dashboard');
-      checkHealth();
-      populateFilterCategories();
-      renderStockCategoryOptions();
-      renderOldStockTable();
-      loadOrders();
-    }
-
-    function switchView(viewName) {
-      document.getElementById('viewDashboard').classList.toggle('hidden', viewName !== 'dashboard');
-      document.getElementById('viewPos').classList.toggle('hidden', viewName !== 'pos');
-      document.getElementById('viewCards').classList.toggle('hidden', viewName !== 'cards');
-      document.getElementById('viewReport').classList.toggle('hidden', viewName !== 'report');
-      document.getElementById('viewStock').classList.toggle('hidden', viewName !== 'stock');
-      document.getElementById('viewUsers').classList.toggle('hidden', viewName !== 'users');
-
-      document.getElementById('navDashboardBtn').className = viewName === 'dashboard' ? 'btn btn-light btn-sm fw-bold text-dark' : 'btn btn-outline-light btn-sm fw-bold';
-      document.getElementById('navPosBtn').className = viewName === 'pos' ? 'btn btn-primary btn-sm fw-bold' : 'btn btn-outline-light btn-sm fw-bold';
-      document.getElementById('navCardsBtn').className = viewName === 'cards' ? 'btn btn-primary btn-sm fw-bold' : 'btn btn-outline-light btn-sm fw-bold';
-      document.getElementById('navReportBtn').className = viewName === 'report' ? 'btn btn-info btn-sm fw-bold text-dark' : 'btn btn-outline-info btn-sm fw-bold';
-      document.getElementById('navStockBtn').className = viewName === 'stock' ? 'btn btn-success btn-sm fw-bold' : 'btn btn-outline-success btn-sm fw-bold';
-      if (currentUser && currentUser.role === 'admin') {
-        document.getElementById('navUsersBtn').className = viewName === 'users' ? 'btn btn-warning btn-sm fw-bold' : 'btn btn-outline-warning btn-sm fw-bold';
-      }
-
-      if (viewName === 'cards') loadOrders();
-      if (viewName === 'report') {
-        initReportFilterDefaults();
-        renderRevenueReport();
-      }
-      if (viewName === 'stock') {
-        initReportFilterDefaults();
-        renderStockCategoryOptions();
-        renderOldStockTable();
-      }
-      if (viewName === 'users') loadUsers();
-    }
-
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      document.getElementById('loginError').textContent = '';
-      const res = await fetch(API + '/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: document.getElementById('loginUsername').value,
-          password: document.getElementById('loginPassword').value
-        })
-      });
-      const data = await res.json();
-      if (data.success) {
-        currentUser = data.user;
-        enterApp();
-      } else {
-        document.getElementById('loginError').textContent = data.error || 'Login បរាជ័យ';
-      }
-    });
-
-    async function logout() {
-      await fetch(API + '/api/auth/logout', { method: 'POST' });
-      currentUser = null;
-      showLogin();
-    }
-
-    async function checkHealth() {
-      const badge = document.getElementById('dbStatusBadge');
-      try {
-        const res = await fetch(API + '/api/health');
-        const data = await res.json();
-        badge.className = data.success ? 'badge bg-success' : 'badge bg-danger';
-        badge.textContent = data.success ? 'DB Connected (DATABASE_URL)' : 'DB Error';
-      } catch {
-        badge.className = 'badge bg-danger';
-        badge.textContent = 'Offline';
-      }
-    }
-
-    function renderGroupButtons() {
-      const groups = ['All', ...LAUNDRY_GROUPS];
-      const bar = document.getElementById('categoryFilterBar');
-      bar.innerHTML = groups.map(g => {
-        const active = activeGroupFilter === g ? 'btn-dark' : 'btn-outline-dark';
-        const safeGroup = g.replace(/'/g, "\\'");
-        return `<button type="button" class="btn ${active} category-btn shadow-sm" onclick="selectGroupFilter('${safeGroup}')">${g === 'All' ? 'ទាំងអស់ / All' : escapeHtml(g)}</button>`;
-      }).join('');
-    }
-
-    function renderCategorySelectOptions(selectedValue = '') {
-      const sel = document.getElementById('editCatalogGroup');
-      if (!sel) return;
-      const target = selectedValue || LAUNDRY_GROUPS[0] || '';
-      sel.innerHTML = LAUNDRY_GROUPS.map(g =>
-        `<option value="${escapeHtml(g)}" ${g === target ? 'selected' : ''}>${escapeHtml(g)}</option>`
-      ).join('');
-    }
-
-    function renderStockCategoryOptions(selectedValue = '') {
-      const sel = document.getElementById('stockItemCategory');
-      if (!sel) return;
-      const target = selectedValue || LAUNDRY_GROUPS[0] || '';
-      sel.innerHTML = LAUNDRY_GROUPS.map(g =>
-        `<option value="${escapeHtml(g)}" ${g === target ? 'selected' : ''}>${escapeHtml(g)}</option>`
-      ).join('');
-    }
-
-    function addNewCategoryGroup() {
-      const input = prompt('បញ្ចូលឈ្មោះ ក្រុម / Category ថ្មី:');
-      if (!input) return;
-      const groupName = input.trim();
-      if (!groupName) return;
-
-      if (!LAUNDRY_GROUPS.includes(groupName)) {
-        LAUNDRY_GROUPS.push(groupName);
-        persistGroups();
-      }
-      activeGroupFilter = groupName;
-      renderGroupButtons();
-      renderCategorySelectOptions(groupName);
-      renderStockCategoryOptions(groupName);
-      renderCatalogCards();
-    }
-
-    function selectGroupFilter(groupName) {
-      activeGroupFilter = groupName;
-      renderGroupButtons();
-      renderCatalogCards();
-    }
-
-    function highlightSelectedCardDom(itemId) {
-      const allCards = document.querySelectorAll('#laundryTypesGrid .product-card');
-      allCards.forEach(cardEl => {
-        const cardItemId = Number(cardEl.getAttribute('data-item-id'));
-        cardEl.classList.toggle('is-selected', cardItemId === Number(itemId));
+    if (!cleanUser || !cleanName || cleanPass.length < 6) {
+      return res.status(400).json({
+        success: false,
+        error: 'ត្រូវបំពេញ Username, ឈ្មោះពេញ និង Password យ៉ាងតិច ៦ តួអក្សរ'
       });
     }
 
-    function handleCatalogCardClick(event, itemId) {
-      if (event) event.stopPropagation();
-      const numericId = Number(itemId);
-      if (!Number.isFinite(numericId) || numericId <= 0) return;
-      selectedCatalogId = numericId;
-      highlightSelectedCardDom(numericId);
-      addLaundryItem(numericId);
+    const exists = await pool.query('SELECT id FROM users WHERE LOWER(username) = LOWER($1)', [cleanUser]);
+    if (exists.rows.length > 0) {
+      return res.status(409).json({ success: false, error: 'Username នេះមានរួចហើយ' });
     }
 
-    function renderCatalogCards() {
-      const grid = document.getElementById('laundryTypesGrid');
-      const items = activeGroupFilter === 'All'
-        ? LAUNDRY_CATALOG
-        : LAUNDRY_CATALOG.filter(x => x.group === activeGroupFilter);
+    const hash = await bcrypt.hash(cleanPass, 10);
+    const ins = await pool.query(
+      `
+      INSERT INTO users (username, full_name, password_hash, role)
+      VALUES ($1, $2, $3, $4)
+      RETURNING id, username, full_name, role, is_active, to_char(created_at AT TIME ZONE 'Asia/Phnom_Penh', 'DD/MM/YYYY HH24:MI') AS created_at_kh
+      `,
+      [cleanUser, cleanName, hash, cleanRole]
+    );
 
-      if (items.length === 0) {
-        grid.innerHTML = '<div class="col-12 text-center text-muted py-4 small">មិនទាន់មានមុខទំនិញក្នុងក្រុមនេះទេ</div>';
-        return;
-      }
+    res.status(201).json({ success: true, data: ins.rows[0] });
+  } catch (err) {
+    console.error('POST /api/users error:', err);
+    res.status(500).json({ success: false, error: 'មិនអាចបង្កើត User ថ្មីបានទេ' });
+  }
+});
 
-      grid.innerHTML = items.map(item => {
-        const idNum = Number(item.id);
-        const isSel = Number(selectedCatalogId) === idNum;
-        return `
-          <div class="col-6 col-sm-4 col-md-4 col-lg-3">
-            <div class="product-card position-relative ${isSel ? 'is-selected' : ''}" data-item-id="${idNum}" onclick="handleCatalogCardClick(event, ${idNum})">
-              <button type="button" class="btn btn-light btn-sm edit-catalog-btn border" title="កែតម្លៃ និងប្តូររូប"
-                onclick="event.stopPropagation(); openEditCatalogModal(${idNum})">
-                <i class="fa-solid fa-pen text-primary" style="font-size: 0.72rem;"></i>
-              </button>
-              <div class="product-img-wrapper">
-                <img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(item.name)}" onerror="this.src='https://via.placeholder.com/300x200?text=Laundry+Item'">
-              </div>
-              <div class="product-overlay-info">
-                <span class="text-white fw-bold text-truncate" style="font-size: 0.8rem; max-width: 68%;" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</span>
-                <span class="text-warning fw-bold" style="font-size: 0.8rem;">$${Number(item.price).toFixed(2)}</span>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
+app.get('/api/orders', requireAuth, async (req, res) => {
+  try {
+    const { status, category, search } = req.query;
+    const conditions = [];
+    const values = [];
+
+    if (status && status !== 'ALL') {
+      values.push(status);
+      conditions.push(`status = $${values.length}`);
     }
 
-    function openEditCatalogModal(itemId) {
-      document.getElementById('editCatalogImageFile').value = '';
-      if (itemId === null) {
-        document.getElementById('catalogModalTitle').innerHTML = '<i class="fa-solid fa-plus me-1"></i> បន្ថែមមុខទំនិញថ្មី';
-        document.getElementById('editCatalogId').value = '';
-        document.getElementById('editCatalogName').value = '';
-        const defaultGrp = activeGroupFilter !== 'All' ? activeGroupFilter : (LAUNDRY_GROUPS[0] || '');
-        renderCategorySelectOptions(defaultGrp);
-        document.getElementById('editCatalogPrice').value = '1.50';
-        document.getElementById('editCatalogImageUrl').value = 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=300&q=80';
-      } else {
-        const found = LAUNDRY_CATALOG.find(x => Number(x.id) === Number(itemId));
-        if (!found) return;
-        document.getElementById('catalogModalTitle').innerHTML = '<i class="fa-solid fa-pen-to-square me-1"></i> កំណត់តម្លៃ និងប្តូររូបភាព';
-        document.getElementById('editCatalogId').value = found.id;
-        document.getElementById('editCatalogName').value = found.name;
-        if (found.group && !LAUNDRY_GROUPS.includes(found.group)) {
-          LAUNDRY_GROUPS.push(found.group);
-          persistGroups();
-          renderGroupButtons();
-        }
-        renderCategorySelectOptions(found.group || LAUNDRY_GROUPS[0] || '');
-        document.getElementById('editCatalogPrice').value = Number(found.price).toFixed(2);
-        document.getElementById('editCatalogImageUrl').value = found.image_url || '';
-      }
-      updateCatalogImagePreview();
-      editCatalogModalObj.show();
+    if (category && category !== 'ALL') {
+      values.push(category);
+      const idx = values.length;
+      conditions.push(`(category = $${idx} OR EXISTS (SELECT 1 FROM jsonb_array_elements(items_json) elem WHERE elem->>'category' = $${idx}))`);
     }
 
-    function updateCatalogImagePreview() {
-      const urlVal = document.getElementById('editCatalogImageUrl').value.trim();
-      document.getElementById('editCatalogImagePreview').src = urlVal || 'https://via.placeholder.com/300x200?text=Laundry+Item';
+    if (search && String(search).trim() !== '') {
+      values.push(`%${String(search).trim()}%`);
+      const idx = values.length;
+      conditions.push(`(order_code ILIKE $${idx} OR customer_name ILIKE $${idx} OR phone ILIKE $${idx} OR category ILIKE $${idx})`);
     }
 
-    document.getElementById('editCatalogImageFile').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const maxW = 480;
-          const scale = img.width > maxW ? maxW / img.width : 1;
-          canvas.width = Math.round(img.width * scale);
-          canvas.height = Math.round(img.height * scale);
-          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-          document.getElementById('editCatalogImageUrl').value = dataUrl;
-          updateCatalogImagePreview();
-        };
-        img.src = reader.result;
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const query = `
+      SELECT
+        *,
+        to_char(created_at AT TIME ZONE 'Asia/Phnom_Penh', 'DD/MM/YYYY HH24:MI') AS created_at_kh
+      FROM laundry_orders
+      ${whereClause}
+      ORDER BY created_at DESC, id DESC
+    `;
+
+    const result = await pool.query(query, values);
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    console.error('GET /api/orders error:', err);
+    res.status(500).json({ success: false, error: 'Failed to load laundry orders' });
+  }
+});
+
+app.post('/api/orders', requireAuth, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { customer_name, phone, items, image_data, notes } = req.body;
+
+    if (!customer_name || !phone || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'ត្រូវបញ្ចូលឈ្មោះអតិថិជន លេខទូរស័ព្ទ និងយ៉ាងហោចណាស់ ១ មុខទំនិញ'
+      });
+    }
+
+    const cleanItems = items.map((it) => {
+      const rawCat = String(it.category || '').trim();
+      const cat = rawCat || STANDARD_CATEGORIES[0];
+      const srv = String(it.service_type || 'បោក និងបត់ (Wash & Fold)').trim();
+      const cnt = Number.isInteger(Number(it.item_count)) && Number(it.item_count) > 0 ? Number(it.item_count) : 1;
+      const wt = Number(it.weight_kg) >= 0 ? Number(it.weight_kg) : 0;
+      const pr = Number(it.price) >= 0 ? Number(it.price) : 0;
+      return {
+        category: cat,
+        service_type: srv,
+        item_count: cnt,
+        weight_kg: wt,
+        price: pr
       };
-      reader.readAsDataURL(file);
     });
 
-    document.getElementById('catalogItemForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const rawId = document.getElementById('editCatalogId').value;
-      const nameVal = document.getElementById('editCatalogName').value.trim();
-      const groupVal = document.getElementById('editCatalogGroup').value;
-      const priceVal = parseFloat(document.getElementById('editCatalogPrice').value) || 0;
-      const imageVal = document.getElementById('editCatalogImageUrl').value.trim() || 'https://via.placeholder.com/300x200?text=Laundry+Item';
+    const totalCount = cleanItems.reduce((sum, x) => sum + x.item_count, 0);
+    const totalWeight = cleanItems.reduce((sum, x) => sum + x.weight_kg, 0);
+    const totalPrice = cleanItems.reduce((sum, x) => sum + x.price, 0);
 
-      if (!nameVal) return;
+    const summaryCategory =
+      cleanItems.length === 1
+        ? cleanItems[0].category
+        : `${cleanItems[0].category} (+${cleanItems.length - 1} មុខទៀត)`;
+    const summaryService =
+      cleanItems.length === 1 ? cleanItems[0].service_type : 'ច្រើនសេវាកម្ម (Multi-item)';
 
-      let targetItem;
-      if (rawId) {
-        targetItem = LAUNDRY_CATALOG.find(x => Number(x.id) === Number(rawId));
-        if (targetItem) {
-          targetItem.name = nameVal;
-          targetItem.group = groupVal;
-          targetItem.price = priceVal;
-          targetItem.image_url = imageVal;
+    let cleanImage = null;
+    if (typeof image_data === 'string' && image_data.startsWith('data:image/')) {
+      cleanImage = image_data;
+    }
+
+    await client.query('BEGIN');
+
+    const seqRes = await client.query(`SELECT COALESCE(MAX(id), 0) + 1 AS next_num FROM laundry_orders`);
+    const nextNum = String(seqRes.rows[0].next_num).padStart(4, '0');
+    const orderCode = `LND-${nextNum}`;
+
+    const insertRes = await client.query(
+      `
+      INSERT INTO laundry_orders
+        (order_code, customer_name, phone, category, service_type, item_count, weight_kg, price, items_json, status, image_data, notes, created_by)
+      VALUES
+        ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, 'Pending', $10, $11, $12)
+      RETURNING *, to_char(created_at AT TIME ZONE 'Asia/Phnom_Penh', 'DD/MM/YYYY HH24:MI') AS created_at_kh
+      `,
+      [
+        orderCode,
+        String(customer_name).trim(),
+        String(phone).trim(),
+        summaryCategory,
+        summaryService,
+        totalCount,
+        totalWeight,
+        totalPrice,
+        JSON.stringify(cleanItems),
+        cleanImage,
+        notes ? String(notes).trim() : null,
+        req.session.user.username
+      ]
+    );
+
+    await client.query('COMMIT');
+    res.status(201).json({ success: true, data: insertRes.rows[0] });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('POST /api/orders error:', err);
+    res.status(500).json({ success: false, error: 'Failed to create laundry order' });
+  } finally {
+    client.release();
+  }
+});
+
+// 🟢 Update រូបភាពកាត និងទិន្នន័យវិក្កយបត្រក្នុង PostgreSQL
+app.put('/api/orders/:id', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const existingRes = await pool.query('SELECT * FROM laundry_orders WHERE id = $1', [id]);
+    if (existingRes.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Order not found' });
+    }
+
+    const current = existingRes.rows[0];
+    const customerName = req.body.customer_name !== undefined
+      ? String(req.body.customer_name).trim()
+      : current.customer_name;
+    const phone = req.body.phone !== undefined
+      ? String(req.body.phone).trim()
+      : current.phone;
+    const category = req.body.category !== undefined
+      ? String(req.body.category).trim()
+      : current.category;
+    const itemCount = req.body.item_count !== undefined && Number(req.body.item_count) > 0
+      ? parseInt(req.body.item_count, 10)
+      : Number(current.item_count || 1);
+    const price = req.body.price !== undefined && Number(req.body.price) >= 0
+      ? Number(req.body.price)
+      : Number(current.price || 0);
+    const status = req.body.status !== undefined && ALLOWED_STATUSES.includes(req.body.status)
+      ? req.body.status
+      : current.status;
+    const notes = req.body.notes !== undefined
+      ? (String(req.body.notes).trim() || null)
+      : current.notes;
+
+    let nextImage = current.image_data;
+    if (req.body.image_data === null || req.body.image_data === '') {
+      nextImage = null;
+    } else if (typeof req.body.image_data === 'string' && req.body.image_data.startsWith('data:image/')) {
+      nextImage = req.body.image_data;
+    }
+
+    let nextItemsJson = Array.isArray(current.items_json) ? current.items_json : [];
+    if (nextItemsJson.length <= 1) {
+      const baseItem = nextItemsJson[0] || {};
+      nextItemsJson = [
+        {
+          ...baseItem,
+          category,
+          service_type: baseItem.service_type || current.service_type || 'បោក និងបត់ (Wash & Fold)',
+          item_count: itemCount,
+          weight_kg: baseItem.weight_kg ?? current.weight_kg ?? 1,
+          price
         }
-      } else {
-        const nextId = LAUNDRY_CATALOG.reduce((m, x) => Math.max(m, Number(x.id) || 0), 0) + 1;
-        targetItem = { id: nextId, name: nameVal, group: groupVal, price: priceVal, image_url: imageVal };
-        LAUNDRY_CATALOG.push(targetItem);
-      }
-
-      persistCatalog();
-      renderCatalogCards();
-      populateFilterCategories();
-      editCatalogModalObj.hide();
-
-      if (targetItem) {
-        try {
-          await fetch(API + '/api/products', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              id: targetItem.id,
-              name: targetItem.name,
-              category: targetItem.group,
-              price: targetItem.price,
-              image_url: targetItem.image_url
-            })
-          });
-        } catch {}
-      }
-    });
-
-    // 🟢 EDIT ORDER CARD MODAL (កាតរូបភាពទំនិញ)
-    function openEditOrderCardModal(orderId) {
-      const o = ordersCache.find(x => Number(x.id) === Number(orderId));
-      if (!o) return;
-
-      editOrderCardImageBase64 = o.image_data || null;
-      document.getElementById('editOrderCardImageFile').value = '';
-      document.getElementById('editOrderCardModalTitle').innerHTML =
-        `<i class="fa-solid fa-pen-to-square me-1"></i> កែប្រែកាត ${escapeHtml(o.order_code || '')}`;
-      document.getElementById('editOrderCardId').value = o.id;
-      document.getElementById('editOrderCustomerName').value = o.customer_name || '';
-      document.getElementById('editOrderPhone').value = o.phone || '';
-      document.getElementById('editOrderCategory').value = o.category || '';
-      document.getElementById('editOrderItemCount').value = Number(o.item_count || 1);
-      document.getElementById('editOrderPrice').value = Number(o.price || 0).toFixed(2);
-      document.getElementById('editOrderStatus').value = o.status || 'Pending';
-      document.getElementById('editOrderNotes').value = o.notes || '';
-
-      const previewEl = document.getElementById('editOrderCardImagePreview');
-      previewEl.src = editOrderCardImageBase64 || 'https://via.placeholder.com/300x160?text=Order+Card';
-      editOrderCardModalObj.show();
+      ];
     }
 
-    document.getElementById('editOrderCardImageFile').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const maxW = 800;
-          const scale = img.width > maxW ? maxW / img.width : 1;
-          canvas.width = Math.round(img.width * scale);
-          canvas.height = Math.round(img.height * scale);
-          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-          editOrderCardImageBase64 = canvas.toDataURL('image/jpeg', 0.85);
-          document.getElementById('editOrderCardImagePreview').src = editOrderCardImageBase64;
-        };
-        img.src = reader.result;
-      };
-      reader.readAsDataURL(file);
-    });
-
-    document.getElementById('editOrderCardForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const id = Number(document.getElementById('editOrderCardId').value);
-      if (!id) return;
-
-      const updatedFields = {
-        customer_name: document.getElementById('editOrderCustomerName').value.trim(),
-        phone: document.getElementById('editOrderPhone').value.trim(),
-        category: document.getElementById('editOrderCategory').value.trim(),
-        item_count: parseInt(document.getElementById('editOrderItemCount').value, 10) || 1,
-        price: parseFloat(document.getElementById('editOrderPrice').value) || 0,
-        status: document.getElementById('editOrderStatus').value,
-        notes: document.getElementById('editOrderNotes').value.trim(),
-        image_data: editOrderCardImageBase64
-      };
-
-      orderCardOverrides[String(id)] = {
-        ...orderCardOverrides[String(id)],
-        ...updatedFields
-      };
-      persistOrderCardOverrides();
-
-      let savedToDb = false;
-      try {
-        const res = await fetch(API + `/api/orders/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updatedFields)
-        });
-        if (res.ok) {
-          savedToDb = true;
-        } else {
-          await fetch(API + `/api/orders/${id}/status`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: updatedFields.status })
-          });
-        }
-      } catch {}
-
-      ordersCache = applyOrderCardOverridesToList(ordersCache.map(item => {
-        if (Number(item.id) !== id) return item;
-        const nextItems = Array.isArray(item.items_json) && item.items_json.length === 1
-          ? [{ ...item.items_json[0], category: updatedFields.category, item_count: updatedFields.item_count, price: updatedFields.price }]
-          : item.items_json;
-        return { ...item, ...updatedFields, items_json: nextItems };
-      }));
-
-      editOrderCardModalObj.hide();
-      renderOrderCardsGrid(ordersCache);
-      renderRevenueReport();
-
-      const statusMsg = document.getElementById('cardsSaveStatusMsg');
-      if (statusMsg) {
-        statusMsg.className = 'small fw-bold text-success mb-2';
-        statusMsg.textContent = savedToDb
-          ? '✅ បាន Update រូបភាព និងទិន្នន័យកាតទៅ Database រួចរាល់!'
-          : '✅ បាន Update រូបភាព និងទិន្នន័យកាតរួចរាល់ (រក្សាទុកជាប់ទោះ Refresh)!';
-      }
-    });
-
-    function addLaundryItem(itemId) {
-      const numericId = Number(itemId);
-      if (!Number.isFinite(numericId) || numericId <= 0) return;
-      const item = LAUNDRY_CATALOG.find(x => Number(x.id) === numericId);
-      if (!item) return;
-      const serviceType = document.getElementById('defaultServiceSelect').value;
-      const existing = cart.find(c => c.category === item.name && c.service_type === serviceType);
-      if (existing) {
-        existing.item_count += 1;
-      } else {
-        cart.push({
-          category: item.name,
-          service_type: serviceType,
-          item_count: 1,
-          weight_kg: 1,
-          price: Number(item.price)
-        });
-      }
-      renderCart();
-    }
-
-    function applyServiceToAllItems() {
-      const serviceType = document.getElementById('defaultServiceSelect').value;
-      cart.forEach(c => { c.service_type = serviceType; });
-      renderCart();
-    }
-
-    function updateCartQty(idx, delta) {
-      cart[idx].item_count += delta;
-      if (cart[idx].item_count <= 0) {
-        cart.splice(idx, 1);
-      }
-      renderCart();
-    }
-
-    function removeCartItem(idx) {
-      cart.splice(idx, 1);
-      renderCart();
-    }
-
-    function renderCart() {
-      const tbody = document.getElementById('cartTableBody');
-      if (cart.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3 small">មិនទាន់មានមុខទំនិញ</td></tr>`;
-        document.getElementById('subTotalDisplay').textContent = '$0.00';
-        document.getElementById('grandTotalUSD').textContent = '$0.00';
-        document.getElementById('grandTotalRiel').textContent = '0 រៀល';
-        finalCalculatedTotal = 0;
-        calculateChange();
-        return;
-      }
-
-      let subTotal = 0;
-      tbody.innerHTML = cart.map((item, idx) => {
-        const lineTotal = Number(item.price) * Number(item.item_count);
-        subTotal += lineTotal;
-        return `
-          <tr>
-            <td class="small fw-bold">${escapeHtml(item.category)}</td>
-            <td class="text-center" style="white-space: nowrap;">
-              <button type="button" class="btn btn-sm btn-danger py-0 px-2 fw-bold text-white" onclick="updateCartQty(${idx}, -1)">-</button>
-              <span class="mx-1 fw-bold small">${item.item_count}</span>
-              <button type="button" class="btn btn-sm btn-success py-0 px-2 fw-bold text-white" onclick="updateCartQty(${idx}, 1)">+</button>
-            </td>
-            <td class="text-end small">$${Number(item.price).toFixed(2)}</td>
-            <td class="text-end small fw-bold">$${lineTotal.toFixed(2)}</td>
-            <td class="text-end">
-              <button type="button" class="btn btn-sm text-danger p-0" onclick="removeCartItem(${idx})"><i class="fa-solid fa-trash"></i></button>
-            </td>
-          </tr>
-        `;
-      }).join('');
-
-      const discPct = parseFloat(document.getElementById('discountPercent').value) || 0;
-      const discAmt = (subTotal * discPct) / 100;
-      const afterDisc = subTotal - discAmt;
-      const vatAmt = document.getElementById('vatToggle').checked ? afterDisc * 0.10 : 0;
-      finalCalculatedTotal = afterDisc + vatAmt;
-
-      const rate = parseFloat(document.getElementById('exchangeRate').value) || 4100;
-      const totalRiel = Math.round(finalCalculatedTotal * rate);
-
-      document.getElementById('subTotalDisplay').textContent = `$${subTotal.toFixed(2)}`;
-      document.getElementById('grandTotalUSD').textContent = `$${finalCalculatedTotal.toFixed(2)}`;
-      document.getElementById('grandTotalRiel').textContent = `${totalRiel.toLocaleString()} រៀល`;
-      calculateChange();
-    }
-
-    function calculateChange() {
-      const received = parseFloat(document.getElementById('amountReceived').value) || 0;
-      const rate = parseFloat(document.getElementById('exchangeRate').value) || 4100;
-      const changeUsd = received - finalCalculatedTotal;
-      if (received > 0 && changeUsd >= 0) {
-        document.getElementById('changeUSD').textContent = `$${changeUsd.toFixed(2)}`;
-        document.getElementById('changeRiel').textContent = `(${Math.round(changeUsd * rate).toLocaleString()} រៀល)`;
-      } else {
-        document.getElementById('changeUSD').textContent = '$0.00';
-        document.getElementById('changeRiel').textContent = '(0 រៀល)';
-      }
-    }
-
-    document.getElementById('orderImageInput').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      selectedImageBase64 = null;
-      const wrap = document.getElementById('orderImagePreviewWrap');
-      if (!file) {
-        wrap.classList.add('hidden');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = () => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const maxW = 800;
-          const scale = img.width > maxW ? maxW / img.width : 1;
-          canvas.width = Math.round(img.width * scale);
-          canvas.height = Math.round(img.height * scale);
-          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-          selectedImageBase64 = canvas.toDataURL('image/jpeg', 0.85);
-          document.getElementById('orderImagePreview').src = selectedImageBase64;
-          wrap.classList.remove('hidden');
-        };
-        img.src = reader.result;
-      };
-      reader.readAsDataURL(file);
-    });
-
-    function buildInvoicePayloadItems() {
-      return cart.map(item => ({
-        category: item.category,
-        service_type: item.service_type,
-        item_count: item.item_count,
-        weight_kg: item.weight_kg,
-        price: Number(item.price) * Number(item.item_count)
-      }));
-    }
-
-    function updateModalReceivedAndChange() {
-      const grandTotal = parseFloat(document.getElementById('recGrandTotal').dataset.amount || '0') || 0;
-      const rate = parseFloat(document.getElementById('exchangeRate').value) || 4100;
-      const rawInput = document.getElementById('recReceivedInput').value;
-      const recAmt = rawInput === '' ? grandTotal : (parseFloat(rawInput) || 0);
-      const changeAmt = Math.max(0, recAmt - grandTotal);
-
-      document.getElementById('recReceived').textContent = `$${recAmt.toFixed(2)}`;
-      document.getElementById('recChange').textContent = `$${changeAmt.toFixed(2)} (${Math.round(changeAmt * rate).toLocaleString()} រៀល)`;
-    }
-
-    function fillAndShowReceiptModal(orderCode, dateStr, customerName, phone, paymentMethod, itemsList, receivedVal, orderId = null, currentStatus = '') {
-      const rate = parseFloat(document.getElementById('exchangeRate').value) || 4100;
-      const discPct = parseFloat(document.getElementById('discountPercent').value) || 0;
-      const vatOn = document.getElementById('vatToggle').checked;
-
-      let subTotal = 0;
-      document.getElementById('recItemsBody').innerHTML = itemsList.map(it => {
-        const lineAmt = Number(it.price || 0);
-        subTotal += lineAmt;
-        const qty = Number(it.item_count || 1);
-        const unitPrice = qty > 0 ? lineAmt / qty : lineAmt;
-        return `
-          <tr>
-            <td class="small"><strong>${escapeHtml(it.category)}</strong><br/><span class="text-muted">${escapeHtml(it.service_type || '')}</span></td>
-            <td class="text-center small">${qty}</td>
-            <td class="text-end small">$${unitPrice.toFixed(2)}</td>
-            <td class="text-end small fw-bold">$${lineAmt.toFixed(2)}</td>
-          </tr>
-        `;
-      }).join('');
-
-      const discAmt = (subTotal * discPct) / 100;
-      const afterDisc = subTotal - discAmt;
-      const vatAmt = vatOn ? afterDisc * 0.10 : 0;
-      const grandTotal = afterDisc + vatAmt;
-
-      document.getElementById('receiptCodeBadge').textContent = orderCode;
-      document.getElementById('recCustomer').textContent = customerName || 'អតិថិជន';
-      document.getElementById('recPhone').textContent = phone || '-';
-      document.getElementById('recDate').textContent = dateStr || new Date().toLocaleString();
-      document.getElementById('recPayment').textContent = paymentMethod;
-
-      document.getElementById('recSubtotal').textContent = `$${subTotal.toFixed(2)}`;
-      document.getElementById('recDiscount').textContent = `-$${discAmt.toFixed(2)} (${discPct}%)`;
-      document.getElementById('recVat').textContent = `$${vatAmt.toFixed(2)}`;
-      document.getElementById('recGrandTotal').textContent = `$${grandTotal.toFixed(2)}`;
-      document.getElementById('recGrandTotal').dataset.amount = grandTotal.toFixed(2);
-      document.getElementById('recGrandTotalRiel').textContent = `${Math.round(grandTotal * rate).toLocaleString()} រៀល`;
-
-      const recInputEl = document.getElementById('recReceivedInput');
-      if (orderId !== null) {
-        recInputEl.value = '';
-        recInputEl.placeholder = grandTotal.toFixed(2);
-      } else {
-        recInputEl.value = receivedVal ? Number(receivedVal).toFixed(2) : '';
-        recInputEl.placeholder = grandTotal.toFixed(2);
-      }
-
-      activeModalOrderId = orderId;
-      const pickupBtn = document.getElementById('markPickedUpBtn');
-      if (orderId !== null && currentStatus !== 'Picked Up') {
-        pickupBtn.classList.remove('hidden');
-      } else {
-        pickupBtn.classList.add('hidden');
-      }
-
-      updateModalReceivedAndChange();
-      receiptModalObj.show();
-    }
-
-    async function confirmPickupFromModal() {
-      if (!activeModalOrderId) return;
-      await updateOrderStatus(activeModalOrderId, 'Picked Up');
-      document.getElementById('recPayment').textContent = 'Picked Up';
-      document.getElementById('markPickedUpBtn').classList.add('hidden');
-    }
-
-    async function saveOrderAndPrint() {
-      const fb = document.getElementById('posFeedback');
-      fb.textContent = '';
-
-      const customerName = document.getElementById('customerNameInput').value.trim();
-      const phone = document.getElementById('customerPhoneInput').value.trim();
-      if (!customerName || !phone || cart.length === 0) {
-        fb.className = 'small fw-bold mt-2 text-center text-danger';
-        fb.textContent = 'សូមបំពេញ ឈ្មោះ លេខទូរស័ព្ទ និងមុខទំនិញ!';
-        return;
-      }
-
-      const itemsToSave = buildInvoicePayloadItems();
-      const paymentMethod = document.getElementById('paymentMethod').value;
-      const notesVal = document.getElementById('orderNotesInput').value.trim();
-      const extraNote = `Pay: ${paymentMethod}${notesVal ? ' • ' + notesVal : ''}`;
-
-      const res = await fetch(API + '/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customer_name: customerName,
-          phone: phone,
-          items: itemsToSave,
-          image_data: selectedImageBase64,
-          notes: extraNote
-        })
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        const created = data.data;
-        fb.className = 'small fw-bold mt-2 text-center text-success';
-        fb.textContent = `✅ រក្សាទុក ${created.order_code} រួចរាល់!`;
-
-        fillAndShowReceiptModal(
-          created.order_code,
-          created.created_at_kh,
-          created.customer_name,
-          created.phone,
-          paymentMethod,
-          itemsToSave,
-          document.getElementById('amountReceived').value,
-          created.id,
-          created.status
-        );
-
-        cart = [];
-        selectedImageBase64 = null;
-        document.getElementById('orderImageInput').value = '';
-        document.getElementById('orderImagePreviewWrap').classList.add('hidden');
-        document.getElementById('amountReceived').value = '';
-        document.getElementById('discountPercent').value = '0';
-        document.getElementById('vatToggle').checked = false;
-        renderCart();
-        loadOrders();
-      } else {
-        fb.className = 'small fw-bold mt-2 text-center text-danger';
-        fb.textContent = data.error || 'មិនអាចរក្សាទុកបានទេ';
-      }
-    }
-
-    function populateFilterCategories() {
-      const sel = document.getElementById('filterCategorySelect');
-      sel.innerHTML = '<option value="ALL">Category អាវ/ខោ/កម្រាលពូក ទាំងអស់</option>' +
-        LAUNDRY_CATALOG.map(x => `<option value="${escapeHtml(x.name)}">${escapeHtml(x.name)}</option>`).join('');
-    }
-
-    function parseOrderDateKey(order) {
-      const raw = order.created_at || order.createdAt || order.created_at_kh || '';
-      const d = new Date(raw);
-      if (!Number.isNaN(d.getTime())) {
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const dd = String(d.getDate()).padStart(2, '0');
-        return { day: `${yyyy}-${mm}-${dd}`, month: `${yyyy}-${mm}`, year: String(yyyy) };
-      }
-      const match = String(raw).match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
-      if (match) {
-        const yyyy = match[1];
-        const mm = String(match[2]).padStart(2, '0');
-        const dd = String(match[3]).padStart(2, '0');
-        return { day: `${yyyy}-${mm}-${dd}`, month: `${yyyy}-${mm}`, year: String(yyyy) };
-      }
-      const now = new Date();
-      const yyyy = now.getFullYear();
-      const mm = String(now.getMonth() + 1).padStart(2, '0');
-      const dd = String(now.getDate()).padStart(2, '0');
-      return { day: `${yyyy}-${mm}-${dd}`, month: `${yyyy}-${mm}`, year: String(yyyy) };
-    }
-
-    function renderRevenueReport() {
-      initReportFilterDefaults();
-      const selectedDay = document.getElementById('reportDateInput').value;
-      const selectedMonth = document.getElementById('reportMonthInput').value;
-      const selectedYear = String(document.getElementById('reportYearInput').value || new Date().getFullYear());
-      const scope = document.getElementById('reportScopeSelect').value;
-      const rate = parseFloat(document.getElementById('exchangeRate').value) || 4100;
-
-      document.getElementById('lblSelectedDay').textContent = selectedDay || '-';
-      document.getElementById('lblSelectedMonth').textContent = selectedMonth || '-';
-      document.getElementById('lblSelectedYear').textContent = selectedYear || '-';
-
-      const filteredOrders = ordersCache.filter(o => {
-        if (scope === 'PICKED_UP') {
-          return String(o.status || '').toLowerCase() === 'picked up';
-        }
-        return true;
-      });
-
-      let daySum = 0, dayCount = 0;
-      let monthSum = 0, monthCount = 0;
-      let yearSum = 0, yearCount = 0;
-      const dailyMap = new Map();
-
-      filteredOrders.forEach(o => {
-        const amt = Number(o.price || 0);
-        const key = parseOrderDateKey(o);
-
-        if (selectedDay && key.day === selectedDay) {
-          daySum += amt;
-          dayCount += 1;
-        }
-        if (selectedMonth && key.month === selectedMonth) {
-          monthSum += amt;
-          monthCount += 1;
-          const prev = dailyMap.get(key.day) || { sum: 0, count: 0 };
-          prev.sum += amt;
-          prev.count += 1;
-          dailyMap.set(key.day, prev);
-        }
-        if (selectedYear && key.year === selectedYear) {
-          yearSum += amt;
-          yearCount += 1;
-        }
-      });
-
-      document.getElementById('revDayUSD').textContent = `$${daySum.toFixed(2)}`;
-      document.getElementById('revDayRiel').textContent = `${Math.round(daySum * rate).toLocaleString()} រៀល`;
-      document.getElementById('revDayCount').textContent = `${dayCount} វិក្កយបត្រ`;
-
-      document.getElementById('revMonthUSD').textContent = `$${monthSum.toFixed(2)}`;
-      document.getElementById('revMonthRiel').textContent = `${Math.round(monthSum * rate).toLocaleString()} រៀល`;
-      document.getElementById('revMonthCount').textContent = `${monthCount} វិក្កយបត្រ`;
-
-      document.getElementById('revYearUSD').textContent = `$${yearSum.toFixed(2)}`;
-      document.getElementById('revYearRiel').textContent = `${Math.round(yearSum * rate).toLocaleString()} រៀល`;
-      document.getElementById('revYearCount').textContent = `${yearCount} វិក្កយបត្រ`;
-
-      const tbody = document.getElementById('dailySummaryTableBody');
-      const rows = Array.from(dailyMap.entries()).sort((a, b) => b[0].localeCompare(a[0]));
-      if (rows.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3 small">មិនទាន់មានទិន្នន័យចំណូលសម្រាប់ខែនេះទេ</td></tr>';
-      } else {
-        tbody.innerHTML = rows.map(([dayKey, info]) => `
-          <tr>
-            <td class="fw-bold small">${escapeHtml(dayKey)}</td>
-            <td class="text-center small">${info.count}</td>
-            <td class="text-end small fw-bold text-success">$${info.sum.toFixed(2)}</td>
-            <td class="text-end small fw-bold text-secondary">${Math.round(info.sum * rate).toLocaleString()} រៀល</td>
-          </tr>
-        `).join('');
-      }
-    }
-
-    function renderOrderCardsGrid(list) {
-      const grid = document.getElementById('orderCardsGrid');
-      if (!grid) return;
-
-      if (!list || list.length === 0) {
-        grid.innerHTML = '<div class="col-12 text-center text-muted py-5">មិនមានទិន្នន័យវិក្កយបត្រទេ</div>';
-        return;
-      }
-
-      grid.innerHTML = list.map(o => {
-        const items = Array.isArray(o.items_json) && o.items_json.length > 0
-          ? o.items_json
-          : [{ category: o.category, item_count: o.item_count, price: o.price }];
-
-        const imgHtml = o.image_data
-          ? `<img src="${o.image_data}" alt="${escapeHtml(o.order_code)}" />`
-          : `<div class="text-muted text-center p-1" style="font-size: 0.7rem;"><i class="fa-solid fa-shirt fs-6 d-block"></i>${escapeHtml(o.category)}</div>`;
-
-        const linesHtml = items.map(it => `
-          <div class="d-flex justify-content-between border-bottom py-0" style="font-size: 0.7rem;">
-            <span class="text-truncate" style="max-width: 72%;">${escapeHtml(it.category)} (${Number(it.item_count || 1)})</span>
-            <strong>$${Number(it.price || 0).toFixed(2)}</strong>
-          </div>
-        `).join('');
-
-        return `
-          <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-            <div class="order-photo-card">
-              <div>
-                <div class="order-photo-box">
-                  ${imgHtml}
-                  <button type="button" class="btn btn-light btn-sm order-card-edit-btn border text-primary"
-                    title="កែប្រែកាត" onclick="event.stopPropagation(); openEditOrderCardModal(${o.id})">
-                    <i class="fa-solid fa-pen" style="font-size: 0.6rem;"></i> Edit
-                  </button>
-                </div>
-                <div class="p-1.5" style="padding: 6px;">
-                  <div class="d-flex justify-content-between align-items-center mb-0.5" style="margin-bottom: 2px;">
-                    <span class="fw-bold text-primary" style="font-size: 0.72rem;">${escapeHtml(o.order_code)}</span>
-                    <span class="badge bg-info-subtle text-dark" style="font-size: 0.62rem;">${escapeHtml(o.status)}</span>
-                  </div>
-                  <div class="fw-bold text-truncate" style="font-size: 0.72rem;">${escapeHtml(o.customer_name)} (${escapeHtml(o.phone)})</div>
-                  <div class="my-1 bg-light rounded px-1 py-0.5">${linesHtml}</div>
-                  <div class="d-flex justify-content-between fw-bold" style="font-size: 0.74rem;">
-                    <span>សរុប:</span>
-                    <span class="text-success">$${Number(o.price).toFixed(2)}</span>
-                  </div>
-                  <div class="text-muted" style="font-size: 0.64rem;">${escapeHtml(o.created_at_kh || '')}</div>
-                </div>
-              </div>
-              <div class="p-1 bg-light border-top d-flex gap-1 align-items-center justify-content-between">
-                <select class="form-select form-select-sm py-0 px-1" style="width: auto; font-size: 0.68rem;" onchange="updateOrderStatus(${o.id}, this.value)">
-                  <option value="Pending" ${o.status === 'Pending' ? 'selected' : ''}>Pending</option>
-                  <option value="Washing" ${o.status === 'Washing' ? 'selected' : ''}>Washing</option>
-                  <option value="Ready" ${o.status === 'Ready' ? 'selected' : ''}>Ready</option>
-                  <option value="Picked Up" ${o.status === 'Picked Up' ? 'selected' : ''}>Picked Up</option>
-                </select>
-                <div class="d-flex gap-1">
-                  <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" style="font-size: 0.68rem;" title="Edit" onclick="openEditOrderCardModal(${o.id})"><i class="fa-solid fa-pen"></i></button>
-                  <button type="button" class="btn btn-sm btn-outline-primary py-0 px-1" style="font-size: 0.68rem;" title="Print" onclick="openSavedOrderInvoice(${o.id})"><i class="fa-solid fa-print"></i></button>
-                  <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1" style="font-size: 0.68rem;" title="Delete" onclick="deleteOrder(${o.id})"><i class="fa-solid fa-trash"></i></button>
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    async function loadOrders() {
-      const search = document.getElementById('searchOrdersInput').value;
-      const category = document.getElementById('filterCategorySelect').value;
-      const status = document.getElementById('filterStatusSelect').value;
-      const params = new URLSearchParams({ search, category, status });
-
-      const res = await fetch(API + '/api/orders?' + params.toString());
-      if (res.status === 401) return showLogin();
-      const json = await res.json();
-      ordersCache = applyOrderCardOverridesToList(json.data || []);
-      renderRevenueReport();
-      renderOrderCardsGrid(ordersCache);
-    }
-
-    function openSavedOrderInvoice(orderId) {
-      const o = ordersCache.find(x => Number(x.id) === Number(orderId));
-      if (!o) return;
-      const items = Array.isArray(o.items_json) && o.items_json.length > 0
-        ? o.items_json
-        : [{ category: o.category, service_type: o.service_type, item_count: o.item_count, price: o.price }];
-
-      fillAndShowReceiptModal(
-        o.order_code,
-        o.created_at_kh || '',
-        o.customer_name,
-        o.phone,
-        o.status,
-        items,
-        '',
-        o.id,
-        o.status
-      );
-    }
-
-    async function updateOrderStatus(id, status) {
-      if (orderCardOverrides[String(id)]) {
-        orderCardOverrides[String(id)].status = status;
-        persistOrderCardOverrides();
-      }
-      await fetch(API + `/api/orders/${id}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status })
-      });
-      loadOrders();
-    }
-
-    async function deleteOrder(id) {
-      if (!confirm('លុបវិក្កយបត្រនេះមែនទេ?')) return;
-      if (orderCardOverrides[String(id)]) {
-        delete orderCardOverrides[String(id)];
-        persistOrderCardOverrides();
-      }
-      await fetch(API + `/api/orders/${id}`, { method: 'DELETE' });
-      loadOrders();
-    }
-
-    // 🟢 OLD STOCK MANAGEMENT
-    document.getElementById('oldStockForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const msg = document.getElementById('stockFormMsg');
-      msg.textContent = '';
-
-      const name = document.getElementById('stockItemName').value.trim();
-      const category = document.getElementById('stockItemCategory').value;
-      const qty = parseInt(document.getElementById('stockItemQty').value, 10) || 0;
-      const price = parseFloat(document.getElementById('stockItemPrice').value) || 0;
-      const stockDate = document.getElementById('stockItemDate').value || new Date().toISOString().slice(0, 10);
-      const note = document.getElementById('stockItemNote').value.trim();
-
-      if (!name) return;
-
-      const entry = {
-        id: Date.now(),
-        name,
+    const updatedRes = await pool.query(
+      `
+      UPDATE laundry_orders
+      SET customer_name = $1,
+          phone = $2,
+          category = $3,
+          item_count = $4,
+          price = $5,
+          status = $6,
+          notes = $7,
+          image_data = $8,
+          items_json = $9::jsonb,
+          updated_at = NOW()
+      WHERE id = $10
+      RETURNING *, to_char(created_at AT TIME ZONE 'Asia/Phnom_Penh', 'DD/MM/YYYY HH24:MI') AS created_at_kh
+      `,
+      [
+        customerName,
+        phone,
         category,
-        qty,
+        itemCount,
         price,
-        stock_date: stockDate,
-        note
-      };
+        status,
+        notes,
+        nextImage,
+        JSON.stringify(nextItemsJson),
+        id
+      ]
+    );
 
-      oldStockList.unshift(entry);
-      persistOldStock();
-      renderOldStockTable();
+    res.json({ success: true, data: updatedRes.rows[0] });
+  } catch (err) {
+    console.error('PUT /api/orders/:id error:', err);
+    res.status(500).json({ success: false, error: 'Failed to update laundry order' });
+  }
+});
 
-      try {
-        await fetch(API + '/api/stock/opening', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(entry)
-        });
-      } catch {}
+app.patch('/api/orders/:id/status', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
 
-      document.getElementById('stockItemName').value = '';
-      document.getElementById('stockItemQty').value = '10';
-      document.getElementById('stockItemNote').value = '';
-      msg.className = 'small fw-bold mt-2 text-center text-success';
-      msg.textContent = '✅ បានបញ្ចូលស្តុកចាស់រួចរាល់!';
+    if (!ALLOWED_STATUSES.includes(status)) {
+      return res.status(400).json({ success: false, error: 'Invalid status value' });
+    }
+
+    const result = await pool.query(
+      `
+      UPDATE laundry_orders
+      SET status = $1, updated_at = NOW()
+      WHERE id = $2
+      RETURNING *, to_char(created_at AT TIME ZONE 'Asia/Phnom_Penh', 'DD/MM/YYYY HH24:MI') AS created_at_kh
+      `,
+      [status, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Order not found' });
+    }
+
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    console.error('PATCH /api/orders/:id/status error:', err);
+    res.status(500).json({ success: false, error: 'Failed to update order status' });
+  }
+});
+
+app.delete('/api/orders/:id', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('DELETE FROM laundry_orders WHERE id = $1 RETURNING id', [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Order not found' });
+    }
+    res.json({ success: true, deletedId: result.rows[0].id });
+  } catch (err) {
+    console.error('DELETE /api/orders/:id error:', err);
+    res.status(500).json({ success: false, error: 'Failed to delete order' });
+  }
+});
+
+app.get('*', (req, res) => {
+  const indexPath = fs.existsSync(path.join(publicDir, 'index.html'))
+    ? path.join(publicDir, 'index.html')
+    : path.join(__dirname, 'index.html');
+  res.sendFile(indexPath);
+});
+
+initDatabase()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`🚀 Laundry server running on port ${PORT}`);
     });
-
-    function adjustOldStockQty(stockId, delta) {
-      const item = oldStockList.find(x => Number(x.id) === Number(stockId));
-      if (!item) return;
-      item.qty = Math.max(0, (Number(item.qty) || 0) + delta);
-      persistOldStock();
-      renderOldStockTable();
-    }
-
-    function deleteOldStock(stockId) {
-      if (!confirm('លុបទិន្នន័យស្តុកចាស់នេះមែនទេ?')) return;
-      oldStockList = oldStockList.filter(x => Number(x.id) !== Number(stockId));
-      persistOldStock();
-      renderOldStockTable();
-    }
-
-    function renderOldStockTable() {
-      const tbody = document.getElementById('oldStockTableBody');
-      if (!tbody) return;
-
-      let totalQty = 0;
-      let totalValue = 0;
-
-      oldStockList.forEach(item => {
-        const q = Number(item.qty || 0);
-        const p = Number(item.price || 0);
-        totalQty += q;
-        totalValue += q * p;
-      });
-
-      const qtyBadge = document.getElementById('totalOldStockQtyBadge');
-      const valBadge = document.getElementById('totalOldStockValueBadge');
-      if (qtyBadge) qtyBadge.textContent = `សរុប: ${totalQty.toLocaleString()} ឯកតា`;
-      if (valBadge) valBadge.textContent = `តម្លៃសរុប: $${totalValue.toFixed(2)}`;
-
-      if (oldStockList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4 small">មិនទាន់មានស្តុកចាស់</td></tr>';
-        return;
-      }
-
-      tbody.innerHTML = oldStockList.map(item => {
-        const q = Number(item.qty || 0);
-        const p = Number(item.price || 0);
-        const lineTotal = q * p;
-        return `
-          <tr>
-            <td>
-              <div class="fw-bold small">${escapeHtml(item.name)}</div>
-              ${item.note ? `<div class="text-muted" style="font-size: 0.72rem;">${escapeHtml(item.note)}</div>` : ''}
-            </td>
-            <td class="small">${escapeHtml(item.category || '')}</td>
-            <td class="text-center" style="white-space: nowrap;">
-              <button type="button" class="btn btn-sm btn-danger py-0 px-2 fw-bold text-white" onclick="adjustOldStockQty(${item.id}, -1)">-</button>
-              <span class="mx-1 fw-bold small">${q}</span>
-              <button type="button" class="btn btn-sm btn-success py-0 px-2 fw-bold text-white" onclick="adjustOldStockQty(${item.id}, 1)">+</button>
-            </td>
-            <td class="text-end small">$${p.toFixed(2)}</td>
-            <td class="text-end small fw-bold text-success">$${lineTotal.toFixed(2)}</td>
-            <td class="small">${escapeHtml(item.stock_date || '')}</td>
-            <td class="text-end">
-              <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteOldStock(${item.id})"><i class="fa-solid fa-trash"></i></button>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    async function loadUsers() {
-      const res = await fetch(API + '/api/users');
-      if (!res.ok) return;
-      const data = await res.json();
-      document.getElementById('usersTableBody').innerHTML = (data.data || []).map(u => `
-        <tr>
-          <td>${u.id}</td>
-          <td><strong>${escapeHtml(u.username)}</strong></td>
-          <td>${escapeHtml(u.full_name)}</td>
-          <td>${escapeHtml(u.role)}</td>
-          <td>${escapeHtml(u.created_at_kh || '')}</td>
-        </tr>
-      `).join('');
-    }
-
-    document.getElementById('createUserForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const msg = document.getElementById('userFormMsg');
-      msg.textContent = '';
-      const res = await fetch(API + '/api/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: document.getElementById('newUsername').value,
-          full_name: document.getElementById('newFullName').value,
-          password: document.getElementById('newPassword').value,
-          role: document.getElementById('newRole').value
-        })
-      });
-      const data = await res.json();
-      if (data.success) {
-        e.target.reset();
-        msg.className = 'small fw-bold mt-2 text-success';
-        msg.textContent = '✅ បង្កើត User រួចរាល់!';
-        loadUsers();
-      } else {
-        msg.className = 'small fw-bold mt-2 text-danger';
-        msg.textContent = data.error || 'បរាជ័យ';
-      }
-    });
-  </script>
-</body>
-</html>
+  })
+  .catch((err) => {
+    console.error('❌ Database init failed:', err);
+    process.exit(1);
+  });
